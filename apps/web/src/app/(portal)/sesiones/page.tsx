@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/app-shell';
 import { StatusChip } from '@/components/ui/status-chip';
 import { Button } from '@/components/ui/button';
@@ -70,12 +71,15 @@ export default async function SesionesPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-start gap-3">
                   {item.canConfirm ? (
-                    <>
-                      <Button>Confirmar asistencia</Button>
-                      <Button variant="ghost">No podré asistir</Button>
-                    </>
+                    <Button
+                      id={`confirm-attendance-${item.id}`}
+                      disabled
+                      disabledReason="Disponible cuando activemos el portal."
+                    >
+                      Confirmar asistencia
+                    </Button>
                   ) : (
                     <Button
                       id={`confirm-attendance-${item.id}`}
@@ -85,6 +89,12 @@ export default async function SesionesPage() {
                       Confirmar asistencia
                     </Button>
                   )}
+                  <Link
+                    href={`/sesiones/${item.id}`}
+                    className="self-center text-sm font-semibold text-[var(--edu-text-link)] underline underline-offset-2"
+                  >
+                    Ver detalle
+                  </Link>
                 </div>
               </li>
             );

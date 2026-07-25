@@ -65,7 +65,9 @@ export function AppShell({ me, currentPath, children, aside }: AppShellProps) {
             {enrollment === null || enrollment === undefined ? null : (
               <p className="text-xs text-[var(--edu-text-secondary)]">
                 {enrollment.oleada.name} · {translateProgramPhase(enrollment.currentPhase)}
-                {enrollment.currentWeek === null ? '' : ` · Semana ${enrollment.currentWeek}`}
+                {typeof enrollment.currentWeek === 'number'
+                  ? ` · Semana ${enrollment.currentWeek}`
+                  : ''}
               </p>
             )}
           </div>

@@ -109,10 +109,14 @@ export type StatusKind = keyof typeof statusDictionaries;
  * Devuelve `null` cuando el valor no está en el diccionario. Quien lo consume
  * decide qué hacer, pero nunca debe renderizar un estado en blanco: un enum
  * desconocido es un contrato desincronizado y tiene que notarse.
+ *
+ * `Object.hasOwn` no es defensa decorativa: sin él, un valor como `toString`
+ * resolvería contra `Object.prototype` y devolvería una función en vez de
+ * `null`, que es justo el chip vacío que este módulo existe para evitar.
  */
 export function translateStatus(kind: StatusKind, value: string): StatusLabel | null {
   const dictionary: Record<string, StatusLabel> = statusDictionaries[kind];
-  return dictionary[value] ?? null;
+  return Object.hasOwn(dictionary, value) ? (dictionary[value] ?? null) : null;
 }
 
 export function translateSessionType(value: SessionType): string {

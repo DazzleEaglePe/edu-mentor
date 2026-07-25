@@ -72,8 +72,15 @@ const catalog: Record<string, ErrorCopy> = {
   },
 };
 
+/**
+ * `Object.hasOwn` por el mismo motivo que en `translateStatus`: sin él, un
+ * `code` como `toString` resolvería contra `Object.prototype` y devolvería una
+ * función en vez del texto de respaldo. El backend no lo enviaría a propósito,
+ * pero un catálogo que confía en el prototipo es una trampa esperando datos
+ * inesperados.
+ */
 export function errorCopy(error: ApiError['error']): ErrorCopy {
-  return catalog[error.code] ?? fallback;
+  return Object.hasOwn(catalog, error.code) ? (catalog[error.code] ?? fallback) : fallback;
 }
 
 /**
@@ -112,16 +119,28 @@ export function scheduleConflictCopy(
   };
 }
 
-/** Type guard para el envelope, sin confiar en el `status` HTTP. */
+/**
+ * Type guard del envelope, sin confiar en el `status` HTTP.
+ *
+ * Comprueba que los tres campos obligatorios sean **strings**, no solo que la
+ * clave exista: `{ code: null }` pasaría un `'code' in candidate` y luego
+ * reventaría al buscar el texto en el catálogo. Este guard es la frontera entre
+ * una respuesta y datos en los que se puede confiar.
+ */
 export function isApiError(value: unknown): value is ApiError {
   if (typeof value !== 'object' || value === null || !('error' in value)) {
     return false;
   }
+
   const candidate = (value as { error: unknown }).error;
+  if (typeof candidate !== 'object' || candidate === null) {
+    return false;
+  }
+
+  const envelope = candidate as Record<string, unknown>;
   return (
-    typeof candidate === 'object' &&
-    candidate !== null &&
-    'code' in candidate &&
-    'traceId' in candidate
+    typeof envelope['code'] === 'string' &&
+    typeof envelope['message'] === 'string' &&
+    typeof envelope['traceId'] === 'string'
   );
 }
