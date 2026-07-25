@@ -108,8 +108,7 @@ export function sortByRequiredAction(deliverables: readonly Deliverable[]): read
  * quien llama no puede deshabilitar sin tener a mano qué decir.
  */
 export type SubmitBlock =
-  | { readonly canSubmit: true }
-  | { readonly canSubmit: false; readonly reason: string };
+  { readonly canSubmit: true } | { readonly canSubmit: false; readonly reason: string };
 
 export function canSubmitRevision(submission: Submission): SubmitBlock {
   if (submission.status !== 'DRAFT') {
