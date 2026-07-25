@@ -60,6 +60,21 @@ describe('errorCopy', () => {
     }
   });
 
+  it('trata el reuso de idempotencia como resultado, no como fallo', () => {
+    // La operación ya ocurrió: alarmar por un reintento haría que alguien
+    // intente crear el usuario otra vez, que es justo lo que evitamos.
+    const copy = errorCopy({ code: 'IDEMPOTENCY_KEY_REUSED', message: '', traceId: 't' });
+    assert.ok(copy.body.includes('No se creó nada por duplicado'));
+    assert.equal(copy.showTraceId, false);
+  });
+
+  it('ante un correo repetido sugiere buscar, no reintentar', () => {
+    const copy = errorCopy({ code: 'EMAIL_ALREADY_EXISTS', message: '', traceId: 't' });
+    assert.equal(copy.action, 'Buscar en la lista');
+    // Una cuenta desactivada sigue existiendo: reintentar nunca funcionaría.
+    assert.ok(copy.body.includes('desactivada'));
+  });
+
   it('explica el cierre de confirmación sin culpar a la persona', () => {
     const copy = errorCopy({ code: 'CONFIRMATION_CLOSED', message: '', traceId: 't' });
     assert.equal(copy.action, null);

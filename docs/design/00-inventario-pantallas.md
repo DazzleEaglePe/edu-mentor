@@ -72,7 +72,7 @@ Regla: una pantalla es `MVP` solo si todo su contenido se sostiene con el contra
 | A2 | Gestión de sesiones | MVP | `GET /sessions` + filtros | Admin ve toda la organización |
 | A3 | Detalle/supervisión de sesión | MVP | `GET /sessions/{sessionId}` | Puede reprogramar, cancelar y completar |
 | A4 | Gestión de entregables | MVP | `GET /deliverables` | |
-| A5 | Usuarios y roles | MVP | `GET/POST /admin/users` · `PATCH /admin/users/{userId}` · `POST …/password-reset` | Roles múltiples (DEC-002) |
+| A5 | Usuarios y roles | MVP | `GET/POST /admin/users` · `PATCH /admin/users/{userId}` · `POST …/password-reset` | Roles múltiples (DEC-002). **`AdminUser` no expone oleada ni último acceso**: la oleada vive en `Enrollment` (A7) |
 | A6 | Oleadas | MVP | `GET/POST /admin/oleadas` · `PATCH /admin/oleadas/{oleadaId}` | ✅ CCR-012. `activeEnrollmentCount` da la ocupación |
 | A7 | Enrollments | MVP | `GET/POST /admin/enrollments` · `PATCH /admin/enrollments/{enrollmentId}` | Alta en `FASE_0` o `FASE_1`; `currentWeek` y `status` editables |
 | A8 | Asignaciones mentor ↔ participante | MVP | `GET/POST /admin/mentor-assignments` · `DELETE …/{mentorAssignmentId}?expectedVersion=` | `enrollmentId` **nullable**: asignación por oleada o 1:1. Cerrar es `DELETE` → `204`; el historial se conserva |

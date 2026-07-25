@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { AuthMe, Deliverable, Session } from '@edu-mentor/shared-types';
+import type { AdminUserPage } from '@/lib/domain/users';
 
 /**
  * Fuente de datos **provisional** mientras la API no expone auth ni sesiones.
@@ -30,4 +31,8 @@ export function loadSessionDetail(): Promise<Session> {
 
 export function loadDeliverableDetail(): Promise<Deliverable> {
   return readFixture<Deliverable>('deliverable.detail.json');
+}
+
+export function loadAdminUsers(): Promise<AdminUserPage> {
+  return readFixture<AdminUserPage>('admin.users-page.json');
 }

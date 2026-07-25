@@ -1977,12 +1977,12 @@
               </div>
               <div class="w-scroll">
                 <table class="w-table">
-                  <thead><tr><th>Nombre</th><th>Roles</th><th>Oleada</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+                  <thead><tr><th>Nombre</th><th>Correo</th><th>Roles</th><th>Estado</th><th></th></tr></thead>
                   <tbody>
-                    <tr><td>Nancy Gómez</td><td><span class="w-chip tag">Mentora</span> <span class="w-chip tag">Admin <span class="m">1</span></span></td><td>Tecnología</td><td><span class="w-chip ok">Activa</span></td><td class="num">Hoy, 08:42</td><td><span class="w-btn link">Editar</span></td></tr>
-                    <tr><td>Carlos Ruiz</td><td><span class="w-chip tag">Mentor</span></td><td>Tecnología</td><td><span class="w-chip ok">Activo</span></td><td class="num">Ayer</td><td><span class="w-btn link">Editar</span></td></tr>
-                    <tr><td>Martín del Valle</td><td><span class="w-chip tag">Participante</span></td><td>Tecnología</td><td><span class="w-chip ok">Activo</span></td><td class="num">Hoy, 07:15</td><td><span class="w-btn link">Editar</span></td></tr>
-                    <tr><td>Ana Torres</td><td><span class="w-chip tag">Participante</span></td><td>Tecnología</td><td><span class="w-chip wait">Contraseña temporal <span class="m">2</span></span></td><td class="num">—</td><td><span class="w-btn">Restablecer acceso</span></td></tr>
+                    <tr><td>Ana Torres</td><td>ana.torres@example.test</td><td><span class="w-chip tag">Participante</span></td><td><span class="w-chip wait">Contraseña temporal <span class="m">2</span></span></td><td><span class="w-btn">Restablecer acceso</span></td></tr>
+                    <tr><td>Carlos Ruiz</td><td>carlos.ruiz@example.test</td><td><span class="w-chip tag">Mentor</span></td><td><span class="w-chip ok">Activa</span></td><td><span class="w-btn link">Editar</span></td></tr>
+                    <tr><td>Martín del Valle</td><td>martin@example.test</td><td><span class="w-chip tag">Participante</span></td><td><span class="w-chip ok">Activa</span></td><td><span class="w-btn link">Editar</span></td></tr>
+                    <tr><td>Nancy Gómez</td><td>nancy.gomez@example.test</td><td><span class="w-chip tag">Mentora</span> <span class="w-chip tag">Admin <span class="m">1</span></span></td><td><span class="w-chip off">Desactivada <span class="m">3</span></span></td><td><span class="w-btn link">Editar</span></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1995,9 +1995,12 @@
         <h4>Anotaciones</h4>
         <ol>
           <li><span class="n">1</span> ✅ <strong>DEC-002 aceptada:</strong> roles en plural. Una persona puede ser mentora y admin; el contrato ya devuelve <code>roles[]</code>.</li>
-          <li><span class="n">2</span> ⚖️ <strong>CCR-007 con alternativa:</strong> "contraseña temporal" (<code>mustChangePassword</code>) es el estado más útil de la primera semana — identifica a quien aún no logró entrar. "Restablecer acceso" genera una temporal nueva y revoca sus sesiones.</li>
+          <li><span class="n">2</span> ⚖️ <strong>CCR-007 con alternativa:</strong> "contraseña temporal" (<code>mustChangePassword</code>) es el estado más útil de la primera semana — identifica a quien aún no logró entrar, y por eso ordena la lista. "Restablecer acceso" genera una temporal nueva y revoca sus sesiones.</li>
           <li><span class="n">3</span> Sin borrado duro. La auditoría (DEC-023) y la trazabilidad del programa dependen de conservar el historial.</li>
         </ol>
+        <div class="resp" style="margin-top:14px;">
+          <p><strong>Corregido (jul-2026):</strong> esta plancha mostraba columnas de <s>Oleada</s> y <s>Último acceso</s>. <strong>Ninguna existe en <code>AdminUser</code></strong>, que tiene exactamente <code>id</code>, <code>email</code>, <code>fullName</code>, <code>roles[]</code>, <code>isActive</code>, <code>mustChangePassword</code> y <code>version</code>. La pertenencia a una oleada vive en <code>Enrollment</code> (A7) y el último acceso no se expone en ningún endpoint. Eran invención mía y la implementación no las incluye.</p>
+        </div>
         <div class="resp">
           <p><strong>Móvil:</strong> consulta. El alta de usuarios es tarea de escritorio.</p>
         </div>

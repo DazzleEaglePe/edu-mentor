@@ -71,6 +71,22 @@ const catalog: Record<string, ErrorCopy> = {
     action: null,
     showTraceId: false,
   },
+  EMAIL_ALREADY_EXISTS: {
+    title: 'Ese correo ya está registrado',
+    body: 'Busca a la persona en la lista: puede estar desactivada en vez de ausente.',
+    action: 'Buscar en la lista',
+    showTraceId: false,
+  },
+  /**
+   * La operación ya ocurrió con esa clave: reintentar no debe alarmar ni
+   * duplicar. Se informa el resultado, no un fallo.
+   */
+  IDEMPOTENCY_KEY_REUSED: {
+    title: 'Esta acción ya se había realizado',
+    body: 'No se creó nada por duplicado. Recarga para ver el resultado.',
+    action: 'Recargar',
+    showTraceId: false,
+  },
 };
 
 /**
