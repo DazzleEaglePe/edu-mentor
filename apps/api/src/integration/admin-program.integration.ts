@@ -21,8 +21,11 @@ const EXTERNAL_OLEADA_ID = 'f1111111-1111-4111-8111-111111111111';
 const CAPACITY_OLEADA_ID = 'f2222222-2222-4222-8222-222222222222';
 const PARTICIPANT_A_ID = 'f3333333-3333-4333-8333-333333333333';
 const PARTICIPANT_B_ID = 'f4444444-4444-4444-8444-444444444444';
+const ASSIGNMENT_OLEADA_ID = 'f5555555-5555-4555-8555-555555555555';
 const ENROLLMENT_KEY_A = 'admin-enrollment-integration-a-0001';
 const ENROLLMENT_KEY_B = 'admin-enrollment-integration-b-0001';
+const ASSIGNMENT_KEY_A = 'admin-mentor-assignment-integration-a-0001';
+const ASSIGNMENT_KEY_B = 'admin-mentor-assignment-integration-b-0001';
 
 interface AdminOleadaResponse {
   readonly activeEnrollmentCount: number;
@@ -62,6 +65,29 @@ interface AdminEnrollmentResponse {
 
 interface AdminEnrollmentPageResponse {
   readonly data: readonly AdminEnrollmentResponse[];
+  readonly meta: {
+    readonly total: number;
+  };
+}
+
+interface AdminMentorAssignmentResponse {
+  readonly capability: string;
+  readonly endsAt: string | null;
+  readonly enrollmentId: string | null;
+  readonly id: string;
+  readonly mentor: {
+    readonly id: string;
+  };
+  readonly oleada: {
+    readonly id: string;
+  };
+  readonly startsAt: string;
+  readonly status: string;
+  readonly version: number;
+}
+
+interface AdminMentorAssignmentPageResponse {
+  readonly data: readonly AdminMentorAssignmentResponse[];
   readonly meta: {
     readonly total: number;
   };
@@ -210,6 +236,47 @@ function updateEnrollmentRequest(
   });
 }
 
+function createMentorAssignmentRequest(
+  baseUrl: string,
+  admin: BrowserSession,
+  idempotencyKey: string,
+  options: {
+    readonly enrollmentId?: string | null;
+    readonly mentorUserId?: string;
+    readonly startsAt?: string;
+  } = {},
+): Promise<Response> {
+  return fetch(`${baseUrl}/api/v1/admin/mentor-assignments`, {
+    body: JSON.stringify({
+      capability: 'SPECIALIST',
+      enrollmentId: options.enrollmentId ?? null,
+      mentorUserId: options.mentorUserId ?? SYNTHETIC_IDS.mentorUser,
+      oleadaId: ASSIGNMENT_OLEADA_ID,
+      startsAt: options.startsAt ?? '2026-07-01T14:00:00Z',
+    }),
+    headers: mutationHeaders(admin, {
+      'content-type': 'application/json',
+      'idempotency-key': idempotencyKey,
+    }),
+    method: 'POST',
+  });
+}
+
+function closeMentorAssignmentRequest(
+  baseUrl: string,
+  admin: BrowserSession,
+  mentorAssignmentId: string,
+  expectedVersion: number,
+): Promise<Response> {
+  return fetch(
+    `${baseUrl}/api/v1/admin/mentor-assignments/${mentorAssignmentId}?expectedVersion=${expectedVersion}`,
+    {
+      headers: mutationHeaders(admin),
+      method: 'DELETE',
+    },
+  );
+}
+
 describe('admin program setup', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -301,7 +368,11 @@ describe('admin program setup', () => {
       await pool.query(
         `DELETE FROM idempotency_record
          WHERE organization_id = $1
-           AND operation IN ('admin.oleadas.create', 'admin.enrollments.create')`,
+           AND operation IN (
+             'admin.oleadas.create',
+             'admin.enrollments.create',
+             'admin.mentor-assignments.create'
+           )`,
         [SYNTHETIC_IDS.organization],
       );
       await pool.query('DELETE FROM audit_log WHERE organization_id = $1', [
@@ -310,12 +381,16 @@ describe('admin program setup', () => {
       await pool.query('DELETE FROM enrollment WHERE user_id = ANY($1::uuid[])', [
         [PARTICIPANT_A_ID, PARTICIPANT_B_ID],
       ]);
+      await pool.query('DELETE FROM mentor_assignment WHERE oleada_id = $1', [
+        ASSIGNMENT_OLEADA_ID,
+      ]);
 
       if (createdOleadaId !== undefined) {
         await pool.query('DELETE FROM oleada WHERE id = $1', [createdOleadaId]);
       }
 
       await pool.query('DELETE FROM oleada WHERE id = $1', [CAPACITY_OLEADA_ID]);
+      await pool.query('DELETE FROM oleada WHERE id = $1', [ASSIGNMENT_OLEADA_ID]);
       await pool.query('DELETE FROM oleada WHERE id = $1', [EXTERNAL_OLEADA_ID]);
       await pool.query('DELETE FROM auth_session WHERE user_id = ANY($1::uuid[])', [
         [
@@ -697,6 +772,230 @@ describe('admin program setup', () => {
 
     const participant = await authenticate(baseUrl, SYNTHETIC_EMAILS.participant);
     const forbidden = await fetch(`${baseUrl}/api/v1/admin/enrollments`, {
+      headers: {
+        cookie: participant.accessCookie,
+      },
+    });
+    assert.equal(forbidden.status, 403);
+    assert.equal(((await forbidden.json()) as ErrorResponse).error.code, 'FORBIDDEN');
+
+    assert.notEqual(winnerKey, loserKey);
+  });
+
+  it('serializes mentor scope, closes history and reuses the released scope', async () => {
+    await pool.query(
+      `INSERT INTO oleada (
+         id,
+         organization_id,
+         name,
+         sector,
+         status,
+         start_date,
+         end_date,
+         capacity,
+         updated_at
+       )
+       VALUES ($1, $2, 'Oleada Asignaciones', 'Tecnología', 'OPEN', '2026-01-01', '2027-12-31', 10, NOW())`,
+      [ASSIGNMENT_OLEADA_ID, SYNTHETIC_IDS.organization],
+    );
+    const admin = await authenticate(baseUrl, SYNTHETIC_EMAILS.admin);
+    const attempts = await Promise.all([
+      createMentorAssignmentRequest(baseUrl, admin, ASSIGNMENT_KEY_A),
+      createMentorAssignmentRequest(baseUrl, admin, ASSIGNMENT_KEY_B),
+    ]);
+    assert.deepEqual(attempts.map((response) => response.status).sort(), [201, 409]);
+
+    const winnerIndex = attempts.findIndex((response) => response.status === 201);
+    const loserIndex = winnerIndex === 0 ? 1 : 0;
+    const winnerResponse = attempts[winnerIndex];
+    const loserResponse = attempts[loserIndex];
+
+    assert.ok(winnerResponse !== undefined);
+    assert.ok(loserResponse !== undefined);
+    const winner = (await winnerResponse.json()) as AdminMentorAssignmentResponse;
+    assert.equal(winner.capability, 'SPECIALIST');
+    assert.equal(winner.enrollmentId, null);
+    assert.equal(winner.mentor.id, SYNTHETIC_IDS.mentorUser);
+    assert.equal(winner.oleada.id, ASSIGNMENT_OLEADA_ID);
+    assert.equal(winner.status, 'ACTIVE');
+    assert.equal(winner.version, 1);
+    assert.equal(
+      ((await loserResponse.json()) as ErrorResponse).error.code,
+      'ACTIVE_MENTOR_ASSIGNMENT_EXISTS',
+    );
+
+    const winnerKey = winnerIndex === 0 ? ASSIGNMENT_KEY_A : ASSIGNMENT_KEY_B;
+    const loserKey = winnerIndex === 0 ? ASSIGNMENT_KEY_B : ASSIGNMENT_KEY_A;
+    const afterRace = await pool.query<{
+      assignment_count: number;
+      audit_count: number;
+      reservation_count: number;
+    }>(
+      `SELECT
+         (
+           SELECT COUNT(*)::int
+           FROM mentor_assignment
+           WHERE oleada_id = $1
+         ) assignment_count,
+         (
+           SELECT COUNT(*)::int
+           FROM audit_log
+           WHERE entity_id = $2
+             AND action = 'admin.mentor_assignment_created'
+         ) audit_count,
+         (
+           SELECT COUNT(*)::int
+           FROM idempotency_record
+           WHERE organization_id = $3
+             AND operation = 'admin.mentor-assignments.create'
+         ) reservation_count`,
+      [ASSIGNMENT_OLEADA_ID, winner.id, SYNTHETIC_IDS.organization],
+    );
+    assert.deepEqual(afterRace.rows[0], {
+      assignment_count: 1,
+      audit_count: 1,
+      reservation_count: 1,
+    });
+
+    const staleClose = await closeMentorAssignmentRequest(baseUrl, admin, winner.id, 2);
+    assert.equal(staleClose.status, 409);
+    assert.deepEqual(((await staleClose.json()) as ErrorResponse).error.details, {
+      currentVersion: 1,
+      expectedVersion: 2,
+    });
+
+    const closeWinner = await closeMentorAssignmentRequest(baseUrl, admin, winner.id, 1);
+    assert.equal(closeWinner.status, 204);
+    assert.equal(await closeWinner.text(), '');
+
+    const loserCreatedResponse = await createMentorAssignmentRequest(baseUrl, admin, loserKey);
+    assert.equal(loserCreatedResponse.status, 201);
+    const loserCreated = (await loserCreatedResponse.json()) as AdminMentorAssignmentResponse;
+    assert.notEqual(loserCreated.id, winner.id);
+    assert.equal(loserCreated.status, 'ACTIVE');
+
+    const replay = await createMentorAssignmentRequest(baseUrl, admin, loserKey);
+    assert.equal(replay.status, 201);
+    assert.deepEqual((await replay.json()) as AdminMentorAssignmentResponse, loserCreated);
+
+    const reused = await createMentorAssignmentRequest(baseUrl, admin, loserKey, {
+      startsAt: '2026-07-02T14:00:00Z',
+    });
+    assert.equal(reused.status, 409);
+    assert.equal(((await reused.json()) as ErrorResponse).error.code, 'IDEMPOTENCY_KEY_REUSED');
+
+    const activeList = await fetch(
+      `${baseUrl}/api/v1/admin/mentor-assignments?page=1&limit=20&oleadaId=${ASSIGNMENT_OLEADA_ID}&active=true`,
+      {
+        headers: {
+          cookie: admin.accessCookie,
+        },
+      },
+    );
+    assert.equal(activeList.status, 200);
+    const activePage = (await activeList.json()) as AdminMentorAssignmentPageResponse;
+    assert.equal(activePage.meta.total, 1);
+    assert.equal(activePage.data[0]?.id, loserCreated.id);
+
+    const closedList = await fetch(
+      `${baseUrl}/api/v1/admin/mentor-assignments?page=1&limit=20&oleadaId=${ASSIGNMENT_OLEADA_ID}&active=false`,
+      {
+        headers: {
+          cookie: admin.accessCookie,
+        },
+      },
+    );
+    assert.equal(closedList.status, 200);
+    const closedPage = (await closedList.json()) as AdminMentorAssignmentPageResponse;
+    assert.equal(closedPage.meta.total, 1);
+    assert.equal(closedPage.data[0]?.id, winner.id);
+    assert.equal(closedPage.data[0]?.status, 'CLOSED');
+
+    const mismatchedEnrollment = await createMentorAssignmentRequest(
+      baseUrl,
+      admin,
+      'admin-mentor-assignment-mismatch-0001',
+      {
+        enrollmentId: SYNTHETIC_IDS.enrollment,
+      },
+    );
+    assert.equal(mismatchedEnrollment.status, 422);
+    assert.equal(
+      ((await mismatchedEnrollment.json()) as ErrorResponse).error.code,
+      'MENTOR_ASSIGNMENT_TARGET_INVALID',
+    );
+
+    const externalMentor = await createMentorAssignmentRequest(
+      baseUrl,
+      admin,
+      'admin-mentor-assignment-external-0001',
+      {
+        mentorUserId: SYNTHETIC_IDS.externalParticipantUser,
+      },
+    );
+    assert.equal(externalMentor.status, 422);
+    assert.equal(
+      ((await externalMentor.json()) as ErrorResponse).error.code,
+      'MENTOR_ASSIGNMENT_TARGET_INVALID',
+    );
+
+    const closeReplacement = await closeMentorAssignmentRequest(baseUrl, admin, loserCreated.id, 1);
+    assert.equal(closeReplacement.status, 204);
+
+    const alreadyClosed = await closeMentorAssignmentRequest(baseUrl, admin, loserCreated.id, 2);
+    assert.equal(alreadyClosed.status, 409);
+    assert.equal(
+      ((await alreadyClosed.json()) as ErrorResponse).error.code,
+      'MENTOR_ASSIGNMENT_CLOSED',
+    );
+
+    const storage = await pool.query<{
+      closed_count: number;
+      created_audit_count: number;
+      closed_audit_count: number;
+      idempotency_count: number;
+    }>(
+      `SELECT
+         (
+           SELECT COUNT(*)::int
+           FROM mentor_assignment
+           WHERE oleada_id = $1 AND ends_at IS NOT NULL
+         ) closed_count,
+         (
+           SELECT COUNT(*)::int
+           FROM audit_log
+           WHERE organization_id = $2
+             AND action = 'admin.mentor_assignment_created'
+             AND entity_id IN (
+               SELECT id FROM mentor_assignment WHERE oleada_id = $1
+             )
+         ) created_audit_count,
+         (
+           SELECT COUNT(*)::int
+           FROM audit_log
+           WHERE organization_id = $2
+             AND action = 'admin.mentor_assignment_closed'
+             AND entity_id IN (
+               SELECT id FROM mentor_assignment WHERE oleada_id = $1
+             )
+         ) closed_audit_count,
+         (
+           SELECT COUNT(*)::int
+           FROM idempotency_record
+           WHERE organization_id = $2
+             AND operation = 'admin.mentor-assignments.create'
+         ) idempotency_count`,
+      [ASSIGNMENT_OLEADA_ID, SYNTHETIC_IDS.organization],
+    );
+    assert.deepEqual(storage.rows[0], {
+      closed_count: 2,
+      closed_audit_count: 2,
+      created_audit_count: 2,
+      idempotency_count: 2,
+    });
+
+    const participant = await authenticate(baseUrl, SYNTHETIC_EMAILS.participant);
+    const forbidden = await fetch(`${baseUrl}/api/v1/admin/mentor-assignments`, {
       headers: {
         cookie: participant.accessCookie,
       },
