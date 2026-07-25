@@ -1,4 +1,4 @@
-import { type INestApplication, ValidationPipe } from '@nestjs/common';
+import { type INestApplication, type Type, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 
 import { ApiError } from './common/http/api-error.js';
@@ -19,6 +19,21 @@ function validationException(errors: ValidationError[]): ApiError {
   });
 }
 
+export function createValidationPipe(expectedType?: Type<unknown>): ValidationPipe {
+  return new ValidationPipe({
+    exceptionFactory: validationException,
+    forbidNonWhitelisted: true,
+    stopAtFirstError: false,
+    transform: true,
+    validationError: {
+      target: false,
+      value: false,
+    },
+    whitelist: true,
+    ...(expectedType === undefined ? {} : { expectedType }),
+  });
+}
+
 export function configureHttpApp(app: INestApplication, config: RuntimeConfig): void {
   const httpServer = app.getHttpAdapter().getInstance() as ConfigurableHttpServer;
 
@@ -28,19 +43,7 @@ export function configureHttpApp(app: INestApplication, config: RuntimeConfig): 
   }
 
   app.use(traceIdMiddleware);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      exceptionFactory: validationException,
-      forbidNonWhitelisted: true,
-      stopAtFirstError: false,
-      transform: true,
-      validationError: {
-        target: false,
-        value: false,
-      },
-      whitelist: true,
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new ErrorEnvelopeFilter());
   app.setGlobalPrefix('api/v1');
   app.enableShutdownHooks();

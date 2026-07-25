@@ -10,7 +10,7 @@ Plataforma digital para operar y visibilizar el programa de mentoría y empleabi
 
 ## Estado
 
-Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migración Prisma de fundaciones, servicios PostgreSQL/Redis, errores correlacionables y pipeline local/CI. `apps/web` permanece bajo ownership de Claude Code.
+Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migración Prisma, PostgreSQL/Redis, auth revocable, seed por rol y primer recurso administrativo con aislamiento multi-tenant. `apps/web` permanece bajo ownership de Claude Code.
 
 ## Documentos de entrada
 
@@ -26,9 +26,11 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Scaffold técnico de Fase 1](./docs/checkpoints/2026-07-25-phase1-foundation-scaffold.md)
 - [Persistencia y observabilidad iniciales](./docs/checkpoints/2026-07-25-phase1-data-and-http-foundations.md)
 - [Runtime de datos y readiness](./docs/checkpoints/2026-07-25-phase1-data-runtime.md)
+- [Acceso multi-tenant y seed reproducible](./docs/checkpoints/2026-07-25-phase1-core-access.md)
 - [Lección L01](./docs/learning/01-domain-modeling-and-state-machines.md)
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)
+- [Lección de multi-tenancy y optimistic locking](./docs/learning/05-multi-tenant-data-and-optimistic-locking.md)
 - [Coordinación con Claude Code](./docs/09-claude-code-coordination.md)
 
 `newfiles.zip` se conserva como snapshot de contexto; los documentos extraídos son la fuente de trabajo.
@@ -45,10 +47,13 @@ pnpm check
 cp .env.example .env
 pnpm infra:up
 pnpm db:migrate
+pnpm db:seed
 pnpm dev:api
 ```
 
 `pnpm infra:down` detiene los servicios sin borrar los volúmenes locales.
+`pnpm db:seed` carga exclusivamente el baseline sintético de desarrollo/CI y se bloquea en
+`NODE_ENV=production`.
 
 Health checks locales:
 

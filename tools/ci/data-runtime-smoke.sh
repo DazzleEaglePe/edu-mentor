@@ -17,6 +17,9 @@ pnpm generate
 pnpm db:migrate
 pnpm db:status
 pnpm --filter @edu-mentor/api test:integration
+pnpm db:seed
+pnpm db:seed
+pnpm --filter @edu-mentor/api test:seed-integration
 pnpm build
 
 pnpm --filter @edu-mentor/api start >"$api_log" 2>&1 &

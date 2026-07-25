@@ -12,12 +12,11 @@ import {
 } from '../../common/http/cookies.js';
 import { ApiError } from '../../common/http/api-error.js';
 import { getOrCreateTraceId } from '../../common/http/trace-id.js';
+import { createValidationPipe } from '../../configure-http-app.js';
 import { AuthCookieService } from './auth-cookie.service.js';
 import { AuthService } from './auth.service.js';
 // Runtime imports are required so Nest can reflect DTO classes for ValidationPipe.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { ChangePasswordDto } from './dto/change-password.dto.js';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { LoginDto } from './dto/login.dto.js';
 import { CsrfService } from './security/csrf.service.js';
 
@@ -80,7 +79,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('login')
   async login(
-    @Body() body: LoginDto,
+    @Body(createValidationPipe(LoginDto)) body: LoginDto,
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: CookieResponse,
   ): Promise<AuthMeResponse> {
@@ -159,7 +158,7 @@ export class AuthController {
   @HttpCode(204)
   @Post('change-password')
   async changePassword(
-    @Body() body: ChangePasswordDto,
+    @Body(createValidationPipe(ChangePasswordDto)) body: ChangePasswordDto,
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: CookieResponse,
   ): Promise<void> {

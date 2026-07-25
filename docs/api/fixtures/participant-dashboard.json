@@ -1,0 +1,29 @@
+{
+  "sessions": {
+    "attended": 0,
+    "total": 1,
+    "next": {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "title": "Mentoría 1:1 — Objetivo profesional",
+      "type": "ONE_ON_ONE",
+      "phase": "FASE_1",
+      "startsAt": "2026-08-12T20:00:00Z",
+      "endsAt": "2026-08-12T20:45:00Z",
+      "timezone": "America/Lima",
+      "status": "SCHEDULED",
+      "confirmationClosesAt": "2026-08-12T20:00:00Z",
+      "canConfirm": true,
+      "confirmationSummary": {
+        "total": 1,
+        "pending": 0,
+        "confirmed": 1,
+        "declined": 0
+      }
+    }
+  },
+  "deliverables": {
+    "submitted": 1,
+    "expected": 1,
+    "nextDueAt": null
+  }
+}
