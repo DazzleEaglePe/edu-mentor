@@ -72,6 +72,22 @@ describe('summarizeSubmission', () => {
     assert.equal(summarizeSubmission('SUBMITTED').title, 'Enviado, esperando evaluación');
     assert.notEqual(summarizeSubmission('SUBMITTED').title, 'Pendiente de entregar');
   });
+
+  it('no confunde el diccionario con propiedades heredadas de Object', () => {
+    // Tercera vez que aparece este bug en el proyecto. Ver `lookup.ts`.
+    for (const key of ['toString', 'constructor', '__proto__', 'valueOf']) {
+      const summary = summarizeSubmission(key as SubmissionStatus);
+      assert.equal(typeof summary.title, 'string');
+      assert.equal(typeof summary.needsAction, 'boolean');
+      assert.equal(summary.needsAction, false);
+    }
+  });
+
+  it('ante un estado desconocido no inventa una tarea pendiente', () => {
+    const summary = summarizeSubmission('ARCHIVED' as SubmissionStatus);
+    assert.equal(summary.needsAction, false);
+    assert.equal(summary.title, 'Estado no reconocido');
+  });
 });
 
 describe('currentSubmission', () => {
@@ -130,6 +146,20 @@ describe('sortByRequiredAction', () => {
       input.map((item) => item.id),
       before,
     );
+  });
+
+  it('manda al final un estado desconocido, sin colarlo como urgente', () => {
+    // Sin `lookupOr`, `priorityByStatus['toString']` devolvía una función y la
+    // resta producía NaN, dejando el orden a merced del motor.
+    const unknown = deliverable('DRAFT', '2026-01-01T00:00:00Z', 1);
+    const broken: Deliverable = {
+      ...unknown,
+      submissions: [{ ...submission('toString' as SubmissionStatus), id: 's-1' }],
+    };
+    const returned = deliverable('RETURNED', '2026-12-01T00:00:00Z', 2);
+
+    const sorted = sortByRequiredAction([broken, returned]);
+    assert.equal(sorted[0]?.assignment.weekNumber, 2);
   });
 
   it('manda al final lo que no tiene revisión vigente, sin romperse', () => {

@@ -1,4 +1,5 @@
 import type { ApiComponents } from '@edu-mentor/shared-types';
+import { lookup } from './lookup';
 
 /**
  * Traductor único de enums del dominio a etiquetas visibles.
@@ -110,13 +111,12 @@ export type StatusKind = keyof typeof statusDictionaries;
  * decide qué hacer, pero nunca debe renderizar un estado en blanco: un enum
  * desconocido es un contrato desincronizado y tiene que notarse.
  *
- * `Object.hasOwn` no es defensa decorativa: sin él, un valor como `toString`
- * resolvería contra `Object.prototype` y devolvería una función en vez de
- * `null`, que es justo el chip vacío que este módulo existe para evitar.
+ * La búsqueda pasa por `lookup` para no repetir aquí la protección contra
+ * claves heredadas de `Object.prototype` — ver `lookup.ts`.
  */
 export function translateStatus(kind: StatusKind, value: string): StatusLabel | null {
   const dictionary: Record<string, StatusLabel> = statusDictionaries[kind];
-  return Object.hasOwn(dictionary, value) ? (dictionary[value] ?? null) : null;
+  return lookup(dictionary, value);
 }
 
 export function translateSessionType(value: SessionType): string {

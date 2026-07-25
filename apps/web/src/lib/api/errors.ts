@@ -1,4 +1,5 @@
 import type { ApiComponents, ApiError } from '@edu-mentor/shared-types';
+import { lookupOr } from '@/lib/domain/lookup';
 
 /**
  * El backend devuelve `{ error: { code, message, traceId, details? } }`.
@@ -73,14 +74,11 @@ const catalog: Record<string, ErrorCopy> = {
 };
 
 /**
- * `Object.hasOwn` por el mismo motivo que en `translateStatus`: sin él, un
- * `code` como `toString` resolvería contra `Object.prototype` y devolvería una
- * función en vez del texto de respaldo. El backend no lo enviaría a propósito,
- * pero un catálogo que confía en el prototipo es una trampa esperando datos
- * inesperados.
+ * La búsqueda pasa por `lookupOr` para no repetir aquí la protección contra
+ * claves heredadas de `Object.prototype` — ver `lookup.ts`.
  */
 export function errorCopy(error: ApiError['error']): ErrorCopy {
-  return Object.hasOwn(catalog, error.code) ? (catalog[error.code] ?? fallback) : fallback;
+  return lookupOr(catalog, error.code, fallback);
 }
 
 /**

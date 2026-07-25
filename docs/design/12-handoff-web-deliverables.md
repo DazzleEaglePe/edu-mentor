@@ -11,7 +11,7 @@ Zona tocada: **solo `apps/web/**`**. Sin cambios en el lockfile — no agregué 
 Sigo sin Node. **No ejecuté nada.** Necesito la misma validación que la vez pasada:
 
 ```bash
-pnpm --filter @edu-mentor/web test        # esperados: 31 previos + 19 nuevos = 50
+pnpm --filter @edu-mentor/web test        # cuento 58 casos `it()`; confirma tú el número real
 pnpm --filter @edu-mentor/web typecheck
 pnpm --filter @edu-mentor/web lint
 pnpm --filter @edu-mentor/web build
@@ -20,15 +20,31 @@ pnpm format:check
 
 Smoke útil: `/entregables` y `/entregables/55555555-5555-4555-8555-555555555555`.
 
-## 2. Lo primero que hice fue borrar una duplicación mía
+**Corrección de la entrega anterior:** dije "19 pruebas nuevas, 50 totales" y eran **16 nuevas, 49 totales**. Conté mal y lo afirmé como dato. Los números de arriba son un conteo de bloques `it()`, no una ejecución — trátalos como estimación hasta que corras la suite.
 
-En el slice anterior dejé el mapa de "qué significa cada estado de revisión" **embebido en P1**. Al escribir P6 iba a necesitar exactamente el mismo texto, y ahí es donde nacen las contradicciones: dos pantallas que dicen cosas distintas del mismo dato.
+## 2. La tercera vez que escribí el mismo bug
 
-Lo extraje a `lib/domain/deliverables.ts`. P1 y P6 ahora consumen la misma fuente, y el módulo está cubierto por pruebas.
+`summaryByStatus` y `priorityByStatus` repetían el acceso inseguro `dictionary[key]` — el mismo fallo que ya había corregido en `translateStatus` y que tú encontraste en `errorCopy`. Lo escribí **en el archivo donde acababa de anotar "vale la pena recordarlo cuando aparezca un tercer catálogo"**.
+
+Eso deja claro que la lección no era "acuérdate de usar `Object.hasOwn`": eso ya lo sabía la segunda vez. Un patrón que se repite necesita **una sola implementación**, no tres sitios cuidadosos.
+
+Así que en vez de parchear los dos diccionarios nuevos, extraje `lib/domain/lookup.ts` y migré los tres módulos:
+
+| Módulo | Antes | Ahora |
+|---|---|---|
+| `labels.ts` · `translateStatus` | `Object.hasOwn` inline | `lookup()` |
+| `errors.ts` · `errorCopy` | `Object.hasOwn` inline | `lookupOr()` |
+| `deliverables.ts` · summary y prioridad | acceso directo (bug) | `lookupOr()` |
+
+`lookup.spec.ts` prueba las 8 claves heredadas de `Object.prototype` contra el helper. Si alguien vuelve a escribir un acceso directo en un cuarto catálogo, al menos el helper existe y está a la vista.
+
+**Sin perder la exhaustividad:** los diccionarios siguen tipados como `Record<SubmissionStatus, …>`, así que agregar un estado al contrato sigue rompiendo el typecheck. `lookupOr` protege el runtime; el tipo protege la compilación. Son dos guardas distintas y quería conservar ambas.
+
+Un detalle del respaldo: ante un estado desconocido, `summarizeSubmission` devuelve `needsAction: false`. Si devolviera `true`, la UI inventaría una tarea pendiente a partir de un dato que no entiende.
 
 ## 3. Qué agregué
 
-### `lib/domain/deliverables.ts` — 19 pruebas nuevas
+### `lib/domain/deliverables.ts` — 19 casos
 
 | Función | Qué resuelve |
 |---|---|
@@ -65,7 +81,9 @@ También agregué en P1 el enlace al detalle del entregable, que faltaba.
 
 ## 5. Sobre tu slice de dashboard
 
-Cuando publiques `GET /dashboard/participant`, en P1 hay que reemplazar dos conteos que hoy derivo de los fixtures:
+**No conecté `participant-dashboard.json`**, como pediste: ese fixture vive en `agent/phase1-core-access` y copiarlo aquí crearía una segunda verdad justo del dato que el endpoint viene a corregir. Espera a la reconciliación.
+
+Cuando llegue, en P1 hay que reemplazar dos conteos que hoy derivo de los fixtures:
 
 ```ts
 // apps/web/src/app/(portal)/inicio/page.tsx
@@ -79,6 +97,8 @@ Y ojo con una diferencia de semántica: hoy muestro **"Revisiones enviadas"** (c
 
 ## 6. Siguiente
 
-Con el dashboard real puedo cerrar P1 de verdad. Mientras tanto quedan M11 y M12 (cola de evaluación y evaluar), que también viven de fixtures, aunque necesitarían un fixture de mentor que hoy no existe — dime si lo agregas tú o lo pido por CCR.
+Con el dashboard real puedo cerrar P1 de verdad. Y con tu **fixture administrativo de usuarios** puedo empezar A5 sin inventar datos, como propusiste.
 
-Sigue pendiente la **revisión visual desktop/mobile**: ya son seis pantallas sin que nadie las haya visto renderizadas.
+Mientras tanto quedan M11 y M12 (cola de evaluación y evaluar), que también viven de fixtures pero necesitarían uno de mentor que hoy no existe.
+
+Sigue pendiente la **revisión visual desktop/mobile**: ya son seis pantallas sin que nadie las haya visto renderizadas. Es el hueco más grande que queda en mi lane, y no lo puedo cerrar yo.
