@@ -14,7 +14,8 @@ Estado: baseline reproducible para scaffold; patches se actualizan solo mediante
 | React / React DOM | `19.2.8` | Versiones idénticas. |
 | NestJS | `11.1.28` | `common`, `core` y platform con el mismo patch. |
 | Prisma / Client / adapter-pg | `7.9.0` | ESM + driver adapter obligatorio. |
-| PostgreSQL | `16.x` | Imagen/digest exactos se fijan con Docker Compose. |
+| PostgreSQL | `16.14-bookworm` | Imagen oficial fijada por digest multi-arquitectura. Major 16 soportada hasta noviembre de 2028. |
+| Redis server | `8.2.7-bookworm` | Rama 8.2 con soporte anunciado hasta septiembre de 2030; imagen fijada por digest. |
 | Tailwind / PostCSS plugin | `4.3.3` | Mismo patch. |
 | BullMQ | `5.81.2` | Redis es transporte de jobs, no autoridad del evento. |
 | Redis client | `6.1.0` | Cliente Node; servidor se fija en el spike Docker. |
@@ -92,9 +93,31 @@ También se activará:
 
 ## 6. Pendientes del spike de infraestructura
 
+Las imágenes locales seleccionadas son:
+
+```text
+postgres:16.14-bookworm
+sha256:92620daddcd947f8d5ab5ba66e848702fe443d87fed30c4cea8e389fd78dfc55
+
+redis:8.2.7-bookworm
+sha256:d30960f73a599496d8b2802c97758bab6b1cd421fd06337f837779c47a57e1f3
+```
+
+Ambos manifests publican variantes `amd64` y `arm64`. PostgreSQL recomienda usar el minor vigente de una major soportada. Redis 8.2 se eligió por su ventana de soporte más larga frente a 8.0 y por tener mayor madurez que 8.8.
+
+Fuentes:
+
+- [Política y versiones soportadas de PostgreSQL](https://www.postgresql.org/support/versioning/)
+- [Imagen oficial PostgreSQL](https://hub.docker.com/_/postgres)
+- [Gestión de versiones Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/install/version-mgmt/)
+- [Imagen oficial Redis](https://hub.docker.com/_/redis)
+
+La imagen Redis 8 usa el esquema de licenciamiento publicado por Redis; la selección técnica para desarrollo local no reemplaza la revisión legal antes del piloto.
+
+Pendientes:
+
 1. imagen Linux exacta de Node y digest;
-2. versiones/digests de PostgreSQL y Redis;
-3. compatibilidad de Prisma migrations con los constraints SQL manuales;
-4. imágenes arm64/amd64;
-5. presupuesto de RAM medido;
-6. estrategia de patches de seguridad.
+2. ejecutar la migración y sus constraints SQL contra PostgreSQL;
+3. presupuesto de RAM medido;
+4. estrategia de patches de seguridad;
+5. revisión de licencia Redis para producción.

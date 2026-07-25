@@ -1,16 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { FEATURE_FLAGS, loadFeatureFlags } from './config/feature-flags.js';
+import { RuntimeConfigModule } from './config/runtime-config.module.js';
+import { DatabaseModule } from './infrastructure/database/database.module.js';
+import { RedisModule } from './infrastructure/redis/redis.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 
 @Module({
-  imports: [HealthModule],
-  providers: [
-    {
-      provide: FEATURE_FLAGS,
-      useFactory: loadFeatureFlags,
-    },
-  ],
-  exports: [FEATURE_FLAGS],
+  imports: [RuntimeConfigModule, DatabaseModule, RedisModule, HealthModule],
 })
 export class AppModule {}
