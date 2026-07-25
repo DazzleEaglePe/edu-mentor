@@ -22,10 +22,45 @@ stateDiagram-v2
 - `CLOSED` es de solo lectura; no se borra ni se reabre en el piloto.
 - `capacity` nunca puede quedar por debajo de `activeEnrollmentCount`.
 - Crear usa `Idempotency-Key`; editar usa `expectedVersion`.
-- La edición bloquea la fila de oleada. La creación futura de enrollments usará el mismo lock para
-  que capacidad y altas concurrentes no se contradigan.
+- La edición de capacidad y la creación de enrollments bloquean la misma fila de oleada. Así ambos
+  cambios se serializan y no pueden exceder el cupo.
 
-## 1. Sesión
+## 1. Enrollment
+
+Estado operativo:
+
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: inscribir
+    ACTIVE --> WITHDRAWN: retirar
+    ACTIVE --> COMPLETED: completar
+    WITHDRAWN --> [*]
+    COMPLETED --> [*]
+```
+
+Avance del programa:
+
+```mermaid
+stateDiagram-v2
+    [*] --> FASE_0
+    FASE_0 --> FASE_1
+    FASE_1 --> FASE_2
+    FASE_2 --> FINISHED
+    FINISHED --> [*]
+```
+
+- Solo `ADMIN` crea o actualiza enrollments y siempre dentro de su organización.
+- La persona debe estar activa y tener rol `PARTICIPANT`.
+- La oleada no puede estar `CLOSED`; el par persona/oleada es único.
+- El alta bloquea la fila de oleada, cuenta enrollments `ACTIVE` y crea solo si hay capacidad.
+- Fase y estado avanzan sin saltos ni retrocesos. `WITHDRAWN` y `COMPLETED` son terminales.
+- `currentWeek` solo puede tener valor en `FASE_1`, entre 1 y 6. Al avanzar a `FASE_2` se limpia la
+  semana y se fija `phase1GraduatedAt`.
+- Crear usa `Idempotency-Key`; actualizar usa `expectedVersion`.
+- Un fallo de negocio revierte también la reserva idempotente: después de liberar un cupo, el mismo
+  request fallido puede reintentarse.
+
+## 2. Sesión
 
 ```mermaid
 stateDiagram-v2
@@ -47,7 +82,7 @@ stateDiagram-v2
 
 Una reprogramación nunca edita silenciosamente el horario original. Crea un registro reemplazo y conserva trazabilidad.
 
-## 2. Confirmación y asistencia
+## 3. Confirmación y asistencia
 
 Son dos conceptos separados:
 
@@ -76,7 +111,7 @@ stateDiagram-v2
 - Asistencia es terminal en el MVP. Una corrección administrativa excepcional se audita con before/after.
 - `CONFIRMED` no implica `ATTENDED`; `DECLINED` tampoco debe convertirse automáticamente en `ABSENT`.
 
-## 3. Solicitud de reprogramación
+## 4. Solicitud de reprogramación
 
 ```mermaid
 stateDiagram-v2
@@ -100,7 +135,7 @@ Invariantes:
 
 El `409 SCHEDULE_CONFLICT` identifica el recurso que colisiona y el intervalo ocupado. `conflictingSessionId` solo aparece si el actor ya tiene permiso para leer esa sesión; nunca se filtran título, mentor ni otros participantes de una sesión ajena.
 
-## 4. Revisión de entregable
+## 5. Revisión de entregable
 
 ```mermaid
 stateDiagram-v2
@@ -125,7 +160,7 @@ La flecha `RETURNED → DRAFT` crea otra fila con `revision_number + 1`; no reci
 
 Submit exige al menos un archivo o contenido aceptado por la consigna, todos los archivos `CLEAN`, deadline/regla de tardanza válida, ownership y versión vigentes.
 
-## 5. Reminder y outbox
+## 6. Reminder y outbox
 
 ```mermaid
 stateDiagram-v2
@@ -143,7 +178,7 @@ stateDiagram-v2
 - Un lock con expiración recupera jobs abandonados en `PROCESSING`.
 - n8n puede transportar el mensaje, pero no decidir si el evento existió.
 
-## 6. Matriz de invariantes
+## 7. Matriz de invariantes
 
 | Invariante | DTO | Service/transacción | DB | Test mínimo |
 |---|:---:|:---:|:---:|---|
@@ -159,7 +194,7 @@ stateDiagram-v2
 
 La duplicación deliberada de una regla entre DTO, service y DB no es desperdicio: cada capa evita una clase diferente de fallo.
 
-## 7. Regla para cambios futuros
+## 8. Regla para cambios futuros
 
 Cambiar un estado requiere, como mínimo:
 

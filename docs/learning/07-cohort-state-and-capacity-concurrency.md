@@ -51,9 +51,8 @@ otro request inscribe  → crea el enrollment 19
 admin guarda 18        → capacidad menor al estado real
 ```
 
-`PATCH /admin/oleadas/{id}` toma un lock `FOR UPDATE` sobre la fila. El siguiente slice de
-enrollments tomará el mismo lock antes de contar e inscribir. Dos operaciones que afectan cupos se
-serializan en una frontera compartida.
+`PATCH /admin/oleadas/{id}` y `POST /admin/enrollments` toman un lock `FOR UPDATE` sobre la misma
+fila. Dos operaciones que afectan cupos se serializan en una frontera compartida.
 
 ## 4. Idempotencia reutilizable
 
@@ -102,6 +101,5 @@ Sobre PostgreSQL/Redis reales:
 
 ## 8. Límite actual
 
-El lock ya protege cambios de capacidad. La otra mitad de la invariante llegará con
-`POST /admin/enrollments`, que deberá bloquear la misma oleada antes de comprobar cupos. Hasta
-entonces no se marca completo el setup administrativo.
+El lock ya protege ambos lados de la invariante de capacidad. La continuación del setup
+administrativo es asignar mentores con alcance, vigencia e historial explícitos.

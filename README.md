@@ -10,7 +10,7 @@ Plataforma digital para operar y visibilizar el programa de mentoría y empleabi
 
 ## Estado
 
-Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y ciclo administrativo de usuarios con aislamiento multi-tenant e idempotencia. `apps/web` permanece bajo ownership de Claude Code.
+Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y setup administrativo de usuarios, oleadas y enrollments con aislamiento multi-tenant, idempotencia y control concurrente de cupos. `apps/web` permanece bajo ownership de Claude Code.
 
 ## Documentos de entrada
 
@@ -29,12 +29,14 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Acceso multi-tenant y seed reproducible](./docs/checkpoints/2026-07-25-phase1-core-access.md)
 - [Ciclo administrativo idempotente de usuarios](./docs/checkpoints/2026-07-25-phase1-admin-user-lifecycle.md)
 - [Oleadas idempotentes y estados protegidos](./docs/checkpoints/2026-07-25-phase1-admin-oleadas.md)
+- [Enrollments y protección concurrente de cupos](./docs/checkpoints/2026-07-25-phase1-admin-enrollments.md)
 - [Lección L01](./docs/learning/01-domain-modeling-and-state-machines.md)
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)
 - [Lección de multi-tenancy y optimistic locking](./docs/learning/05-multi-tenant-data-and-optimistic-locking.md)
 - [Lección de idempotencia y reset de credenciales](./docs/learning/06-idempotent-user-creation-and-credential-reset.md)
 - [Lección de estados y concurrencia de capacidad](./docs/learning/07-cohort-state-and-capacity-concurrency.md)
+- [Lección de invariantes transaccionales en enrollments](./docs/learning/08-enrollment-transactional-invariants.md)
 - [Coordinación con Claude Code](./docs/09-claude-code-coordination.md)
 
 `newfiles.zip` se conserva como snapshot de contexto; los documentos extraídos son la fuente de trabajo.

@@ -45,9 +45,14 @@ otro payload.
 runtime. La máquina de estados es lineal (`DRAFT → OPEN → IN_PROGRESS → CLOSED`), una oleada
 cerrada queda de solo lectura y la capacidad no puede bajar del número de enrollments activos.
 
+`GET/POST /admin/enrollments` y `PATCH /admin/enrollments/{enrollmentId}` tienen implementación
+runtime multi-tenant. El alta valida participante y oleada, bloquea el cupo, es idempotente y evita
+sobrecapacidad bajo concurrencia. Estado, fase y semana siguen las transiciones documentadas en
+`../12-domain-state-machines.md` y cada edición exige `expectedVersion`.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
-DTO/decorators Nest ya cubren el ciclo de usuarios; aún corresponde automatizar su comparación con
-OpenAPI para evitar drift entre ambas representaciones.
+DTO/decorators Nest ya cubren usuarios, oleadas y enrollments; aún corresponde automatizar su
+comparación con OpenAPI para evitar drift entre ambas representaciones.
 
 ## Regla de fixtures
 

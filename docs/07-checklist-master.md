@@ -116,7 +116,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Implementar oleadas, enrollments y assignments.
   - [x] Sembrar una oleada, enrollment y mentor assignment sintéticos coherentes.
   - [x] Publicar operaciones runtime de oleadas con idempotencia, versión y capacidad protegida.
-  - [ ] Publicar operaciones runtime de enrollments.
+  - [x] Publicar operaciones runtime de enrollments.
   - [ ] Publicar operaciones runtime de mentor assignments.
 - [x] Implementar auth sessions y rotación/revocación.
   - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
@@ -208,7 +208,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Integrar n8n solo como periferia.
 - [ ] Sincronizar delivery status.
 - [x] Implementar gestión mínima de usuarios.
-- [ ] Implementar gestión de oleadas/enrollments.
+- [x] Implementar gestión de oleadas/enrollments.
 - [ ] Implementar gestión de mentor assignments.
 - [ ] Implementar vista operativa de jobs fallidos.
 - [ ] Probar caída de Redis/n8n/proveedor.
