@@ -27,6 +27,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Persistencia y observabilidad iniciales](./docs/checkpoints/2026-07-25-phase1-data-and-http-foundations.md)
 - [Runtime de datos y readiness](./docs/checkpoints/2026-07-25-phase1-data-runtime.md)
 - [Acceso multi-tenant y seed reproducible](./docs/checkpoints/2026-07-25-phase1-core-access.md)
+- [Ciclo administrativo idempotente de usuarios](./docs/checkpoints/2026-07-25-phase1-admin-user-lifecycle.md)
 - [Lección L01](./docs/learning/01-domain-modeling-and-state-machines.md)
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)

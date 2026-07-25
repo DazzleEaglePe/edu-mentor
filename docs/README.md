@@ -38,6 +38,7 @@
 | [checkpoints/2026-07-25-phase1-data-runtime.md](./checkpoints/2026-07-25-phase1-data-runtime.md) | Runtime PostgreSQL/Redis, migración inicial y readiness real |
 | [checkpoints/2026-07-25-phase1-auth-foundation.md](./checkpoints/2026-07-25-phase1-auth-foundation.md) | Auth persistida, rotación/replay, CSRF, guards y evidencia HTTP |
 | [checkpoints/2026-07-25-phase1-core-access.md](./checkpoints/2026-07-25-phase1-core-access.md) | Seed por rol, administración multi-tenant y optimistic locking |
+| [checkpoints/2026-07-25-phase1-admin-user-lifecycle.md](./checkpoints/2026-07-25-phase1-admin-user-lifecycle.md) | Creación idempotente, reset seguro y prueba concurrente real |
 
 ## Regla de precedencia
 

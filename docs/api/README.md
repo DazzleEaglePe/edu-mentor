@@ -41,7 +41,9 @@ implementación runtime. La creación exige `Idempotency-Key`, devuelve la respu
 un reintento equivalente y rechaza con `409 IDEMPOTENCY_KEY_REUSED` si la misma clave llega con
 otro payload.
 
-El archivo se validó con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. En Fase 1 los DTO/decorators de Nest deberán generar o verificar este contrato en CI para evitar dos fuentes de verdad.
+El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
+DTO/decorators Nest ya cubren el ciclo de usuarios; aún corresponde automatizar su comparación con
+OpenAPI para evitar drift entre ambas representaciones.
 
 ## Regla de fixtures
 

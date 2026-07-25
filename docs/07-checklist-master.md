@@ -112,7 +112,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Implementar usuarios, roles y mentor capabilities.
   - [x] Sembrar usuarios por rol y capacidades de mentor con datos sintéticos.
   - [x] Listar y editar usuarios de la organización con roles múltiples y versión.
-  - [ ] Crear usuarios y resetear contraseña desde administración.
+  - [x] Crear usuarios y resetear contraseña desde administración.
 - [ ] Implementar oleadas, enrollments y assignments.
   - [x] Sembrar una oleada, enrollment y mentor assignment sintéticos coherentes.
   - [ ] Publicar operaciones administrativas runtime para las tres entidades.
@@ -120,7 +120,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
   - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
   - [x] Cookies seguras, CSRF stateful y validación de origen.
   - [x] Rotación refresh con detección de replay y revocación de familia.
-- [ ] Implementar RBAC y ownership.
+- [x] Implementar RBAC y ownership.
   - [x] Crear guards de roles y policy reutilizable de organización/ownership.
   - [x] Probar scoping cross-role y cross-organization sobre un recurso funcional.
 - [ ] Implementar audit log.
@@ -205,7 +205,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Integrar canal inicial.
 - [ ] Integrar n8n solo como periferia.
 - [ ] Sincronizar delivery status.
-- [ ] Implementar gestión mínima de usuarios.
+- [x] Implementar gestión mínima de usuarios.
 - [ ] Implementar gestión de oleadas/enrollments.
 - [ ] Implementar gestión de mentor assignments.
 - [ ] Implementar vista operativa de jobs fallidos.
