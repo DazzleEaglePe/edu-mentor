@@ -336,5 +336,35 @@ describe('synthetic seed and organization-scoped administration', () => {
     });
     assert.equal(forbiddenList.status, 403);
     assert.equal(((await forbiddenList.json()) as ErrorResponse).error.code, 'FORBIDDEN');
+
+    const deactivateResponse = await fetch(
+      `${baseUrl}/api/v1/admin/users/${SYNTHETIC_IDS.participantUser}`,
+      {
+        body: JSON.stringify({
+          expectedVersion: 2,
+          isActive: false,
+        }),
+        headers: {
+          ...mutationHeaders(admin),
+          'content-type': 'application/json',
+        },
+        method: 'PATCH',
+      },
+    );
+    assert.equal(deactivateResponse.status, 200);
+    const deactivated = (await deactivateResponse.json()) as AdminUserResponse;
+    assert.equal(deactivated.isActive, false);
+    assert.equal(deactivated.version, 3);
+
+    const revokedParticipantSession = await fetch(`${baseUrl}/api/v1/auth/me`, {
+      headers: {
+        cookie: participant.accessCookie,
+      },
+    });
+    assert.equal(revokedParticipantSession.status, 401);
+    assert.equal(
+      ((await revokedParticipantSession.json()) as ErrorResponse).error.code,
+      'UNAUTHORIZED',
+    );
   });
 });
