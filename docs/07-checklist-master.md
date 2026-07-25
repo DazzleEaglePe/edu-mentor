@@ -113,9 +113,11 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
   - [x] Sembrar usuarios por rol y capacidades de mentor con datos sintéticos.
   - [x] Listar y editar usuarios de la organización con roles múltiples y versión.
   - [x] Crear usuarios y resetear contraseña desde administración.
-- [ ] Implementar oleadas, enrollments y assignments.
+- [x] Implementar oleadas, enrollments y assignments.
   - [x] Sembrar una oleada, enrollment y mentor assignment sintéticos coherentes.
-  - [ ] Publicar operaciones administrativas runtime para las tres entidades.
+  - [x] Publicar operaciones runtime de oleadas con idempotencia, versión y capacidad protegida.
+  - [x] Publicar operaciones runtime de enrollments.
+  - [x] Publicar operaciones runtime de mentor assignments.
 - [x] Implementar auth sessions y rotación/revocación.
   - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
   - [x] Cookies seguras, CSRF stateful y validación de origen.
@@ -206,8 +208,8 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Integrar n8n solo como periferia.
 - [ ] Sincronizar delivery status.
 - [x] Implementar gestión mínima de usuarios.
-- [ ] Implementar gestión de oleadas/enrollments.
-- [ ] Implementar gestión de mentor assignments.
+- [x] Implementar gestión de oleadas/enrollments.
+- [x] Implementar gestión de mentor assignments.
 - [ ] Implementar vista operativa de jobs fallidos.
 - [ ] Probar caída de Redis/n8n/proveedor.
 

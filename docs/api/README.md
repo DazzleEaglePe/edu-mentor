@@ -41,9 +41,23 @@ implementación runtime. La creación exige `Idempotency-Key`, devuelve la respu
 un reintento equivalente y rechaza con `409 IDEMPOTENCY_KEY_REUSED` si la misma clave llega con
 otro payload.
 
+`GET/POST /admin/oleadas` y `PATCH /admin/oleadas/{oleadaId}` también tienen implementación
+runtime. La máquina de estados es lineal (`DRAFT → OPEN → IN_PROGRESS → CLOSED`), una oleada
+cerrada queda de solo lectura y la capacidad no puede bajar del número de enrollments activos.
+
+`GET/POST /admin/enrollments` y `PATCH /admin/enrollments/{enrollmentId}` tienen implementación
+runtime multi-tenant. El alta valida participante y oleada, bloquea el cupo, es idempotente y evita
+sobrecapacidad bajo concurrencia. Estado, fase y semana siguen las transiciones documentadas en
+`../12-domain-state-machines.md` y cada edición exige `expectedVersion`.
+
+`GET/POST /admin/mentor-assignments` y
+`DELETE /admin/mentor-assignments/{mentorAssignmentId}?expectedVersion=` completan el setup
+administrativo. El alta valida rol/capability del mentor y alcance de oleada o enrollment; el
+`DELETE` cierra la vigencia sin borrar historial.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
-DTO/decorators Nest ya cubren el ciclo de usuarios; aún corresponde automatizar su comparación con
-OpenAPI para evitar drift entre ambas representaciones.
+DTO/decorators Nest ya cubren usuarios, oleadas, enrollments y mentor assignments; aún corresponde
+automatizar su comparación con OpenAPI para evitar drift entre ambas representaciones.
 
 ## Regla de fixtures
 

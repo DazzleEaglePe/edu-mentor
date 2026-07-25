@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 
+import {
+  completeIdempotency,
+  reserveIdempotency,
+} from '../../common/idempotency/idempotency-transaction.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { RoleKey } from '../../generated/prisma/enums.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
@@ -14,40 +18,10 @@ import {
   type UpdateAdminUserInput,
   type UpdateAdminUserResult,
 } from './admin-user.js';
+import { adminUserInclude, toAdminUser, userSnapshot } from './admin-user-mapper.js';
 
 const CREATE_ADMIN_USER_OPERATION = 'admin.users.create';
 const ROLE_KEYS = new Set<RoleKey>(['ADMIN', 'MENTOR', 'PARTICIPANT']);
-
-const adminUserInclude = {
-  userRoles: {
-    include: {
-      role: true,
-    },
-  },
-} as const satisfies Prisma.UserInclude;
-
-type UserWithRoles = Prisma.UserGetPayload<{ include: typeof adminUserInclude }>;
-
-function toAdminUser(user: UserWithRoles): AdminUser {
-  return {
-    email: user.email,
-    fullName: user.fullName,
-    id: user.id,
-    isActive: user.isActive,
-    mustChangePassword: user.mustChangePassword,
-    roles: user.userRoles.map((userRole) => userRole.role.key).sort(),
-    version: user.version,
-  };
-}
-
-function userSnapshot(user: AdminUser): Prisma.InputJsonValue {
-  return {
-    fullName: user.fullName,
-    isActive: user.isActive,
-    roles: [...user.roles],
-    version: user.version,
-  };
-}
 
 function userResponse(user: AdminUser): Prisma.InputJsonObject {
   return {
@@ -148,51 +122,22 @@ export class AdminUsersRepository {
   async create(input: CreateAdminUserInput): Promise<CreateAdminUserResult> {
     try {
       return await this.prisma.$transaction(async (transaction) => {
-        await transaction.idempotencyRecord.deleteMany({
-          where: {
-            expiresAt: {
-              lte: new Date(),
-            },
-            keyHash: input.idempotencyKeyHash,
-            operation: CREATE_ADMIN_USER_OPERATION,
-            organizationId: input.organizationId,
-          },
+        const reservation = await reserveIdempotency(transaction, {
+          expiresAt: input.expiresAt,
+          keyHash: input.idempotencyKeyHash,
+          operation: CREATE_ADMIN_USER_OPERATION,
+          organizationId: input.organizationId,
+          requestHash: input.requestHash,
         });
 
-        const reservation = await transaction.idempotencyRecord.createMany({
-          data: {
-            expiresAt: input.expiresAt,
-            id: randomUUID(),
-            keyHash: input.idempotencyKeyHash,
-            operation: CREATE_ADMIN_USER_OPERATION,
-            organizationId: input.organizationId,
-            requestHash: input.requestHash,
-          },
-          skipDuplicates: true,
-        });
+        if (reservation.kind === 'reused') {
+          return { kind: 'idempotency_key_reused' };
+        }
 
-        if (reservation.count === 0) {
-          const stored = await transaction.idempotencyRecord.findUnique({
-            where: {
-              organizationId_operation_keyHash: {
-                keyHash: input.idempotencyKeyHash,
-                operation: CREATE_ADMIN_USER_OPERATION,
-                organizationId: input.organizationId,
-              },
-            },
-          });
+        if (reservation.kind === 'replay') {
+          const user = parseStoredUser(reservation.responseBody);
 
-          if (stored === null) {
-            throw new Error('The idempotency reservation disappeared unexpectedly.');
-          }
-
-          if (stored.requestHash !== input.requestHash) {
-            return { kind: 'idempotency_key_reused' };
-          }
-
-          const user = parseStoredUser(stored.responseBody);
-
-          if (stored.responseStatus !== 201 || user === null) {
+          if (reservation.responseStatus !== 201 || user === null) {
             throw new Error('The stored idempotency response is incomplete or invalid.');
           }
 
@@ -241,19 +186,13 @@ export class AdminUsersRepository {
             traceId: input.traceId,
           },
         });
-        await transaction.idempotencyRecord.update({
-          data: {
-            resourceId: user.id,
-            responseBody: userResponse(user),
-            responseStatus: 201,
-          },
-          where: {
-            organizationId_operation_keyHash: {
-              keyHash: input.idempotencyKeyHash,
-              operation: CREATE_ADMIN_USER_OPERATION,
-              organizationId: input.organizationId,
-            },
-          },
+        await completeIdempotency(transaction, {
+          keyHash: input.idempotencyKeyHash,
+          operation: CREATE_ADMIN_USER_OPERATION,
+          organizationId: input.organizationId,
+          resourceId: user.id,
+          responseBody: userResponse(user),
+          responseStatus: 201,
         });
 
         return {

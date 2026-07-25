@@ -11,20 +11,20 @@ describe('IdempotencyFingerprintService', () => {
     }),
   );
 
-  it('canonicalizes semantically unordered roles without retaining plaintext', () => {
-    const first = fingerprints.hashCreateAdminUserRequest({
+  it('creates a stable fingerprint without retaining plaintext', () => {
+    const first = fingerprints.hashRequest('admin.users.create', {
       email: 'mentor@example.test',
       fullName: 'Mentor',
       roles: ['MENTOR', 'PARTICIPANT'],
       temporaryPassword: 'Temporary-2026!',
     });
-    const reordered = fingerprints.hashCreateAdminUserRequest({
+    const reordered = fingerprints.hashRequest('admin.users.create', {
       email: 'mentor@example.test',
       fullName: 'Mentor',
-      roles: ['PARTICIPANT', 'MENTOR'],
+      roles: ['MENTOR', 'PARTICIPANT'],
       temporaryPassword: 'Temporary-2026!',
     });
-    const changedPassword = fingerprints.hashCreateAdminUserRequest({
+    const changedPassword = fingerprints.hashRequest('admin.users.create', {
       email: 'mentor@example.test',
       fullName: 'Mentor',
       roles: ['MENTOR', 'PARTICIPANT'],
@@ -39,7 +39,7 @@ describe('IdempotencyFingerprintService', () => {
 
   it('uses a separate domain for idempotency keys', () => {
     const keyHash = fingerprints.hashIdempotencyKey('admin-user-lifecycle-0001');
-    const requestHash = fingerprints.hashCreateAdminUserRequest({
+    const requestHash = fingerprints.hashRequest('admin.users.create', {
       email: 'mentor@example.test',
       fullName: 'Mentor',
       roles: ['MENTOR'],
@@ -48,5 +48,16 @@ describe('IdempotencyFingerprintService', () => {
 
     assert.notEqual(keyHash, requestHash);
     assert.match(keyHash, /^[a-f0-9]{64}$/u);
+  });
+
+  it('separates fingerprints for different operations', () => {
+    const payload = {
+      name: 'Oleada Tecnología',
+    };
+
+    assert.notEqual(
+      fingerprints.hashRequest('admin.oleadas.create', payload),
+      fingerprints.hashRequest('admin.users.create', payload),
+    );
   });
 });

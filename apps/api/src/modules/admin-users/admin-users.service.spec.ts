@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { AuthPrincipal } from '../../common/auth/auth-principal.js';
+import type { IdempotencyFingerprintService } from '../../common/idempotency/idempotency-fingerprint.service.js';
 import { ApiError } from '../../common/http/api-error.js';
 import { AuthorizationPolicy } from '../auth/authorization-policy.js';
 import type { PasswordHasher } from '../auth/crypto/password-hasher.js';
@@ -15,7 +16,6 @@ import type {
 } from './admin-user.js';
 import type { AdminUsersRepository } from './admin-users.repository.js';
 import { AdminUsersService } from './admin-users.service.js';
-import type { IdempotencyFingerprintService } from './idempotency-fingerprint.service.js';
 
 const ORGANIZATION_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const EXTERNAL_ORGANIZATION_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -119,7 +119,7 @@ function createService(options?: {
     },
   };
   const fingerprints = {
-    hashCreateAdminUserRequest: () => 'request-hash',
+    hashRequest: () => 'request-hash',
     hashIdempotencyKey: () => 'idempotency-key-hash',
   };
 
