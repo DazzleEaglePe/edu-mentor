@@ -1,0 +1,2095 @@
+<title>Wireframes MVP · EDU-MENTOR</title>
+<style>
+  /* ==========================================================================
+     EDU-MENTOR · Kit de wireframes MVP
+     Los wireframes son deliberadamente monocromos: se revisa estructura y
+     jerarquía, no color. El estado se codifica con glifo + texto (WCAG 1.4.1),
+     nunca solo con color. Los tokens de marca viven en docs/design/tokens/.
+     ========================================================================== */
+
+  :root {
+    color-scheme: light;
+    /* documento */
+    --ink: #16243b;
+    --ink-soft: #5b6b82;
+    --ink-faint: #8a91a0;
+    --ground: #f4f1ea;
+    --panel: #fffefb;
+    --rule: #ddd8cc;
+    --accent: #0b6e66;
+    --accent-soft: #e4f1ee;
+    --flag: #8f2a10;
+    --flag-soft: #f8e7e1;
+
+    /* primitivos de wireframe (grises con sesgo navy) */
+    --w-ground: #ffffff;
+    --w-fill: #edece8;
+    --w-fill-2: #e2e1dc;
+    --w-line: #c9c8c2;
+    --w-line-strong: #6e7480;
+    --w-ink: #2b3444;
+    --w-ink-soft: #737a86;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ink: #e9e6de;
+      --ink-soft: #a8adb8;
+      --ink-faint: #757b87;
+      --ground: #10151d;
+      --panel: #171d27;
+      --rule: #2b323e;
+      --accent: #5fd3c4;
+      --accent-soft: #14322f;
+      --flag: #f0a08a;
+      --flag-soft: #35201a;
+
+      --w-ground: #1c222c;
+      --w-fill: #262d38;
+      --w-fill-2: #2f3742;
+      --w-line: #3d4652;
+      --w-line-strong: #8d95a3;
+      --w-ink: #dfe3ea;
+      --w-ink-soft: #949cab;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ink: #e9e6de; --ink-soft: #a8adb8; --ink-faint: #757b87;
+    --ground: #10151d; --panel: #171d27; --rule: #2b323e;
+    --accent: #5fd3c4; --accent-soft: #14322f; --flag: #f0a08a; --flag-soft: #35201a;
+    --w-ground: #1c222c; --w-fill: #262d38; --w-fill-2: #2f3742; --w-line: #3d4652;
+    --w-line-strong: #8d95a3; --w-ink: #dfe3ea; --w-ink-soft: #949cab;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink: #16243b; --ink-soft: #5b6b82; --ink-faint: #8a91a0;
+    --ground: #f4f1ea; --panel: #fffefb; --rule: #ddd8cc;
+    --accent: #0b6e66; --accent-soft: #e4f1ee; --flag: #8f2a10; --flag-soft: #f8e7e1;
+    --w-ground: #ffffff; --w-fill: #edece8; --w-fill-2: #e2e1dc; --w-line: #c9c8c2;
+    --w-line-strong: #6e7480; --w-ink: #2b3444; --w-ink-soft: #737a86;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 16px/1.55 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 96px; }
+
+  /* ---------- encabezado del documento ---------- */
+  .masthead { padding: 56px 0 28px; border-bottom: 1px solid var(--rule); }
+  .eyebrow {
+    font: 500 12px/1 var(--mono);
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(30px, 4.4vw, 46px); line-height: 1.05; font-weight: 700;
+    letter-spacing: -.025em; margin: 0 0 16px; text-wrap: balance;
+  }
+  .lede { font-size: 18px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 400 13px/1.4 var(--mono); color: var(--ink-faint); }
+  .meta b { color: var(--ink-soft); font-weight: 500; }
+
+  /* ---------- barra de control ---------- */
+  .controls {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+    padding: 12px 0; margin-bottom: 8px;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .ctl-group { display: flex; gap: 6px; align-items: center; }
+  .ctl-label {
+    font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-right: 2px;
+  }
+  .ctl {
+    appearance: none; border: 1px solid var(--rule); background: transparent;
+    color: var(--ink-soft); font: 500 13px/1 var(--sans);
+    padding: 8px 13px; border-radius: 999px; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .ctl:hover { border-color: var(--accent); color: var(--ink); }
+  .ctl[aria-pressed="true"] {
+    background: var(--accent); border-color: var(--accent);
+    color: var(--w-ground);
+  }
+  :root[data-theme="dark"] .ctl[aria-pressed="true"],
+  .ctl[aria-pressed="true"] { color: #fff; }
+  @media (prefers-color-scheme: dark) { .ctl[aria-pressed="true"] { color: #0d1a19; } }
+  :root[data-theme="dark"] .ctl[aria-pressed="true"] { color: #0d1a19; }
+  :root[data-theme="light"] .ctl[aria-pressed="true"] { color: #fff; }
+
+  :where(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* ---------- secciones ---------- */
+  .sec { padding-top: 48px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .sec-head h2 { font-size: 26px; letter-spacing: -.02em; margin: 0; font-weight: 700; }
+  .sec-head .tag { font: 500 12px/1 var(--mono); color: var(--ink-faint); letter-spacing: .08em; text-transform: uppercase; }
+  .sec-intro { color: var(--ink-soft); max-width: 68ch; margin: 0 0 8px; font-size: 15px; }
+  .navline {
+    font: 400 13px/1.5 var(--mono); color: var(--ink-soft);
+    background: var(--panel); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0 0; overflow-x: auto;
+  }
+
+  /* ---------- plancha (wireframe + anotaciones) ---------- */
+  .plate {
+    margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 26px;
+    align-items: start;
+  }
+  @media (max-width: 940px) { .plate { grid-template-columns: minmax(0, 1fr); } }
+
+  .plate-head { grid-column: 1 / -1; }
+  .plate-id {
+    display: inline-block; font: 600 12px/1 var(--mono); letter-spacing: .08em;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 5px 8px; border-radius: 4px; margin-bottom: 10px;
+  }
+  .plate-head h3 { font-size: 20px; margin: 0 0 6px; letter-spacing: -.01em; font-weight: 650; }
+  .plate-head p { margin: 0; color: var(--ink-soft); font-size: 14.5px; max-width: 70ch; }
+  .endpoints { margin: 10px 0 0; font: 400 12.5px/1.7 var(--mono); color: var(--ink-faint); }
+  .endpoints code { color: var(--ink-soft); }
+  .ccr {
+    display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .06em;
+    color: var(--flag); background: var(--flag-soft); border: 1px solid color-mix(in srgb, var(--flag) 30%, transparent);
+    padding: 4px 7px; border-radius: 4px; margin-left: 6px; vertical-align: 1px;
+  }
+
+  .canvas {
+    container-type: inline-size;
+    background: var(--w-ground); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 0; overflow: hidden; transition: max-width .18s ease;
+  }
+  body.mobile .canvas { max-width: 390px; }
+
+  .notes { font-size: 14px; }
+  .notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+  .notes li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 9px; color: var(--ink-soft); line-height: 1.45; }
+  .notes .n {
+    width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+    border: 1px solid var(--w-line-strong); color: var(--ink); font: 600 11px/1 var(--mono);
+  }
+  .notes h4 {
+    font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 12px;
+  }
+  .notes .resp { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--rule); }
+  .notes .resp p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .notes .resp strong { color: var(--ink); font-weight: 600; }
+
+  /* ==========================================================================
+     PRIMITIVOS DE WIREFRAME
+     ========================================================================== */
+  .w { display: grid; grid-template-columns: 168px minmax(0, 1fr); min-height: 380px; font-size: 12.5px; color: var(--w-ink); }
+  .w.solo { grid-template-columns: minmax(0, 1fr); }
+
+  .w-nav { background: var(--w-fill); border-right: 1px solid var(--w-line); padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+  .w-logo { font: 700 12px/1 var(--sans); letter-spacing: .04em; color: var(--w-ink); padding: 4px 8px 14px; }
+  .w-nav a { display: block; padding: 8px 10px; border-radius: 5px; color: var(--w-ink-soft); text-decoration: none; font-size: 12.5px; }
+  .w-nav a.on { background: var(--w-line-strong); color: var(--w-ground); font-weight: 600; }
+  :root[data-theme="dark"] .w-nav a.on, .w-nav a.on { color: var(--w-ground); }
+
+  .w-body { display: flex; flex-direction: column; min-width: 0; }
+  .w-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 11px 16px; border-bottom: 1px solid var(--w-line); background: var(--w-fill);
+  }
+  .w-top .who { display: flex; align-items: center; gap: 8px; }
+  .w-main { padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+  .w-h { font-weight: 650; font-size: 14px; margin: 0; color: var(--w-ink); }
+  .w-sub { color: var(--w-ink-soft); font-size: 11.5px; margin: 2px 0 0; }
+  .w-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+  .w-card { border: 1px solid var(--w-line); border-radius: 6px; padding: 12px; background: var(--w-ground); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .w-card.q { background: var(--w-fill); }
+  .w-grid { display: grid; gap: 10px; }
+  .w-grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .w-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .w-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .w-split { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 14px; align-items: start; }
+  .w-split.wide { grid-template-columns: minmax(0, 1fr) minmax(0, 320px); }
+
+  .w-line { height: 8px; border-radius: 3px; background: var(--w-fill-2); }
+  .w-line.s { width: 45%; } .w-line.m { width: 70%; } .w-line.l { width: 100%; }
+  .w-lines { display: flex; flex-direction: column; gap: 6px; }
+
+  .w-av { width: 22px; height: 22px; border-radius: 50%; background: var(--w-fill-2); border: 1px solid var(--w-line); flex: none; }
+  .w-av.sq { border-radius: 4px; }
+
+  .w-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 7px 11px; border-radius: 5px; font-size: 11.5px; font-weight: 600;
+    background: var(--w-line-strong); color: var(--w-ground); border: 1px solid var(--w-line-strong);
+    white-space: nowrap; min-height: 30px;
+  }
+  .w-btn.ghost { background: transparent; color: var(--w-ink); border-color: var(--w-line); font-weight: 500; }
+  .w-btn.link { background: none; border: none; color: var(--w-ink-soft); text-decoration: underline; padding: 4px 0; min-height: 0; }
+  .w-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* estado: glifo + texto, nunca solo color */
+  .w-chip {
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    border: 1px solid var(--w-line-strong); border-radius: 999px;
+    padding: 3px 9px; font-size: 10.5px; font-weight: 600; color: var(--w-ink);
+    font-family: var(--sans);
+  }
+  .w-chip::before { font-family: var(--mono); font-size: 10px; }
+  .w-chip.ok::before { content: "✓"; }
+  .w-chip.wait::before { content: "○"; }
+  .w-chip.review::before { content: "◐"; }
+  .w-chip.back::before { content: "↩"; }
+  .w-chip.draft::before { content: "◇"; }
+  .w-chip.sent::before { content: "●"; }
+  .w-chip.no::before { content: "✕"; }
+  .w-chip.scan::before { content: "◍"; }
+  .w-chip.off { border-style: dashed; color: var(--w-ink-soft); }
+  .w-chip.tag { border-radius: 4px; font-weight: 500; color: var(--w-ink-soft); border-color: var(--w-line); }
+  .w-chip.tag::before { content: none; }
+
+  .w-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .w-field label { font-size: 10.5px; font-weight: 600; color: var(--w-ink-soft); letter-spacing: .02em; }
+  .w-input {
+    border: 1px solid var(--w-line-strong); border-radius: 5px; background: var(--w-ground);
+    padding: 8px 10px; min-height: 32px; color: var(--w-ink-soft); font-size: 11.5px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .w-input.area { min-height: 66px; align-items: flex-start; }
+  .w-hint { font-size: 10.5px; color: var(--w-ink-soft); }
+
+  .w-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .w-table th {
+    text-align: left; font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--w-ink-soft); font-weight: 600; padding: 8px 9px; background: var(--w-fill);
+    border-bottom: 1px solid var(--w-line); white-space: nowrap;
+  }
+  .w-table td { padding: 9px; border-bottom: 1px solid var(--w-line); color: var(--w-ink); vertical-align: middle; }
+  .w-table td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 11px; }
+  .w-scroll { overflow-x: auto; border: 1px solid var(--w-line); border-radius: 6px; }
+
+  .w-stat { border: 1px solid var(--w-line); border-radius: 6px; padding: 10px 11px; display: flex; flex-direction: column; gap: 3px; }
+  .w-stat .v { font: 700 18px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--w-ink); }
+  .w-stat .k { font-size: 10.5px; color: var(--w-ink-soft); }
+
+  .w-drop {
+    border: 2px dashed var(--w-line-strong); border-radius: 8px; padding: 22px 14px;
+    text-align: center; color: var(--w-ink-soft); font-size: 12px; background: var(--w-fill);
+  }
+  .w-file { display: flex; align-items: center; gap: 8px; border: 1px solid var(--w-line); border-radius: 5px; padding: 7px 9px; font-size: 11.5px; }
+  .w-file .grow { flex: 1; min-width: 0; }
+
+  .w-cal { display: grid; grid-template-columns: 42px repeat(5, minmax(0, 1fr)); border: 1px solid var(--w-line); border-radius: 6px; overflow: hidden; }
+  .w-cal .hd { background: var(--w-fill); font-size: 10px; font-weight: 600; color: var(--w-ink-soft); padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--w-line); }
+  .w-cal .hr { font: 400 9.5px/1 var(--mono); color: var(--w-ink-soft); padding: 6px 4px; text-align: right; border-right: 1px solid var(--w-line); }
+  .w-cal .cell { border-right: 1px solid var(--w-line); border-bottom: 1px solid var(--w-line); min-height: 34px; padding: 3px; }
+  .w-cal .ev { border: 1px solid var(--w-line-strong); border-left: 3px solid var(--w-line-strong); border-radius: 3px; padding: 3px 4px; font-size: 9.5px; line-height: 1.25; background: var(--w-fill); }
+  .w-cal .ev.dash { border-style: dashed; border-left-style: solid; }
+
+  .w-bar { height: 6px; border-radius: 3px; background: var(--w-fill-2); overflow: hidden; }
+  .w-bar > i { display: block; height: 100%; background: var(--w-line-strong); }
+
+  .w-note {
+    border: 1px solid var(--w-line-strong); border-left-width: 3px; border-radius: 0 5px 5px 0;
+    padding: 9px 11px; font-size: 11.5px; color: var(--w-ink); background: var(--w-fill);
+  }
+  .w-skel { display: flex; flex-direction: column; gap: 8px; }
+  .w-skel i { display: block; height: 10px; border-radius: 3px; background: var(--w-fill-2); }
+  .w-empty { text-align: center; padding: 26px 16px; color: var(--w-ink-soft); display: flex; flex-direction: column; gap: 9px; align-items: center; }
+  .w-empty .ico { width: 34px; height: 34px; border: 1px dashed var(--w-line-strong); border-radius: 8px; }
+
+  /* marcador de anotación sobre el wireframe */
+  .m {
+    display: inline-grid; place-items: center; width: 17px; height: 17px; flex: none;
+    border-radius: 50%; background: var(--w-ink); color: var(--w-ground);
+    font: 700 10px/1 var(--mono); vertical-align: 1px;
+  }
+  :root[data-theme="dark"] .m, .m { color: var(--w-ground); }
+
+  /* ---------- reflow móvil por container query ---------- */
+  @container (max-width: 560px) {
+    .w { grid-template-columns: minmax(0, 1fr); }
+    .w-nav {
+      order: 2; flex-direction: row; justify-content: space-around; border-right: none;
+      border-top: 1px solid var(--w-line); padding: 7px 4px; position: sticky; bottom: 0;
+    }
+    .w-nav .w-logo, .w-nav a.hide-m { display: none; }
+    .w-nav a { font-size: 10.5px; padding: 7px 6px; text-align: center; }
+    .w-grid.c2, .w-grid.c3, .w-grid.c4 { grid-template-columns: minmax(0, 1fr); }
+    .w-split, .w-split.wide { grid-template-columns: minmax(0, 1fr); }
+    .w-cal { grid-template-columns: 34px repeat(2, minmax(0, 1fr)); }
+    .w-cal .hd.d3, .w-cal .hd.d4, .w-cal .hd.d5, .w-cal .cell.d3, .w-cal .cell.d4, .w-cal .cell.d5 { display: none; }
+    .w-btns { width: 100%; }
+    .w-btns .w-btn { flex: 1 1 auto; }
+    .w-main { padding: 12px; }
+    .stack-m { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 16px; }
+  .legend .w-chip { font-size: 10px; }
+
+  footer { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--rule); color: var(--ink-faint); font-size: 13.5px; }
+  footer p { margin: 0 0 8px; max-width: 74ch; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">EDU-US · Innovación Digital · Fase 0</p>
+    <h1>Wireframes MVP de EDU-MENTOR</h1>
+    <p class="lede">
+      Las pantallas del piloto: Agenda y Sesiones + Entregables, por rol.
+      Monocromo a propósito — aquí se revisa <em>qué información va dónde</em> y qué
+      puede hacer cada rol, no el color. La marca vive en los design tokens, aparte.
+    </p>
+    <p class="lede" style="font-size:16px;">
+      <strong>Sincronizado con el cierre de reconciliación</strong> (<code>api/openapi.yaml</code>, 57 operaciones):
+      12 CCR procesadas —11 cerradas y CCR-008 pendiente de Producto—,
+      <code>CONFIRMED</code> ya no es estado de sesión, confirmación y asistencia son ejes separados,
+      las rutas de entregables apuntan a una revisión concreta, y la administración de oleadas ya tiene contrato.
+    </p>
+    <div class="meta">
+      <span><b>Alcance:</b> 2 módulos priorizados</span>
+      <span><b>Fuera:</b> Job Tracking · mentor par · IA de CV · Demo Day · certificados</span>
+      <span><b>Estados:</b> OpenAPI vigente</span>
+      <span><b>A11y:</b> WCAG 2.2 AA</span>
+    </div>
+    <div class="legend">
+      <span class="w-chip ok">Confirmada · Asistió · Evaluado · Aprobada</span>
+      <span class="w-chip wait">Por confirmar · Enviado · Pendiente</span>
+      <span class="w-chip review">En evaluación</span>
+      <span class="w-chip back">Devuelto</span>
+      <span class="w-chip no">No asistiré · No asistió · Rechazada</span>
+      <span class="w-chip draft">Borrador</span>
+      <span class="w-chip scan">Analizando archivo</span>
+      <span class="w-chip off">Realizada · Cancelada · Reprogramada</span>
+    </div>
+  </header>
+
+  <nav class="controls" aria-label="Controles de la revisión">
+    <div class="ctl-group">
+      <span class="ctl-label">Rol</span>
+      <button class="ctl" data-filter="all" aria-pressed="true">Todos</button>
+      <button class="ctl" data-filter="t" aria-pressed="false">Transversal</button>
+      <button class="ctl" data-filter="p" aria-pressed="false">Participante</button>
+      <button class="ctl" data-filter="m" aria-pressed="false">Mentor</button>
+      <button class="ctl" data-filter="a" aria-pressed="false">Admin</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Ancho</span>
+      <button class="ctl" data-vp="desktop" aria-pressed="true">Escritorio</button>
+      <button class="ctl" data-vp="mobile" aria-pressed="false">Móvil 390</button>
+    </div>
+  </nav>
+
+  <!-- ====================================================== TRANSVERSAL -->
+  <section class="sec" data-role="t">
+    <div class="sec-head"><h2>Transversal</h2><span class="tag">T1 · T5</span></div>
+    <p class="sec-intro">Lo que sostiene todo lo demás: entrar y saber qué pasa cuando algo no sale bien.</p>
+
+    <article class="plate" data-role="t">
+      <div class="plate-head">
+        <span class="plate-id">T1 · MVP</span>
+        <h3>Login</h3>
+        <p>Única puerta de entrada. No hay registro público: las cuentas las crea el admin con una contraseña temporal.</p>
+        <p class="endpoints"><code>GET /auth/csrf</code> → <code>POST /auth/login</code> · cookies <code>HttpOnly</code>, sin Bearer</p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-main" style="align-items:center; justify-content:center; min-height:380px;">
+            <div class="w-card" style="width:min(340px,100%); gap:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="w-av sq"></span><strong style="font-size:13px;">EDU-MENTOR</strong>
+              </div>
+              <p class="w-h" style="font-size:16px; margin-top:4px;">Bienvenido de vuelta <span class="m">1</span></p>
+              <p class="w-sub">Ingresa con el correo que registró tu coordinación.</p>
+              <div class="w-field"><label>Correo</label><div class="w-input">tu@correo.org</div></div>
+              <div class="w-field"><label>Contraseña</label><div class="w-input">••••••••<span>👁</span></div></div>
+              <div class="w-btn" style="width:100%;">Iniciar sesión</div>
+              <div class="w-note"><span class="m">2</span> ¿No puedes entrar? Escribe a tu coordinación para que restablezca tu acceso.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Sin "crear cuenta" ni "continuar con Google": el alta la controla el admin (DEC-004).</li>
+          <li><span class="n">2</span> <strong>Se eliminó "¿Olvidaste tu contraseña?"</strong> — CCR-007 se resolvió con reset manual del admin. Prometer autoservicio sin canal de notificación (DEC-020) sería mentir.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> la tarjeta ocupa el ancho completo con 16px de margen; el botón mantiene 44px de alto.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="t">
+      <div class="plate-head">
+        <span class="plate-id">T6 · MVP · NUEVA</span>
+        <h3>Cambio de contraseña obligatorio</h3>
+        <p>Bloquea el portal cuando <code>mustChangePassword = true</code>. Es la consecuencia directa de resolver CCR-007 con contraseñas temporales.</p>
+        <p class="endpoints"><code>GET /auth/me</code> → <code>mustChangePassword</code> · <code>POST /auth/change-password</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-main" style="align-items:center; justify-content:center; min-height:340px;">
+            <div class="w-card" style="width:min(380px,100%); gap:12px;">
+              <span class="w-chip tag">Paso obligatorio</span>
+              <p class="w-h" style="font-size:16px;">Define tu contraseña</p>
+              <p class="w-sub">Ingresaste con una contraseña temporal. Crea una propia para continuar. <span class="m">1</span></p>
+              <div class="w-field"><label>Contraseña temporal</label><div class="w-input">••••••••••••<span>👁</span></div></div>
+              <div class="w-field"><label>Nueva contraseña</label><div class="w-input">Mínimo 12 caracteres <span class="m">2</span></div></div>
+              <div class="w-field"><label>Repite la nueva contraseña</label><div class="w-input">••••••••••••</div></div>
+              <div class="w-btn" style="width:100%;">Guardar y continuar</div>
+              <span class="w-hint"><span class="m">3</span> Sin salida lateral: no hay "más tarde" ni navegación al portal.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Se explica <em>por qué</em> aparece. Un muro sin motivo es donde la gente abandona el onboarding.</li>
+          <li><span class="n">2</span> Mínimo 12 según el contrato. Con opción de ver y de pegar: la temporal es larga y muchos entran desde el celular.</li>
+          <li><span class="n">3</span> Es la única pantalla del MVP que bloquea la navegación entera. Cambiar la contraseña revoca las demás sesiones.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> journey primario — la mayoría entrará por primera vez desde el celular.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="t">
+      <div class="plate-head">
+        <span class="plate-id">T5 · MVP</span>
+        <h3>Los cuatro estados obligatorios</h3>
+        <p>Cada pantalla del MVP los define. Ninguna captura de los mockups v1 los tenía, y son la diferencia entre un piloto usable y uno que genera tickets.</p>
+        <p class="endpoints">Contrato de error: <code>code</code> · <code>message</code> · <code>traceId</code> · <code>details</code> <span class="ccr">DEC-027</span></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-main">
+            <div class="w-grid c2">
+              <div class="w-card">
+                <span class="w-chip tag">Loading</span>
+                <div class="w-skel" aria-hidden="true">
+                  <i style="width:38%"></i><i style="width:88%"></i><i style="width:70%"></i><i style="width:80%"></i>
+                </div>
+                <p class="w-hint"><span class="m">1</span> Skeleton con la forma real del contenido. <code>aria-busy</code> mientras carga.</p>
+              </div>
+              <div class="w-card">
+                <span class="w-chip tag">Empty</span>
+                <div class="w-empty">
+                  <span class="ico"></span>
+                  <strong style="font-size:12px;">Todavía no tienes sesiones agendadas</strong>
+                  <span style="font-size:11px;">Tu mentor las programará al iniciar la semana.</span>
+                </div>
+                <p class="w-hint"><span class="m">2</span> Sin botón: el participante no puede agendar.</p>
+              </div>
+              <div class="w-card">
+                <span class="w-chip tag">Error</span>
+                <div class="w-empty">
+                  <span class="ico"></span>
+                  <strong style="font-size:12px;">No pudimos cargar tus sesiones</strong>
+                  <div class="w-btns" style="justify-content:center;"><span class="w-btn">Reintentar</span></div>
+                  <span style="font-size:10px; font-family:var(--mono);">Código de soporte a4f1-9c<span class="m">3</span></span>
+                </div>
+              </div>
+              <div class="w-card">
+                <span class="w-chip tag">Sin acceso</span>
+                <div class="w-empty">
+                  <span class="ico"></span>
+                  <strong style="font-size:12px;">Este contenido no está disponible</strong>
+                  <span style="font-size:11px;">Si crees que es un error, escribe a tu coordinación.</span>
+                  <div class="w-btns" style="justify-content:center;"><span class="w-btn ghost">Volver a mi inicio</span></div>
+                </div>
+                <p class="w-hint"><span class="m">4</span> El backend responde <code>404</code> para lo ajeno: no revela existencia.</p>
+              </div>
+            </div>
+            <div class="w-grid c2" style="margin-top:4px;">
+              <div class="w-note"><strong>409 · SCHEDULE_CONFLICT</strong> · <em>puede ver la sesión</em><br>"Nancy G. ya tiene una sesión de 10:00 a 11:00 el 19 ago." → elegir otro horario · <u>ver la sesión</u> <span class="m">5</span></div>
+              <div class="w-note"><strong>409 · SCHEDULE_CONFLICT</strong> · <em>no puede verla</em><br>"Daniel V. no está disponible de 10:00 a 11:00 el 19 ago." → elegir otro horario <span class="m">6</span></div>
+              <div class="w-note"><strong>409 · versión</strong><br>"Alguien actualizó esto mientras trabajabas." → ver cambios · recargar</div>
+              <div class="w-note"><strong>422 · CONFIRMATION_CLOSED</strong><br>"La confirmación cerró el 19 ago a las 10:00." → avisar a tu mentora <span class="m">7</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Nunca spinner a pantalla completa: el skeleton evita el salto de layout y comunica qué viene.</li>
+          <li><span class="n">2</span> El empty se redacta según <em>por qué</em> está vacío. Cinco casos distintos en <code>03-estados-ux.md</code>.</li>
+          <li><span class="n">3</span> "Código de soporte" en vez de "traceId": la persona no sabe qué es un trace, pero sí que debe copiarlo.</li>
+          <li><span class="n">4</span> El copy dice "no está disponible", no "no existe". Es verdad en ambos casos y no filtra si el recurso existe.</li>
+          <li><span class="n">5</span> ✅ <strong>CCR-010 resuelta.</strong> <code>ScheduleConflictDetails</code> trae <code>resourceType</code>, <code>occupiedInterval</code> y <code>canViewConflictingSession</code>. Con <code>true</code>, se ofrece abrir la sesión en conflicto.</li>
+          <li><span class="n">6</span> Con <code>false</code>, <code>conflictingSessionId</code> viene en <code>null</code>: <strong>el enlace no se renderiza</strong>, ni siquiera deshabilitado. Solo el intervalo — nunca título, mentor ni participantes de una sesión ajena.</li>
+          <li><span class="n">7</span> ✅ <strong>CCR-011 resuelta.</strong> Este error solo aparece desde una pestaña vieja: en condiciones normales la UI ya deshabilitó el control con el motivo visible.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Contrato:</strong> <code>{ error: { code, message, traceId, details } }</code>. La UI redacta desde <code>code</code>; nunca muestra <code>message</code> crudo.</p>
+          <p style="margin-top:8px;"><strong>El MVP no promete "el siguiente horario libre":</strong> el contrato no lo calcula, y sugerir un hueco sin validar solo produce un segundo <code>409</code>.</p>
+        </div>
+      </aside>
+    </article>
+    <article class="plate" data-role="t">
+      <div class="plate-head">
+        <span class="plate-id">T4 · MVP</span>
+        <h3>Mi perfil</h3>
+        <p>Solo lectura salvo la contraseña. Los datos del programa los cambia la coordinación, no la persona.</p>
+        <p class="endpoints"><code>GET /auth/me</code> · <code>POST /auth/change-password</code> · <code>POST /auth/logout-all</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Sesiones</a><a href="#">Entregables</a><a href="#" class="on">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Mi perfil</strong><div class="who"><span class="w-chip tag">Participante</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+                  <div class="w-card">
+                    <div style="display:flex; gap:11px; align-items:center;">
+                      <span class="w-av" style="width:44px; height:44px;"></span>
+                      <div><strong style="font-size:14px;">Martín del Valle</strong><div class="w-hint">martin@example.org</div></div>
+                    </div>
+                    <div class="w-grid c2" style="margin-top:4px;">
+                      <div><div class="w-hint">Oleada</div><strong style="font-size:11.5px;">Tecnología e Innovación</strong></div>
+                      <div><div class="w-hint">Mentora asignada</div><strong style="font-size:11.5px;">Nancy Gómez</strong></div>
+                      <div><div class="w-hint">Fase</div><strong style="font-size:11.5px;">Fase 1 · Semana 4</strong></div>
+                      <div><div class="w-hint">Inscrito desde</div><strong style="font-size:11.5px;">28 abr 2026</strong></div>
+                    </div>
+                    <span class="w-hint"><span class="m">1</span> Para corregir estos datos, escribe a tu coordinación.</span>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Seguridad</p>
+                    <div class="w-field"><label>Contraseña actual</label><div class="w-input">••••••••</div></div>
+                    <div class="w-field"><label>Nueva contraseña</label><div class="w-input">Mínimo 10 caracteres</div></div>
+                    <div class="w-btns"><span class="w-btn">Cambiar contraseña <span class="m">2</span></span></div>
+                  </div>
+                </div>
+                <div class="w-card q">
+                  <p class="w-h">Sesión activa</p>
+                  <span class="w-hint">Iniciaste sesión el 17 ago, 08:42 · Chrome en Windows</span>
+                  <span class="w-btn ghost">Cerrar sesión</span>
+                  <span class="w-btn link">Cerrar sesión en todos mis dispositivos <span class="m">3</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Oleada, fase y mentor son datos operativos: los cambia el admin. Editables aquí generarían inconsistencias con enrollment.</li>
+          <li><span class="n">2</span> ⚖️ <strong>CCR-007 con alternativa:</strong> el cambio autenticado sí existe (<code>POST /auth/change-password</code>). Lo que no existe es la recuperación autónoma, y por eso no se promete en el login.</li>
+          <li><span class="n">3</span> <code>logout-all</code> revoca la familia de refresh tokens (DEC-005). Es la salida cuando alguien sospecha que otra persona entró a su cuenta.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una columna; la sesión activa va al final.</p>
+        </div>
+      </aside>
+    </article>
+  </section>
+
+  <!-- ====================================================== PARTICIPANTE -->
+  <section class="sec" data-role="p">
+    <div class="sec-head"><h2>Participante</h2><span class="tag">P1 – P10</span></div>
+    <p class="sec-intro">El rol más numeroso y el que más usará el celular. Todo su journey cabe en cuatro entradas de navegación.</p>
+    <p class="navline">Inicio · Mis sesiones · Mis entregables · Mi perfil</p>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P1 · MVP</span>
+        <h3>Inicio</h3>
+        <p>Responde tres preguntas en orden: cuándo es mi próxima sesión, qué debo entregar y cuándo vence, y si tengo feedback nuevo. Nada más.</p>
+        <p class="endpoints"><code>GET /dashboard/participant</code> · <code>GET /auth/me</code> → <code>activeEnrollment</code> · <code>GET /deliverables</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#" class="on">Inicio</a>
+            <a href="#">Sesiones</a>
+            <a href="#">Entregables</a>
+            <a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top">
+              <div>
+                <strong>Hola, Martín</strong>
+                <div class="w-sub">Oleada Tecnología · Fase 1 · Semana 4 <span class="m">1</span></div>
+              </div>
+              <div class="who"><span class="w-chip tag">Participante</span><span class="w-av"></span></div>
+            </div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:14px; min-width:0;">
+                  <div class="w-card">
+                    <div class="w-sec-head stack-m">
+                      <div><p class="w-h">Tu próxima sesión <span class="m">2</span></p><p class="w-sub">Martes 19 may · 10:00–11:00 (Lima)</p></div>
+                      <span class="w-chip wait">Por confirmar</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;"><span class="w-av"></span><span>Mentoría 1:1 · Nancy G.</span></div>
+                    <div class="w-btns"><span class="w-btn">Confirmar asistencia</span><span class="w-btn ghost">No podré asistir</span><span class="w-btn link">Ver detalle</span></div>
+                  </div>
+                  <div class="w-card">
+                    <div class="w-sec-head"><p class="w-h">Pendiente de entregar <span class="m">3</span></p><span class="w-btn link">Ver todos</span></div>
+                    <div class="w-grid c2">
+                      <div class="w-card q">
+                        <span class="w-chip draft">Borrador</span>
+                        <strong style="font-size:12px;">S4 · La realidad de mi sector</strong>
+                        <span class="w-hint">Vence en 2 días · 1 jun, 11:59 PM</span>
+                        <span class="w-btn ghost">Continuar</span>
+                      </div>
+                      <div class="w-card q">
+                        <span class="w-chip back">Devuelto</span>
+                        <strong style="font-size:12px;">S3 · Mi perfil y el mercado</strong>
+                        <span class="w-hint">Tu mentora pide ajustes</span>
+                        <span class="w-btn ghost">Ver qué corregir</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:14px; min-width:0;">
+                  <div class="w-card">
+                    <p class="w-h">Tu recorrido <span class="m">4</span></p>
+                    <div class="w-lines">
+                      <div style="display:flex; gap:8px; align-items:center;"><span class="w-chip ok">Fase 0</span><span class="w-hint">Selección</span></div>
+                      <div style="display:flex; gap:8px; align-items:center;"><span class="w-chip review">Fase 1</span><span class="w-hint">Semana 4 de 6</span></div>
+                      <div class="w-bar"><i style="width:66%"></i></div>
+                      <div style="display:flex; gap:8px; align-items:center;"><span class="w-chip off">Fase 2</span><span class="w-hint">Al graduarte</span></div>
+                    </div>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Esta semana</p>
+                    <div class="w-grid c2">
+                      <div class="w-stat"><span class="v">2/2</span><span class="k">Sesiones asistidas</span></div>
+                      <div class="w-stat"><span class="v">3/4</span><span class="k">Entregas enviadas</span></div>
+                    </div>
+                    <span class="w-hint"><span class="m">5</span> Los cuatro números vienen de <code>/dashboard/participant</code>, calculados en el backend.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> ✅ <strong>CCR-002 aprobada.</strong> Oleada, fase y semana salen de <code>activeEnrollment</code> en <code>/auth/me</code>.</li>
+          <li><span class="n">2</span> Confirmar es la acción primaria; declinar va como secundaria. <strong>Declinar es un estado nuevo del contrato</strong> (<code>DECLINED</code>): antes el participante solo podía confirmar o quedarse callado.</li>
+          <li><span class="n">3</span> Los entregables se ordenan por urgencia real, no por número de semana.</li>
+          <li><span class="n">4</span> Recorrido en solo lectura. Nada de Fase 2 operativa ni graduación (FUTURE).</li>
+          <li><span class="n">5</span> ✅ <strong>CCR-004 resuelta mejor de lo pedido:</strong> Codex expone conteos server-side en vez de obligarme a sumar listas paginadas. Sin satisfacción ni variaciones porcentuales.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una columna en orden próxima sesión → entregables → recorrido. La navegación pasa a barra inferior de 4 destinos.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P2 · MVP</span>
+        <h3>Mis sesiones</h3>
+        <p>Lista antes que calendario. El participante tiene ~12 sesiones en todo el programa: una lista agrupada por semana se lee mejor que una grilla horaria.</p>
+        <p class="endpoints"><code>GET /sessions</code> · <code>GET /sessions/calendar</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#" class="on">Sesiones</a><a href="#">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Mis sesiones</strong><div class="who"><span class="w-chip tag">Participante</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-sec-head stack-m">
+                <div class="w-btns"><span class="w-chip tag">Próximas</span><span class="w-chip tag">Pasadas</span><span class="m">1</span></div>
+                <span class="w-hint">Zona horaria: Lima (GMT-5)</span>
+              </div>
+              <p class="w-sub" style="margin-top:4px;">Semana 4 · 18–24 de mayo</p>
+              <div class="w-card">
+                <div class="w-sec-head stack-m">
+                  <div style="display:flex; gap:9px; align-items:flex-start;">
+                    <span class="w-av"></span>
+                    <div><strong style="font-size:12.5px;">Mentoría 1:1 · Plan de desarrollo</strong><div class="w-sub">Mar 19 may · 10:00–11:00 · Nancy G.</div></div>
+                  </div>
+                  <div class="w-btns"><span class="w-chip wait">Por confirmar</span><span class="w-btn">Confirmar</span></div>
+                </div>
+              </div>
+              <div class="w-card">
+                <div class="w-sec-head stack-m">
+                  <div style="display:flex; gap:9px; align-items:flex-start;">
+                    <span class="w-av sq"></span>
+                    <div><strong style="font-size:12.5px;">Taller grupal · Liderazgo con propósito</strong><div class="w-sub">Jue 21 may · 16:00–17:30 · Carlos R.</div></div>
+                  </div>
+                  <div class="w-btns"><span class="w-chip ok">Confirmada</span><span class="w-btn ghost">Ver detalle</span></div>
+                </div>
+              </div>
+              <div class="w-card">
+                <div class="w-sec-head stack-m">
+                  <div style="display:flex; gap:9px; align-items:flex-start;">
+                    <span class="w-av"></span>
+                    <div><strong style="font-size:12.5px;">Networking EDU-US</strong><div class="w-sub">Vie 22 may · 17:00–18:00 · Equipo EDU-US</div></div>
+                  </div>
+                  <div class="w-btns"><span class="w-chip no">No asistiré <span class="m">2</span></span><span class="w-btn link">Cambiar</span></div>
+                </div>
+              </div>
+              <div class="w-card">
+                <div class="w-sec-head stack-m">
+                  <div style="display:flex; gap:9px; align-items:flex-start;">
+                    <span class="w-av"></span>
+                    <div>
+                      <strong style="font-size:12.5px;">Seguimiento de objetivos</strong>
+                      <div class="w-sub"><s>Lun 18 may · 09:00</s> → Mar 26 may · 10:00 <span class="m">3</span></div>
+                    </div>
+                  </div>
+                  <div class="w-btns"><span class="w-chip wait">Por confirmar</span><span class="w-btn">Confirmar</span></div>
+                </div>
+              </div>
+              <div class="w-note"><span class="m">4</span> Semana 3 · <span class="w-chip off" style="margin:0 4px;">Realizada</span> <span class="w-chip ok" style="margin:0 4px;">Asististe</span> Sesión grupal · 12 may</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Dos pestañas, no filtros complejos. El participante no necesita filtrar por mentor ni por tipo.</li>
+          <li><span class="n">2</span> <code>DECLINED</code> se etiqueta "No asistiré" y es reversible: se puede volver a confirmar mientras la sesión siga <code>SCHEDULED</code>.</li>
+          <li><span class="n">3</span> Al reprogramar, la sesión original queda <code>RESCHEDULED</code> y nace una nueva; la confirmación arranca otra vez en <code>PENDING</code>.</li>
+          <li><span class="n">4</span> <strong>Tres ejes, no uno.</strong> En sesiones pasadas conviven el estado de la sesión (Realizada) y la asistencia registrada (Asististe). El chip de confirmación es del participante; el de asistencia lo pone el mentor (DEC-007).</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> la tarjeta apila título → fecha → chip → acción, con el botón a ancho completo. Es la pantalla más usada desde el celular.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P3 + P4 + P5 · MVP</span>
+        <h3>Detalle de sesión, confirmación y solicitud de cambio</h3>
+        <p>El journey más frecuente del programa: ~12 confirmaciones por participante, casi siempre desde el celular.</p>
+        <p class="endpoints"><code>GET /sessions/{sessionId}</code> · <code>PUT /sessions/{sessionId}/participants/me/confirmation</code> · <code>POST /sessions/{sessionId}/reschedule-requests</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#" class="on">Sesiones</a><a href="#">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><span class="w-btn link">← Volver a mis sesiones</span><div class="who"><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div class="w-card">
+                  <div class="w-sec-head stack-m">
+                    <span class="w-chip tag">Sesión 1:1 · Semana 4</span><span class="w-chip wait">Por confirmar</span>
+                  </div>
+                  <p class="w-h" style="font-size:16px;">Mentoría 1:1 — Plan de desarrollo personal</p>
+                  <p class="w-sub">Martes 19 de mayo de 2026 · 10:00–11:00 · 60 min · Lima (GMT-5) <span class="m">1</span></p>
+                  <div style="display:flex; align-items:center; gap:9px; padding:9px 0; border-top:1px solid var(--w-line); border-bottom:1px solid var(--w-line);">
+                    <span class="w-av"></span><div><strong style="font-size:12px;">Nancy Gómez</strong><div class="w-hint">Mentora especialista</div></div>
+                  </div>
+                  <p class="w-hint" style="font-weight:600; color:var(--w-ink);">Sobre esta sesión</p>
+                  <div class="w-lines"><span class="w-line l"></span><span class="w-line l"></span><span class="w-line m"></span></div>
+                  <div class="w-btns" style="margin-top:6px;">
+                    <span class="w-btn">Confirmar asistencia <span class="m">2</span></span>
+                    <span class="w-btn ghost">No podré asistir <span class="m">3</span></span>
+                  </div>
+                  <span class="w-hint">Puedes cambiar tu respuesta hasta el 19 may a las 10:00. <span class="m">6</span></span>
+                  <span class="w-btn link">Necesito otra fecha → solicitar reprogramación <span class="m">4</span></span>
+                  <span class="w-hint">El enlace para unirte aparece 15 min antes.</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card q">
+                    <p class="w-h">Solicitud enviada</p>
+                    <div class="w-file"><div class="grow"><strong style="font-size:11.5px;">Pediste mover esta sesión</strong><div class="w-hint">"Tengo un examen ese día" · 17 may</div></div><span class="w-chip wait">Pendiente</span></div>
+                    <span class="w-hint"><span class="m">5</span> Mientras se decide, la sesión sigue en pie y debes confirmar igual.</span>
+                    <span class="w-btn link">Cancelar mi solicitud</span>
+                  </div>
+                  <div class="w-card q">
+                    <p class="w-h">Prepárate</p>
+                    <div class="w-file"><span class="w-av sq"></span><span class="grow">S4 · La realidad de mi sector</span><span class="w-chip draft">Borrador</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Zona horaria explícita: el contrato exige <code>timezone</code> en cada sesión. El piloto opera en <code>America/Lima</code> pero alguien puede estar fuera.</li>
+          <li><span class="n">2</span> Acción primaria única, 44px de alto mínimo. Envía <code>expectedVersion</code>: si el mentor movió la sesión mientras mirabas, se avisa en vez de confirmar algo que ya cambió.</li>
+          <li><span class="n">3</span> <strong>Declinar</strong> = "no voy, pero la sesión sigue". Es reversible.</li>
+          <li><span class="n">4</span> ✅ <strong>CCR-001 aprobada.</strong> Solicitar reprogramación = "pido otra fecha para todos". Es más pesado que declinar, por eso va como enlace y no como botón.</li>
+          <li><span class="n">5</span> Mientras la solicitud está <code>PENDING</code>, <strong>la sesión sigue <code>SCHEDULED</code></strong>. La UI no debe insinuar que ya se movió, o la gente falta a una sesión que existe.</li>
+          <li><span class="n">6</span> ✅ <strong>CCR-011 resuelta.</strong> <code>confirmationClosesAt</code> y <code>canConfirm</code> vienen en la sesión. Cuando <code>canConfirm</code> es <code>false</code>, ambos botones se deshabilitan <strong>con el motivo en pantalla</strong> — nunca un gris sin explicación.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una columna; confirmar queda fijo abajo, en el alcance del pulgar. Declinar no comparte esa zona: es una acción que no debe pulsarse por accidente.</p>
+          <p style="margin-top:8px;">En el piloto la confirmación cierra al empezar la sesión. Si Proyectos quiere cerrarla antes, es cambiar un valor — no el contrato.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P6 · MVP</span>
+        <h3>Mis entregables</h3>
+        <p>Los cinco estados reales del ciclo, incluido <code>RETURNED</code> — ausente en los mockups v1 y necesario para el slice de devolver/reenviar.</p>
+        <p class="endpoints"><code>GET /deliverables?status=</code> — el estado mostrado es el de la <strong>revisión actual</strong> (<code>currentSubmissionId</code>)</p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Sesiones</a><a href="#" class="on">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Mis entregables</strong><div class="who"><span class="w-chip tag">Participante</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-card" style="border-left:3px solid var(--w-line-strong);">
+                <div class="w-sec-head stack-m">
+                  <div><strong style="font-size:13px;">S3 · Alineando mi perfil con el mercado</strong><div class="w-sub">Revisión 1 devuelta el 20 may · tu mentora pide ajustes</div></div>
+                  <div class="w-btns"><span class="w-chip back">Devuelto</span><span class="w-btn">Ver qué corregir</span></div>
+                </div>
+                <span class="w-hint"><span class="m">1</span> Lo devuelto sube al tope: es lo único que bloquea al participante.</span>
+              </div>
+              <div class="w-grid c2">
+                <div class="w-card">
+                  <div class="w-sec-head"><span class="w-chip draft">Borrador</span><span class="w-hint">Vence en 2 días</span></div>
+                  <strong style="font-size:12.5px;">S4 · Conociendo la realidad de mi sector</strong>
+                  <span class="w-hint">Última edición: 19 may, 9:15</span>
+                  <span class="w-btn ghost">Continuar</span>
+                </div>
+                <div class="w-card">
+                  <div class="w-sec-head"><span class="w-chip wait">Enviado</span><span class="w-hint">17 may, 20:42</span></div>
+                  <strong style="font-size:12.5px;">S1 · Conociendo mi punto de partida</strong>
+                  <span class="w-hint">Esperando evaluación <span class="m">2</span></span>
+                  <span class="w-btn ghost">Ver mi entrega</span>
+                </div>
+                <div class="w-card">
+                  <div class="w-sec-head"><span class="w-chip review">En evaluación</span><span class="w-hint">Desde ayer</span></div>
+                  <strong style="font-size:12.5px;">S2 · Diseñando mi objetivo profesional</strong>
+                  <span class="w-hint">Tu mentora está revisando</span>
+                  <span class="w-btn ghost">Ver mi entrega</span>
+                </div>
+                <div class="w-card">
+                  <div class="w-sec-head"><span class="w-chip ok">Evaluado</span><span class="w-hint">85/100 <span class="m">3</span></span></div>
+                  <strong style="font-size:12.5px;">S0 · Carta de motivación</strong>
+                  <span class="w-hint">Con retroalimentación</span>
+                  <span class="w-btn ghost">Ver feedback</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Orden por acción requerida, no cronológico: devuelto → borrador por vencer → resto.</li>
+          <li><span class="n">2</span> <code>SUBMITTED</code> se etiqueta "Enviado", nunca "Pendiente" — ese estado no existe en el modelo.</li>
+          <li><span class="n">3</span> Escala 0–100, la del contrato. Las estrellas 4.8/5 de los mockups son otra escala y una de las dos debe morir (<strong>CCR-005</strong>).</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una sola columna; la tarjeta devuelta conserva su borde de énfasis en el borde izquierdo.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P8 + P9 · MVP</span>
+        <h3>Subir archivos y enviar</h3>
+        <p>El envío congela una revisión inmutable (DEC-010). La pantalla tiene que decirlo con todas sus letras, o el participante posterga por miedo a equivocarse.</p>
+        <p class="endpoints"><code>POST …/submissions/{submissionId}/files</code> · <code>DELETE …/files/{fileId}</code> · <code>PATCH …/submissions/{submissionId}</code> (notas) · <code>POST …/submit</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Sesiones</a><a href="#" class="on">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><span class="w-btn link">← Mis entregables</span><span class="w-chip draft">Borrador</span></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+                  <div class="w-card q">
+                    <strong style="font-size:13px;">S4 · Conociendo la realidad de mi sector</strong>
+                    <span class="w-hint">Entrega hasta el 1 jun, 11:59 PM (Lima)</span>
+                    <div class="w-lines"><span class="w-line l"></span><span class="w-line l"></span><span class="w-line m"></span></div>
+                    <span class="w-btn link">Ver consigna completa</span>
+                  </div>
+                  <div class="w-drop">
+                    <strong style="display:block; font-size:12.5px; color:var(--w-ink);">Arrastra tus archivos o haz clic para subir</strong>
+                    <span>PDF, DOCX, PPTX, PNG, JPG, ZIP · máx. 20 MB por archivo <span class="m">1</span></span>
+                  </div>
+                  <div class="w-file"><span class="w-av sq"></span><span class="grow">analisis-sector.pdf · 2.4 MB</span><span class="w-hint">Quitar</span></div>
+                  <div class="w-file">
+                    <span class="w-av sq"></span>
+                    <div class="grow"><div>presentacion.pptx · 14.1 MB</div><div class="w-bar" style="margin-top:5px;"><i style="width:62%"></i></div></div>
+                    <span class="w-hint">62% · Cancelar <span class="m">2</span></span>
+                  </div>
+                  <div class="w-file"><span class="w-av sq"></span><span class="grow">anexo-datos.xlsx · 1.1 MB</span><span class="w-chip scan">Analizando <span class="m">3</span></span></div>
+                  <div class="w-field"><label>Notas para tu mentora (opcional)</label><div class="w-input area">Cuéntale en qué quieres que se enfoque…</div><span class="w-hint">Se guardan con el borrador. <span class="m">6</span></span></div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card">
+                    <p class="w-h">Al enviar <span class="m">4</span></p>
+                    <span class="w-hint">Se congela esta versión y tu mentora la recibe para evaluar. <strong>Si te pide ajustes, podrás reenviar sin perder lo anterior.</strong></span>
+                    <span class="w-btn ghost">Enviar entregable</span>
+                    <span class="w-hint">Esperando el análisis de 1 archivo. <span class="m">5</span></span>
+                    <span class="w-btn ghost">Guardar borrador</span>
+                  </div>
+                  <div class="w-note">Error de subida: "El archivo supera el límite." Los archivos válidos ya cargados se conservan.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Los formatos y el límite mostrados son <strong>los mismos que valida el backend</strong>. Tipos, tamaño y retención siguen pendientes de Producto.</li>
+          <li><span class="n">2</span> Progreso real por archivo, con cancelar. Nada de barras simuladas.</li>
+          <li><span class="n">3</span> <strong>Nuevo del contrato:</strong> subir ≠ estar listo. Cada archivo pasa por <code>scanStatus</code> <code>PENDING → CLEAN | REJECTED | ERROR</code>.</li>
+          <li><span class="n">4</span> La frase sobre el reenvío es el copy más importante de la pantalla: elimina el miedo a enviar.</li>
+          <li><span class="n">5</span> Enviar exige <strong>todos los archivos <code>CLEAN</code></strong>. El botón deshabilitado siempre dice qué falta: un botón gris sin explicación es el peor patrón posible aquí.</li>
+          <li><span class="n">6</span> Las notas se guardan con <code>PATCH …/submissions/{submissionId}</code> mientras la revisión siga en <code>DRAFT</code>. Este campo existía en el wireframe sin ruta de guardado; la auditoría de Codex la agregó.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> la zona de carga se convierte en botón "Subir archivo" (cámara/archivos del sistema); el panel de envío pasa al final, fijo.</p>
+          <p style="margin-top:8px;">Quitar archivos solo se permite en <code>DRAFT</code>. Después del envío la revisión es inmutable.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P10 + P11 · MVP</span>
+        <h3>Feedback recibido</h3>
+        <p>Con historial de revisiones visible. Ocultar la versión anterior hace imposible entender la corrección y contradice DEC-010/011.</p>
+        <p class="endpoints"><code>GET /deliverables/{deliverableId}</code> → <code>submissions[]</code> con su <code>evaluation</code> · <code>POST /deliverables/{deliverableId}/submissions</code> para reenviar</p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Sesiones</a><a href="#" class="on">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><span class="w-btn link">← Mis entregables</span><span class="w-chip ok">Evaluado</span></div>
+            <div class="w-main">
+              <div class="w-split wide">
+                <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+                  <div>
+                    <p class="w-h" style="font-size:15px;">S2 · Diseñando mi objetivo profesional</p>
+                    <p class="w-sub">Evaluado el 21 may por Nancy Gómez</p>
+                  </div>
+                  <div class="w-card">
+                    <div class="w-sec-head stack-m">
+                      <div style="display:flex; gap:9px; align-items:center;"><span class="w-av"></span><strong style="font-size:12.5px;">Retroalimentación</strong></div>
+                      <span class="w-chip ok" style="font-size:12px;">85 / 100 <span class="m">1</span></span>
+                    </div>
+                    <div class="w-lines"><span class="w-line l"></span><span class="w-line l"></span><span class="w-line l"></span><span class="w-line m"></span></div>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Por criterio <span class="m">2</span></p>
+                    <div style="display:flex; flex-direction:column; gap:7px;">
+                      <div><div style="display:flex; justify-content:space-between; font-size:11px;"><span>Claridad del objetivo</span><span>4/5</span></div><div class="w-bar"><i style="width:80%"></i></div></div>
+                      <div><div style="display:flex; justify-content:space-between; font-size:11px;"><span>Evidencia y análisis</span><span>4/5</span></div><div class="w-bar"><i style="width:80%"></i></div></div>
+                      <div><div style="display:flex; justify-content:space-between; font-size:11px;"><span>Plan de acción</span><span>5/5</span></div><div class="w-bar"><i style="width:100%"></i></div></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card q">
+                    <p class="w-h">Revisiones <span class="m">3</span></p>
+                    <div class="w-file"><span class="grow">Revisión 2 · 20 may</span><span class="w-chip ok">Evaluado</span></div>
+                    <div class="w-file"><span class="grow">Revisión 1 · 15 may</span><span class="w-chip back">Devuelto</span></div>
+                    <span class="w-btn link">Ver la revisión 1 y su feedback</span>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Lo que enviaste</p>
+                    <div class="w-file"><span class="w-av sq"></span><span class="grow">objetivo-profesional.pdf</span><span class="w-hint">Descargar</span></div>
+                  </div>
+                  <div class="w-note"><span class="m">4</span> Si estuviera <strong>Devuelto</strong>, aquí iría "Crear revisión 3" — una revisión nueva, no una edición de la anterior.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> ✅ <strong>CCR-005 aprobada:</strong> 0–100 en DB, API y UI. Nada de estrellas.</li>
+          <li><span class="n">2</span> Los criterios <strong>vienen de la consigna</strong> (<code>assignment.rubric[]</code>), no están hardcodeados. Cada puntaje referencia un <code>criterionId</code>. El contenido real lo define Proyectos.</li>
+          <li><span class="n">3</span> Cada revisión conserva su propia evaluación. Es la prueba visual de que DEC-010/011 se respetó.</li>
+          <li><span class="n">4</span> <strong>Cambio de contrato:</strong> reenviar crea una revisión nueva encadenada por <code>previousSubmissionId</code>. No es "editar y volver a mandar".</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> feedback primero, criterios después, revisiones al final en acordeón.</p>
+        </div>
+      </aside>
+    </article>
+    <article class="plate" data-role="p">
+      <div class="plate-head">
+        <span class="plate-id">P7 · MVP</span>
+        <h3>Detalle de la consigna</h3>
+        <p>Lo que el participante lee antes de empezar. La consigna es contenido de Proyectos: la pantalla la presenta, no la interpreta.</p>
+        <p class="endpoints"><code>GET /assignments</code> · <code>POST /deliverables</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Sesiones</a><a href="#" class="on">Entregables</a><a href="#">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><span class="w-btn link">← Mis entregables</span><span class="w-chip tag">Semana 4</span></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+                  <div>
+                    <p class="w-h" style="font-size:16px;">Conociendo la realidad de mi sector</p>
+                    <p class="w-sub">Entrega hasta el 1 jun 2026, 11:59 PM (Lima) · <strong>vence en 2 días</strong> <span class="m">1</span></p>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Qué tienes que hacer</p>
+                    <div class="w-lines"><span class="w-line l"></span><span class="w-line l"></span><span class="w-line l"></span><span class="w-line m"></span></div>
+                    <p class="w-h" style="margin-top:6px;">Qué se espera del entregable</p>
+                    <div class="w-lines"><span class="w-line l"></span><span class="w-line m"></span></div>
+                  </div>
+                  <div class="w-card q">
+                    <p class="w-h">Cómo se evalúa <span class="m">2</span></p>
+                    <div class="w-file"><span class="grow">Claridad del objetivo</span><span class="w-hint">0–5</span></div>
+                    <div class="w-file"><span class="grow">Evidencia y análisis</span><span class="w-hint">0–5</span></div>
+                    <div class="w-file"><span class="grow">Plan de acción</span><span class="w-hint">0–5</span></div>
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card">
+                    <span class="w-chip draft">Borrador</span>
+                    <span class="w-hint">Empezaste el 19 may. Tienes 1 archivo cargado.</span>
+                    <span class="w-btn">Continuar mi entrega</span>
+                  </div>
+                  <div class="w-card q">
+                    <p class="w-h">Vinculada a</p>
+                    <div class="w-file"><span class="w-av"></span><span class="grow">Mentoría 1:1 · Mar 19 may</span></div>
+                    <span class="w-hint"><span class="m">3</span> La consigna de la semana se trabaja en la sesión 1:1.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> El vencimiento se muestra en absoluto y en relativo. En absoluto siempre con zona horaria.</li>
+          <li><span class="n">2</span> Los criterios se muestran <em>antes</em> de entregar, no solo al recibir la nota. Criterios reales pendientes de Proyectos.</li>
+          <li><span class="n">3</span> Vínculo informativo entre consigna y sesión de la misma semana. No hay relación en el modelo: se deriva de <code>week_number</code>.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una columna, con la tarjeta de estado y el botón de continuar fijos al final.</p>
+        </div>
+      </aside>
+    </article>
+  </section>
+
+  <!-- ====================================================== MENTOR -->
+  <section class="sec" data-role="m">
+    <div class="sec-head"><h2>Mentor especialista</h2><span class="tag">M1 – M12</span></div>
+    <p class="sec-intro">Trabaja en escritorio. Su día tiene dos modos: agendar/operar la semana y evaluar entregas.</p>
+    <p class="navline">Inicio · Mi agenda · Evaluaciones · Participantes · Mi perfil</p>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M1 · MVP</span>
+        <h3>Inicio del mentor</h3>
+        <p>Responde: qué tengo hoy, quién no ha confirmado, qué debo decidir y qué debo evaluar. Sin métricas de vanidad.</p>
+        <p class="endpoints"><code>GET /dashboard/mentor</code> → <code>completedMinutes</code> · <code>upcomingSessions</code> · <code>pendingConfirmations</code> · <code>pendingRescheduleRequests</code> · <code>pendingReviews</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#" class="on">Inicio</a><a href="#">Agenda</a><a href="#">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top">
+              <div><strong>Hola, Nancy</strong><div class="w-sub">Oleada Tecnología · Fase 1 · Semana 4</div></div>
+              <div class="who"><span class="w-chip tag">Mentora</span><span class="w-av"></span></div>
+            </div>
+            <div class="w-main">
+              <div class="w-grid c4">
+                <div class="w-stat"><span class="v">2</span><span class="k">Sesiones próximas</span></div>
+                <div class="w-stat"><span class="v">5</span><span class="k">Sin confirmar <span class="m">1</span></span></div>
+                <div class="w-stat"><span class="v">1</span><span class="k">Solicitudes por decidir</span></div>
+                <div class="w-stat"><span class="v">12</span><span class="k">Entregas por evaluar</span></div>
+              </div>
+              <div class="w-split">
+                <div class="w-card">
+                  <div class="w-sec-head"><p class="w-h">Hoy · lunes 17 de agosto</p><span class="w-btn link">Ver agenda</span></div>
+                  <div class="w-file"><span class="w-av"></span><div class="grow"><strong style="font-size:11.5px;">10:00 · Seguimiento 1:1 — María L.</strong><div class="w-hint">60 min · 1 de 1 confirmó</div></div><span class="w-chip off">Programada</span></div>
+                  <div class="w-file"><span class="w-av sq"></span><div class="grow"><strong style="font-size:11.5px;">16:00 · Taller grupal — 8 participantes</strong><div class="w-hint">90 min · 5 confirmaron · 1 no asistirá · 2 sin responder</div></div><span class="w-chip off">Programada <span class="m">2</span></span></div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card" style="border-left:3px solid var(--w-line-strong);">
+                    <p class="w-h">Solicitudes por decidir <span class="m">3</span></p>
+                    <div class="w-file"><span class="w-av"></span><div class="grow"><strong style="font-size:11.5px;">Daniel V. · 1:1 mié 19</strong><div class="w-hint">"Tengo un examen ese día"</div></div><span class="w-btn">Revisar</span></div>
+                  </div>
+                  <div class="w-card">
+                    <p class="w-h">Sin confirmar <span class="m">4</span></p>
+                    <div class="w-file"><span class="w-av"></span><span class="grow">Ana T. · 1:1 jue 20</span><span class="w-chip wait">Por confirmar</span></div>
+                    <div class="w-file"><span class="w-av"></span><span class="grow">Pedro G. · Taller lun 17</span><span class="w-chip no">No asistirá</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Los cuatro números son exactamente los campos de <code>/dashboard/mentor</code>. Calculados en el backend.</li>
+          <li><span class="n">2</span> <strong>La sesión grupal es "Programada", no "Parcial".</strong> <code>CONFIRMED</code> dejó de ser estado de sesión (DEC-007): el desglose de confirmaciones va como texto, no como chip agregado.</li>
+          <li><span class="n">3</span> ✅ <strong>CCR-001:</strong> panel real de solicitudes de reprogramación. Va primero porque es lo único que bloquea a otra persona.</li>
+          <li><span class="n">4</span> ⚖️ <strong>CCR-003 rechazada</strong> y usamos la alternativa que propuse: confirmaciones pendientes, no "solicitudes de sesión". Aquí también aparece quién declinó, que antes era invisible.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> soportado para consulta (ver el día, ver quién falta), no para agendar ni evaluar.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M2 + M3 · MVP</span>
+        <h3>Mi agenda</h3>
+        <p>Calendario semanal con lista de apoyo. Según el roadmap, primero funciona el ciclo de negocio y después el calendario visual.</p>
+        <p class="endpoints"><code>GET /sessions/calendar</code> · <code>GET /sessions</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#" class="on">Agenda</a><a href="#">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top">
+              <div class="w-btns"><strong>Mi agenda</strong><span class="w-chip tag">‹ 17–23 ago ›</span><span class="w-chip tag">Hoy</span></div>
+              <div class="w-btns"><span class="w-btn">+ Agendar sesión</span><span class="w-av"></span></div>
+            </div>
+            <div class="w-main">
+              <div class="w-cal">
+                <span class="hr"></span>
+                <span class="hd">LUN 17</span><span class="hd">MAR 18</span><span class="hd d3">MIÉ 19</span><span class="hd d4">JUE 20</span><span class="hd d5">VIE 21</span>
+                <span class="hr">09:00</span>
+                <span class="cell"></span><span class="cell"></span><span class="cell d3"></span><span class="cell d4"></span><span class="cell d5"></span>
+                <span class="hr">10:00</span>
+                <span class="cell"><span class="ev">1:1 · María L.<br>Confirmada ✓</span></span>
+                <span class="cell"></span>
+                <span class="cell d3"><span class="ev dash">1:1 · Daniel V.<br>Por confirmar ○ <span class="m">1</span></span></span>
+                <span class="cell d4"></span><span class="cell d5"></span>
+                <span class="hr">14:00</span>
+                <span class="cell"></span>
+                <span class="cell"><span class="ev">Grupal · Liderazgo<br>8 participantes</span></span>
+                <span class="cell d3"></span>
+                <span class="cell d4"><span class="ev">1:1 · Ana T.<br>Confirmada ✓</span></span>
+                <span class="cell d5"></span>
+              </div>
+              <div class="w-note"><span class="m">2</span> Hay un cruce de horario: ya tienes "1:1 · Carlos R." de 14:00 a 15:00 el martes. <u>Ver la sesión</u></div>
+              <div class="w-sec-head"><p class="w-h">Próximas · lista</p><span class="w-btn link">Ver todas</span></div>
+              <div class="w-file"><span class="w-chip tag">Mié 19 · 10:00</span><span class="grow">Seguimiento 1:1 — Daniel V.</span><span class="w-chip wait">1 sin confirmar</span><span class="w-btn ghost">Reprogramar <span class="m">3</span></span></div>
+              <div class="w-file"><span class="w-chip tag">Jue 20 · 14:00</span><span class="grow">Revisión de avances — Ana T.</span><span class="w-chip ok">1 de 1 confirmó</span><span class="w-btn ghost">Reprogramar</span></div>
+              <div class="w-file"><span class="w-chip tag">Hoy · 10:00</span><span class="grow">Seguimiento 1:1 — María L. <span class="w-hint">ya terminó</span></span><span class="w-btn">Completar y registrar asistencia <span class="m">4</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> El bloque codifica el estado con borde punteado <em>y</em> texto, no solo con color (WCAG 1.4.1). En los mockups v1 el color era el único portador.</li>
+          <li><span class="n">2</span> El <code>409</code> de traslape es el error central de Agenda (DEC-008). Aquí el conflicto es con <em>su propia</em> agenda, así que <code>canViewConflictingSession</code> es <code>true</code> y se ofrece abrir la sesión. Nunca es una validación optimista del cliente.</li>
+          <li><span class="n">3</span> Los chips de la lista muestran <strong>la proporción de confirmaciones</strong>, no un estado agregado inventado.</li>
+          <li><span class="n">4</span> <strong>Nuevo del contrato:</strong> <code>POST /sessions/{id}/complete</code>. Completar es una acción explícita del mentor, no un cambio automático por hora — y va junto con registrar asistencia porque es el mismo momento operativo.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> el calendario muestra 2 días por pantalla con scroll horizontal; la lista pasa a ser la vista principal.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M4 · MVP</span>
+        <h3>Agendar sesión</h3>
+        <p>El formulario cambia según fase y tipo. Nunca debe permitir el estado imposible que DEC-009 quiere evitar.</p>
+        <p class="endpoints"><code>POST /sessions</code> + header <code>Idempotency-Key</code> — <code>FASE_1 → weekNumber</code> · <code>FASE_2 → checkpointMonth</code> · <code>timezone</code> obligatorio</p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#" class="on">Agenda</a><a href="#">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Agendar sesión</strong><span class="w-btn link">Cancelar ✕</span></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:11px; min-width:0;">
+                  <div class="w-field"><label>Tipo de sesión</label>
+                    <div class="w-btns"><span class="w-btn">1:1</span><span class="w-btn ghost">Grupal</span><span class="w-btn ghost">Checkpoint <span class="m">1</span></span></div>
+                  </div>
+                  <div class="w-grid c2">
+                    <div class="w-field"><label>Fase</label><div class="w-input">Fase 1 · Hub de Empleabilidad ▾</div></div>
+                    <div class="w-field"><label>Semana del programa <span class="m">2</span></label><div class="w-input">Semana 4 ▾</div></div>
+                  </div>
+                  <div class="w-field"><label>Título</label><div class="w-input">Seguimiento de objetivos</div></div>
+                  <div class="w-grid c4">
+                    <div class="w-field"><label>Fecha</label><div class="w-input">19 ago 2026</div></div>
+                    <div class="w-field"><label>Hora</label><div class="w-input">10:00</div></div>
+                    <div class="w-field"><label>Duración</label><div class="w-input">60 min ▾</div></div>
+                    <div class="w-field"><label>Zona horaria</label><div class="w-input">America/Lima ▾ <span class="m">5</span></div></div>
+                  </div>
+                  <div class="w-field"><label>Participantes</label>
+                    <div class="w-input"><span>Daniel V. ✕</span><span class="w-hint">Buscar…</span></div>
+                    <span class="w-hint">Solo participantes asignados a ti en esta oleada.</span>
+                  </div>
+                  <div class="w-field"><label>Enlace de reunión (opcional)</label><div class="w-input">https://…</div></div>
+                  <div class="w-field"><label>Descripción</label><div class="w-input area"></div></div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-note"><span class="m">3</span> <strong>Hay un cruce de horario.</strong> Daniel V. no está disponible de 10:00 a 11:30 el 19 ago. Elige otro horario.</div>
+                  <div class="w-card">
+                    <p class="w-h">Al guardar</p>
+                    <span class="w-hint">Se notifica a 1 participante y quedará en <em>por confirmar</em>.</span>
+                    <span class="w-btn">Guardar y notificar</span>
+                    <span class="w-btn ghost">Guardar sin notificar</span>
+                  </div>
+                  <span class="w-hint"><span class="m">4</span> El formulario recuerda duración, semana y enlace para la siguiente sesión.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Los tres tipos del enum: <code>ONE_ON_ONE · GROUP · CHECKPOINT</code>. "Taller" no es un tipo, es un título.</li>
+          <li><span class="n">2</span> Este campo <strong>cambia con la fase</strong>: Fase 1 pide semana (1–6), Fase 2 pide mes de checkpoint. Nunca ambos, nunca ninguno.</li>
+          <li><span class="n">3</span> ✅ <strong>CCR-010 resuelta.</strong> Aquí el bloqueo es de un participante y el mentor <em>no</em> puede ver esa otra sesión (<code>canViewConflictingSession: false</code>), así que solo se dice el intervalo. Si fuera su propia agenda, el texto nombraría la sesión y ofrecería abrirla.</li>
+          <li><span class="n">4</span> Crear 15 sesiones 1:1 es tedioso. No propongo creación masiva para el piloto (multiplica conflictos y riesgo transaccional); sí que el formulario recuerde el contexto. El <code>Idempotency-Key</code> del contrato evita que un doble clic cree dos sesiones.</li>
+          <li><span class="n">5</span> <code>timezone</code> es obligatorio en el contrato, así que se muestra en vez de asumirse. Precargado en <code>America/Lima</code>.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> pantalla completa en un solo paso; los campos de fecha y hora usan los selectores nativos del sistema.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M6 + M7 · MVP</span>
+        <h3>Reprogramar o cancelar</h3>
+        <p>Acciones destructivas: muestran la consecuencia antes de ejecutarse. La reprogramación encadena la sesión original por <code>rescheduled_from</code>, no la borra.</p>
+        <p class="endpoints"><code>POST /sessions/:id/reschedule</code> · <code>POST /sessions/:id/cancel</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-main">
+            <div class="w-grid c2">
+              <div class="w-card">
+                <strong style="font-size:13px;">Reprogramar sesión</strong>
+                <div class="w-file"><div class="grow"><s>Mié 19 ago · 10:00–11:00</s><div class="w-hint">Fecha actual</div></div><span class="w-chip off">Quedará reprogramada</span></div>
+                <div style="text-align:center; color:var(--w-ink-soft);">↓</div>
+                <div class="w-grid c2">
+                  <div class="w-field"><label>Nueva fecha</label><div class="w-input">26 ago 2026</div></div>
+                  <div class="w-field"><label>Nueva hora</label><div class="w-input">10:00</div></div>
+                </div>
+                <div class="w-field"><label>Motivo (se comparte con el participante)</label><div class="w-input area"></div></div>
+                <div class="w-note"><span class="m">1</span> Se notificará a Daniel V. y su confirmación volverá a <em>por confirmar</em>.</div>
+                <div class="w-btns"><span class="w-btn">Confirmar reprogramación</span><span class="w-btn ghost">Volver</span></div>
+              </div>
+              <div class="w-card">
+                <strong style="font-size:13px;">Cancelar sesión</strong>
+                <div class="w-file"><div class="grow"><strong style="font-size:11.5px;">Taller grupal · Liderazgo con propósito</strong><div class="w-hint">Mar 18 ago · 14:00 · 8 participantes</div></div></div>
+                <div class="w-field"><label>Motivo de la cancelación</label><div class="w-input area"></div></div>
+                <div class="w-note"><span class="m">2</span> Se notificará a <strong>8 participantes</strong>. Esta acción no se puede deshacer; para mover la fecha, usa reprogramar.</div>
+                <div class="w-btns"><span class="w-btn">Sí, cancelar la sesión</span><span class="w-btn ghost">Volver</span></div>
+                <span class="w-hint"><span class="m">3</span> La sesión queda en el historial como <code>CANCELLED</code>, no desaparece.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> El antes → después explícito. El motivo no es opcional: es lo que el participante leerá en la notificación.</li>
+          <li><span class="n">2</span> La consecuencia se cuantifica ("8 participantes"), y se ofrece la alternativa menos destructiva.</li>
+          <li><span class="n">3</span> Nada se borra. La trazabilidad es un requisito del charter, no un extra.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> hoja inferior a pantalla completa; el botón destructivo nunca queda bajo el pulgar por defecto.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M15 · MVP · NUEVA</span>
+        <h3>Decidir solicitudes de reprogramación</h3>
+        <p>Pantalla que nació de CCR-001. El participante pide otra fecha; el mentor decide. Aprobar crea la sesión reemplazo en la misma transacción.</p>
+        <p class="endpoints"><code>GET /reschedule-requests?status=PENDING</code> · <code>POST /reschedule-requests/{requestId}/approve</code> · <code>/reject</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#" class="on">Agenda</a><a href="#">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Solicitudes de reprogramación</strong><div class="who"><span class="w-chip tag">1 pendiente</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div class="w-card">
+                  <div class="w-sec-head stack-m">
+                    <div style="display:flex; gap:9px; align-items:flex-start;">
+                      <span class="w-av"></span>
+                      <div><strong style="font-size:12.5px;">Daniel Vega</strong><div class="w-sub">Solicitó el 17 ago</div></div>
+                    </div>
+                    <span class="w-chip wait">Pendiente</span>
+                  </div>
+                  <div class="w-file"><div class="grow"><strong style="font-size:11.5px;">Seguimiento 1:1</strong><div class="w-hint">Mié 19 ago · 10:00–11:00</div></div><span class="w-chip off">Sigue programada <span class="m">1</span></span></div>
+                  <div class="w-note">"Tengo un examen ese día a la misma hora. ¿Podríamos moverla al jueves?"</div>
+                  <div class="w-field"><label>Nueva fecha y hora <span class="m">2</span></label>
+                    <div class="w-grid c3">
+                      <div class="w-input">20 ago 2026</div><div class="w-input">10:00</div><div class="w-input">60 min ▾</div>
+                    </div>
+                    <span class="w-hint">Propuesta del participante: jueves 20, sin hora específica.</span>
+                  </div>
+                  <div class="w-btns"><span class="w-btn">Aprobar y reprogramar</span><span class="w-btn ghost">Rechazar</span></div>
+                  <span class="w-hint"><span class="m">3</span> Al aprobar: la sesión original queda reprogramada, nace la nueva y se notifica a los participantes.</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-note"><span class="m">4</span> Si el horario nuevo choca, la solicitud <strong>sigue pendiente</strong>: no hay aprobación a medias. El <code>409</code> dirá el intervalo ocupado, sin revelar la sesión ajena.</div>
+                  <div class="w-card q">
+                    <p class="w-h">Decididas</p>
+                    <div class="w-file"><span class="grow">María L. · 12 ago</span><span class="w-chip ok">Aprobada</span></div>
+                    <div class="w-file"><span class="grow">Pedro G. · 8 ago</span><span class="w-chip no">Rechazada</span></div>
+                    <div class="w-file"><span class="grow">Ana T. · 5 ago</span><span class="w-chip off">Cancelada</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Mientras la solicitud está pendiente, <strong>la sesión sigue <code>SCHEDULED</code></strong>. El chip lo dice para que nadie asuma que ya se movió.</li>
+          <li><span class="n">2</span> El participante puede proponer fecha, pero <strong>quien fija el horario final es el mentor</strong>: es su agenda la que tiene restricciones de traslape.</li>
+          <li><span class="n">3</span> Aprobar exige <code>expectedSessionVersion</code> y <code>expectedRequestVersion</code>. Si cualquiera cambió, se avisa y se recarga.</li>
+          <li><span class="n">4</span> Invariante del contrato: un traslape devuelve <code>409</code> y deja la solicitud <code>PENDING</code>. La UI nunca debe mostrarla como resuelta.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> soportado — decidir una solicitud es corto y urgente, y el mentor puede estar fuera de su escritorio.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M11 · MVP</span>
+        <h3>Cola de evaluación</h3>
+        <p>Ordenada por antigüedad de envío: lo que lleva más tiempo esperando sube. Es una cola de trabajo, no un listado.</p>
+        <p class="endpoints"><code>GET /deliverables/pending-review</code> · <code>POST …/submissions/{submissionId}/start-review</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Agenda</a><a href="#" class="on">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Entregas por evaluar</strong><div class="who"><span class="w-chip tag">12 pendientes</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-sec-head stack-m">
+                <div class="w-btns">
+                  <span class="w-chip wait">Enviadas · 12</span><span class="w-chip review">En evaluación · 3</span>
+                  <span class="w-chip ok">Evaluadas · 18</span><span class="w-chip back">Devueltas · 2 <span class="m">1</span></span>
+                </div>
+                <div class="w-btns"><span class="w-chip tag">Semana ▾</span><span class="w-chip tag">Buscar…</span></div>
+              </div>
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Participante</th><th>Consigna</th><th>Rev.</th><th>Enviado</th><th>Estado</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>María L.</td><td>Análisis FODA personal</td><td class="num">1</td><td class="num">hace 3 días <span class="m">2</span></td><td><span class="w-chip wait">Enviado</span></td><td><span class="w-btn">Tomar y evaluar</span></td></tr>
+                    <tr><td>Carlos R.</td><td>Proyecto de impacto</td><td class="num">1</td><td class="num">hace 14 h</td><td><span class="w-chip wait">Enviado</span></td><td><span class="w-btn">Tomar y evaluar</span></td></tr>
+                    <tr><td>Ana T.</td><td>Plan de acción personal</td><td class="num">2</td><td class="num">hace 19 h</td><td><span class="w-chip review">En evaluación · tú <span class="m">3</span></span></td><td><span class="w-btn ghost">Continuar</span></td></tr>
+                    <tr><td>Pedro G.</td><td>Presentación final</td><td class="num">1</td><td class="num">hace 2 días</td><td><span class="w-chip back">Devuelto <span class="m">4</span></span></td><td><span class="w-btn ghost">Ver</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <span class="w-hint">Mostrando 4 · <span class="m">5</span> paginación por "cargar más" (<code>hasNextPage</code>), sin datos de contacto en el listado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Las cuatro pestañas son estados reales del enum. <code>RETURNED</code> faltaba por completo en los mockups.</li>
+          <li><span class="n">2</span> Tiempo relativo, no fecha absoluta: en una cola importa cuánto lleva esperando.</li>
+          <li><span class="n">3</span> <strong>"Tomar y evaluar", no solo "Evaluar".</strong> El contrato exige <code>start-review</code> explícito: al abrirla, la revisión pasa a <code>UNDER_REVIEW</code> y queda visible que alguien la está revisando. El botón dice lo que realmente hace.</li>
+          <li><span class="n">4</span> Lo devuelto sigue siendo asunto del mentor hasta que el participante cree la siguiente revisión.</li>
+          <li><span class="n">5</span> La columna "Rev." importa: se evalúa una revisión concreta, no "el entregable".</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> la tabla se convierte en tarjetas apiladas. Evaluar sigue siendo un journey de escritorio.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M12 + M13 + M14 + M16 · MVP</span>
+        <h3>Evaluar entregable</h3>
+        <p>Dos columnas porque evaluar exige mirar el trabajo y escribir a la vez. Es donde el mentor pasa más tiempo.</p>
+        <p class="endpoints"><code>POST …/submissions/{submissionId}/evaluation</code> · <code>POST …/submissions/{submissionId}/return</code> · <code>PUT /assignments/{assignmentId}/top-candidates</code> <span class="ccr">CCR-008 pendiente de Producto</span></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-top"><span class="w-btn link">← Cola de evaluación</span><div class="w-btns"><span class="w-chip tag">María L. · S1</span><span class="w-chip review">En evaluación</span></div></div>
+          <div class="w-main">
+            <div class="w-split wide">
+              <div class="w-card" style="min-height:260px;">
+                <div class="w-sec-head"><p class="w-h">analisis-foda.pdf</p><div class="w-btns"><span class="w-btn ghost">Descargar <span class="m">1</span></span></div></div>
+                <div class="w-lines" style="flex:1; justify-content:center; gap:9px;">
+                  <span class="w-line l"></span><span class="w-line l"></span><span class="w-line m"></span>
+                  <span class="w-line l"></span><span class="w-line s"></span>
+                </div>
+                <span class="w-hint">Vista previa del documento · pág. 1 de 4</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <div class="w-field"><label>Retroalimentación</label>
+                  <div class="w-input area">Qué hizo bien · qué mejorar · siguiente paso concreto <span class="m">2</span></div>
+                </div>
+                <div class="w-field"><label>Puntaje (0–100)</label><div class="w-input">85</div></div>
+                <div class="w-field"><label>Criterios de esta consigna <span class="m">3</span></label>
+                  <div class="w-file"><span class="grow">Claridad del objetivo</span><span class="w-hint">4 / 5 ▾</span></div>
+                  <div class="w-file"><span class="grow">Evidencia y análisis</span><span class="w-hint">4 / 5 ▾</span></div>
+                  <div class="w-file"><span class="grow">Plan de acción</span><span class="w-hint">5 / 5 ▾</span></div>
+                </div>
+                <div class="w-btns"><span class="w-btn">Guardar evaluación</span><span class="w-btn ghost">Devolver para corrección <span class="m">4</span></span></div>
+                <div class="w-note">Al devolver, el participante recibe tu feedback y podrá crear una revisión nueva. El historial se conserva.</div>
+                <div class="w-card q">
+                  <div class="w-sec-head"><p class="w-h">Top 3 de esta consigna</p><span class="w-chip tag">Regla provisional <span class="m">5</span></span></div>
+                  <div class="w-file"><span class="w-chip tag">1.º</span><span class="grow">María L.</span><span class="w-hint">Quitar</span></div>
+                  <div class="w-file"><span class="w-chip tag">2.º</span><span class="grow">Ana T.</span><span class="w-hint">Quitar</span></div>
+                  <div class="w-file"><span class="w-chip tag">3.º</span><span class="grow">— sin asignar</span><span class="w-btn ghost">Agregar a esta</span></div>
+                  <span class="w-hint">Proyectos aún no ratificó si el Top 3 es por consigna, semana u oleada.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> La descarga tiene endpoint propio y se audita (DEC-023), con ownership validado: un mentor solo abre lo de sus asignados.</li>
+          <li><span class="n">2</span> El placeholder guía la estructura del feedback. No es IA — es copy, y es lo que separa un feedback útil de "buen trabajo".</li>
+          <li><span class="n">3</span> ✅ <strong>CCR-005:</strong> puntaje 0–100 y <strong>criterios que vienen de la consigna</strong> (<code>assignment.rubric[]</code> con su <code>label</code> y <code>maxScore</code>). Nada hardcodeado.</li>
+          <li><span class="n">4</span> Si otro mentor evaluó primero, el guardado responde <code>409</code> de versión y se ofrece recargar sin perder lo escrito.</li>
+          <li><span class="n">5</span> ⏳ <strong>CCR-008 pendiente de Producto.</strong> El contrato trae <code>provisionalRule: true</code> y la pantalla lo dice explícitamente. Diseñar como si estuviera aprobado sería fingir una decisión que nadie tomó.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> pestañas Documento / Evaluación. Declarado explícitamente como flujo de escritorio.</p>
+        </div>
+      </aside>
+    </article>
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M5 + M8 + M9 · MVP</span>
+        <h3>Editar sesión y marcar asistencia</h3>
+        <p>Dos momentos distintos de la misma sesión: antes (editar detalles menores) y después (completarla y registrar quién asistió).</p>
+        <p class="endpoints"><code>PATCH /sessions/{sessionId}</code> · <code>POST /sessions/{sessionId}/complete</code> · <code>PUT /sessions/{sessionId}/participants/{enrollmentId}/attendance</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-main">
+            <div class="w-grid c2">
+              <div class="w-card">
+                <div class="w-sec-head"><strong style="font-size:13px;">Editar sesión</strong><span class="w-chip off">Programada</span></div>
+                <div class="w-field"><label>Título</label><div class="w-input">Taller: Liderazgo con propósito</div></div>
+                <div class="w-field"><label>Enlace de reunión</label><div class="w-input">https://…</div></div>
+                <div class="w-field"><label>Descripción</label><div class="w-input area"></div></div>
+                <div class="w-note"><span class="m">1</span> Para cambiar fecha, hora o participantes usa <strong>reprogramar</strong>: eso notifica y reinicia las confirmaciones.</div>
+                <div class="w-btns"><span class="w-btn">Guardar cambios</span><span class="w-btn ghost">Cancelar</span></div>
+              </div>
+              <div class="w-card">
+                <div class="w-sec-head"><strong style="font-size:13px;">Marcar asistencia</strong><span class="w-chip tag">Mar 18 ago · 14:00</span></div>
+                <span class="w-hint">Taller grupal · 8 participantes · la sesión ya terminó <span class="m">2</span></span>
+                <div class="w-note">Al guardar, la sesión pasa a <strong>Realizada</strong>.</div>
+                <div class="w-file"><span class="w-av"></span><span class="grow">María L. <span class="w-chip ok" style="margin-left:4px;">Confirmó</span></span><div class="w-btns"><span class="w-btn">Asistió</span><span class="w-btn ghost">No asistió</span></div></div>
+                <div class="w-file"><span class="w-av"></span><span class="grow">Pedro G. <span class="w-chip no" style="margin-left:4px;">No asistiría</span></span><div class="w-btns"><span class="w-btn">Asistió <span class="m">3</span></span><span class="w-btn ghost">No asistió</span></div></div>
+                <div class="w-file"><span class="w-av"></span><span class="grow">Ana T. <span class="w-chip wait" style="margin-left:4px;">No respondió</span></span><div class="w-btns"><span class="w-btn ghost">Asistió</span><span class="w-btn ghost">No asistió</span></div></div>
+                <span class="w-hint"><span class="m">4</span> El registro de asistencia es terminal: corregirlo después es una excepción auditada.</span>
+                <div class="w-btns"><span class="w-btn">Guardar asistencia</span><span class="w-btn ghost">Marcar todos como asistieron</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Editar es para detalles que no afectan al participante. Todo lo que sí lo afecta pasa por reprogramar, que deja rastro.</li>
+          <li><span class="n">2</span> La acción solo aparece cuando la sesión ya ocurrió. Antes no tiene sentido y confunde.</li>
+          <li><span class="n">3</span> <strong>Confirmación y asistencia son ejes independientes</strong> (DEC-007). Quien declinó puede aparecer igual, y quien confirmó puede faltar. La UI muestra la confirmación como contexto, nunca como valor por defecto de la asistencia.</li>
+          <li><span class="n">4</span> <code>attendanceStatus</code> es <code>PENDING → ATTENDED | ABSENT</code> y es terminal. Ya no existe <code>CONFIRMED</code> dentro de asistencia.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> marcar asistencia sí es móvil — el mentor la registra al terminar la sesión, desde donde esté.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M10 · MVP</span>
+        <h3>Crear y editar consigna</h3>
+        <p>Una consigna por semana y por oleada. Aplica a todos los participantes de la oleada, no a uno. La crean tanto mentores como admin.</p>
+        <p class="endpoints"><code>POST /assignments</code> · <code>PATCH /assignments/{assignmentId}</code> — autorizado para <strong>Mentor y Admin</strong></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Agenda</a><a href="#" class="on">Evaluar</a><a href="#">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Nueva consigna</strong><span class="w-btn link">Cancelar ✕</span></div>
+            <div class="w-main">
+              <div class="w-split">
+                <div style="display:flex; flex-direction:column; gap:11px; min-width:0;">
+                  <div class="w-grid c2">
+                    <div class="w-field"><label>Oleada</label><div class="w-input">Tecnología e Innovación ▾</div></div>
+                    <div class="w-field"><label>Semana del programa</label><div class="w-input">Semana 4 ▾ <span class="m">1</span></div></div>
+                  </div>
+                  <div class="w-field"><label>Título</label><div class="w-input">Conociendo la realidad de mi sector</div></div>
+                  <div class="w-field"><label>Instrucciones</label><div class="w-input area">Qué tienen que hacer y qué se espera del entregable…</div></div>
+                  <div class="w-grid c2">
+                    <div class="w-field"><label>Fecha límite</label><div class="w-input">1 jun 2026</div></div>
+                    <div class="w-field"><label>Hora límite</label><div class="w-input">23:59 <span class="m">2</span></div></div>
+                  </div>
+                  <div class="w-field"><label>Criterios de evaluación</label>
+                    <div class="w-file"><span class="grow">Claridad del objetivo</span><span class="w-hint">Quitar</span></div>
+                    <div class="w-file"><span class="grow">Evidencia y análisis</span><span class="w-hint">Quitar</span></div>
+                    <span class="w-btn link">+ Agregar criterio <span class="m">3</span></span>
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="w-card">
+                    <p class="w-h">Al publicar</p>
+                    <span class="w-hint">18 participantes de la oleada verán la consigna y podrán crear su borrador.</span>
+                    <span class="w-btn">Publicar consigna</span>
+                    <span class="w-btn ghost">Guardar sin publicar</span>
+                  </div>
+                  <div class="w-note"><span class="m">4</span> Ya existe una consigna para la Semana 4 en esta oleada.</div>
+                  <div class="w-card q">
+                    <p class="w-h">Editar después <span class="m">5</span></p>
+                    <span class="w-hint">Puedes corregir título, instrucciones, fecha y rúbrica <strong>mientras nadie haya enviado</strong> su revisión. Después, la consigna queda congelada.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> <code>week_number</code> 1–6: las consignas son un concepto de Fase 1. Los checkpoints de Fase 2 no generan entregables.</li>
+          <li><span class="n">2</span> Hora límite explícita con zona horaria: "vence el 1 de junio" es ambiguo y genera reclamos.</li>
+          <li><span class="n">3</span> Los criterios alimentan <code>rubric_scores</code> (JSON), así que la rúbrica puede variar por consigna sin migración.</li>
+          <li><span class="n">4</span> Aviso, no bloqueo: puede haber más de una consigna por semana si Proyectos lo decide. Regla pendiente de confirmar.</li>
+          <li><span class="n">5</span> <code>PATCH /assignments/{assignmentId}</code> permite corregir una consigna <strong>solo hasta que llegue la primera revisión enviada</strong>. Cambiar la rúbrica después invalidaría evaluaciones ya hechas.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> consulta. Redactar instrucciones largas es tarea de escritorio.</p>
+          <p style="margin-top:8px;"><strong>Permisos:</strong> Mentor y Admin pueden crear y editar consignas. Era una pregunta abierta del diseño; el contrato la cerró.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="m">
+      <div class="plate-head">
+        <span class="plate-id">M17 · MVP</span>
+        <h3>Participantes asignados</h3>
+        <p>Una fila por persona con el estado de su semana. Es la vista que responde "¿quién se me está quedando atrás?".</p>
+        <p class="endpoints">✅ <code>GET /admin/mentor-assignments</code> scopeado al mentor · <code>GET /deliverables</code> · <code>GET /sessions</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Inicio</a><a href="#">Agenda</a><a href="#">Evaluar</a><a href="#" class="on">Participantes</a><a href="#" class="hide-m">Perfil</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Mis participantes</strong><div class="who"><span class="w-chip tag">6 asignados</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Participante</th><th>Fase</th><th>Próxima sesión</th><th>Asistencia</th><th>Entregas S1–S4</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>María L.</td><td><span class="w-chip tag">F1 · S4</span></td><td class="num">Lun 17 · 10:00</td><td class="num">4/4</td><td><span class="w-chip ok">4/4</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td>Daniel V.</td><td><span class="w-chip tag">F1 · S4</span></td><td class="num">Mié 19 · 10:00</td><td class="num">3/4</td><td><span class="w-chip wait">3/4</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td>Ana T.</td><td><span class="w-chip tag">F1 · S4</span></td><td class="num">Jue 20 · 14:00</td><td class="num">2/4 <span class="m">1</span></td><td><span class="w-chip back">1/4</span></td><td><span class="w-btn">Contactar</span></td></tr>
+                    <tr><td>Pedro G.</td><td><span class="w-chip tag">F1 · S4</span></td><td class="num">Sin agendar <span class="m">2</span></td><td class="num">4/4</td><td><span class="w-chip ok">4/4</span></td><td><span class="w-btn ghost">Agendar</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="w-note"><span class="m">3</span> Solo ves a tus participantes asignados en esta oleada. El backend valida el ownership, no solo el rol.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Baja asistencia + entregas faltantes = la señal temprana de deserción que el programa necesita ver.</li>
+          <li><span class="n">2</span> "Sin agendar" es accionable: lleva directo al formulario con el participante precargado.</li>
+          <li><span class="n">3</span> ✅ <strong>CCR-012:</strong> las asignaciones explícitas ya existen, así que esta pantalla y el ownership del mentor son verificables.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> tabla → tarjetas, una por participante, con el estado de la semana resumido.</p>
+        </div>
+      </aside>
+    </article>
+  </section>
+
+  <!-- ====================================================== ADMIN -->
+  <section class="sec" data-role="a">
+    <div class="sec-head"><h2>Admin · Proyectos</h2><span class="tag">A1 – A6</span></div>
+    <p class="sec-intro">Seis entradas, no once. Postulaciones, matching, apoyo emocional, fases/graduación y reportes salen de la navegación del piloto: están fuera de alcance.</p>
+    <p class="navline">Dashboard · Sesiones · Entregables · Oleadas · Usuarios · Operación</p>
+
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A6 + A7 + A8 · MVP</span>
+        <h3>Configurar la oleada</h3>
+        <p>El journey sin el cual nada funciona (DEC-004). El charter lo exige: configurar el contexto mínimo sin tocar la base de datos. <strong>Desbloqueado por CCR-012.</strong></p>
+        <p class="endpoints">✅ <code>/admin/oleadas</code> · <code>/admin/users</code> · <code>/admin/enrollments</code> · <code>/admin/mentor-assignments</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Dashboard</a><a href="#">Sesiones</a><a href="#">Entregables</a><a href="#" class="on">Oleadas</a><a href="#">Usuarios</a><a href="#" class="hide-m">Operación</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Oleada Tecnología e Innovación</strong><div class="who"><span class="w-chip tag">Admin</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-card q">
+                <div class="w-sec-head stack-m">
+                  <div><p class="w-h">Preparación de la oleada <span class="m">1</span></p><p class="w-sub">Completa los 4 pasos para poder abrirla.</p></div>
+                  <span class="w-chip draft">Borrador</span>
+                </div>
+                <div class="w-grid c4">
+                  <div class="w-card"><span class="w-chip ok">Listo</span><strong style="font-size:11.5px;">1 · Datos de la oleada</strong><span class="w-hint">Tecnología · ago 2026 – feb 2027 · cupo 30</span></div>
+                  <div class="w-card"><span class="w-chip ok">Listo</span><strong style="font-size:11.5px;">2 · Usuarios</strong><span class="w-hint">18 participantes · 3 mentores</span></div>
+                  <div class="w-card"><span class="w-chip review">En curso</span><strong style="font-size:11.5px;">3 · Inscripciones</strong><span class="w-hint">18 de 30 cupos <span class="m">2</span></span></div>
+                  <div class="w-card"><span class="w-chip wait">Falta</span><strong style="font-size:11.5px;">4 · Asignaciones <span class="m">3</span></strong><span class="w-hint">12 de 18 con mentor</span></div>
+                </div>
+                <div class="w-btns"><span class="w-btn ghost">Abrir oleada</span><span class="w-hint">Disponible al completar el paso 4.</span></div>
+              </div>
+              <div class="w-sec-head stack-m">
+                <p class="w-h">Asignaciones de mentoría</p>
+                <div class="w-btns"><span class="w-btn ghost">+ Asignar a un participante</span><span class="w-btn ghost">+ Asignar a toda la oleada <span class="m">4</span></span></div>
+              </div>
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Mentor</th><th>Alcance</th><th>Capacidad</th><th>Estado</th><th>Desde</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>Nancy G.</td><td>María L. <span class="w-chip tag">Fase 1 · S4</span></td><td>Especialista</td><td><span class="w-chip ok">Vigente</span></td><td class="num">1 ago</td><td><span class="w-btn link">Reasignar</span></td></tr>
+                    <tr><td>Nancy G.</td><td>Daniel V. <span class="w-chip tag">Fase 1 · S4</span></td><td>Especialista</td><td><span class="w-chip ok">Vigente</span></td><td class="num">1 ago</td><td><span class="w-btn link">Reasignar</span></td></tr>
+                    <tr><td>Carlos R.</td><td><em>Toda la oleada</em></td><td>Especialista</td><td><span class="w-chip ok">Vigente</span></td><td class="num">1 ago</td><td><span class="w-btn link">Reasignar</span></td></tr>
+                    <tr><td>Juan P.</td><td>Ana T.</td><td>Especialista</td><td><span class="w-chip off">Cerrada <span class="m">5</span></span></td><td class="num">1 ago – 12 ago</td><td><span class="w-hint">—</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="w-note">Ana T. quedó <strong>sin mentor vigente</strong> tras la reasignación. Asígnale uno antes de abrir la oleada.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Setup guiado en 4 pasos, no un formulario gigante. Es la primera vez que alguien de Proyectos toca la plataforma. <strong>Los cuatro pasos ya tienen contrato.</strong></li>
+          <li><span class="n">2</span> La ocupación sale de <code>Oleada.activeEnrollmentCount</code>: no hace falta pedir la lista de enrollments para mostrar "18 de 30".</li>
+          <li><span class="n">3</span> Sin asignaciones explícitas no hay ownership verificable (DEC-018) y el mentor no puede agendar.</li>
+          <li><span class="n">4</span> <strong><code>enrollmentId</code> es nullable en el contrato</strong>, así que una asignación puede cubrir la oleada completa —el mentor de los talleres grupales— o un participante concreto. La pantalla ofrece los dos modos en vez de asumir 1:1.</li>
+          <li><span class="n">5</span> Reasignar <strong>cierra</strong> la asignación anterior vía <code>DELETE …/{mentorAssignmentId}?expectedVersion=</code> → <code>204</code>. Es un <code>DELETE</code> semántico: cierra, no borra. La fila sigue visible con su periodo, sin acciones.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> soportado para consulta. La configuración es una tarea de escritorio.</p>
+          <p style="margin-top:8px;">✅ <strong>CCR-012 resuelta.</strong> Este era el bloqueo del piloto: sin él ningún otro journey podía empezar.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A1 + A2 · MVP</span>
+        <h3>Dashboard y supervisión de sesiones</h3>
+        <p>Responde una sola pregunta: <em>¿qué está en riesgo esta semana?</em> No es un tablero de vanidad.</p>
+        <p class="endpoints"><code>GET /dashboard/admin</code> → <code>activeUsers</code> · <code>upcomingSessions</code> · <code>pendingDeliverables</code> · <code>failedJobs</code> · <code>GET /sessions</code> + filtros</p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#" class="on">Dashboard</a><a href="#">Sesiones</a><a href="#">Entregables</a><a href="#">Oleadas</a><a href="#">Usuarios</a><a href="#" class="hide-m">Operación</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top">
+              <div><strong>Semana 4 · 17–23 ago</strong><div class="w-sub">Oleada Tecnología · 18 participantes</div></div>
+              <div class="who"><span class="w-chip tag">Admin</span><span class="w-av"></span></div>
+            </div>
+            <div class="w-main">
+              <div class="w-card" style="border-left:3px solid var(--w-line-strong);">
+                <p class="w-h">En riesgo esta semana <span class="m">1</span></p>
+                <div class="w-grid c3">
+                  <div class="w-file"><span class="grow">6 sesiones sin confirmar</span><span class="w-btn link">Ver</span></div>
+                  <div class="w-file"><span class="grow">4 entregas vencidas sin enviar</span><span class="w-btn link">Ver</span></div>
+                  <div class="w-file"><span class="grow">12 entregas sin evaluar</span><span class="w-btn link">Ver</span></div>
+                </div>
+              </div>
+              <div class="w-grid c4">
+                <div class="w-stat"><span class="v">21</span><span class="k">Usuarios activos</span></div>
+                <div class="w-stat"><span class="v">24</span><span class="k">Sesiones próximas <span class="m">2</span></span></div>
+                <div class="w-stat"><span class="v">7</span><span class="k">Entregas pendientes</span></div>
+                <div class="w-stat"><span class="v">2</span><span class="k">Envíos fallidos <span class="m">3</span></span></div>
+              </div>
+              <div class="w-sec-head stack-m">
+                <p class="w-h">Sesiones</p>
+                <div class="w-btns"><span class="w-chip tag">Semana ▾</span><span class="w-chip tag">Estado ▾</span><span class="w-chip tag">Mentor ▾</span><span class="w-chip tag">Tipo ▾</span></div>
+              </div>
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Tipo</th><th>Mentor</th><th>Participantes</th><th>Fecha</th><th>Confirmaron</th><th>Estado</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="w-chip tag">1:1</span></td><td>Nancy G.</td><td>María L.</td><td class="num">Lun 17 · 10:00</td><td class="num">1/1</td><td><span class="w-chip off">Programada</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td><span class="w-chip tag">Grupal</span></td><td>Carlos R.</td><td>8 participantes</td><td class="num">Mar 18 · 14:00</td><td class="num">5/8 <span class="m">4</span></td><td><span class="w-chip off">Programada</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td><span class="w-chip tag">1:1</span></td><td>Nancy G.</td><td>Daniel V.</td><td class="num">Mié 19 · 10:00</td><td class="num">0/1</td><td><span class="w-chip off">Programada</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td><span class="w-chip tag">Grupal</span></td><td>Ana M.</td><td>12 participantes</td><td class="num">Jue 13 · 17:00</td><td class="num">11/12</td><td><span class="w-chip off">Realizada</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td><span class="w-chip tag">1:1</span></td><td>Juan P.</td><td>Ana T.</td><td class="num">Jue 20 · 14:00</td><td class="num">1/1</td><td><span class="w-chip off">Reprogramada</span></td><td><span class="w-btn link">Ver</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Lo primero que ve Proyectos es lo que requiere intervención, no el total acumulado.</li>
+          <li><span class="n">2</span> Los cuatro conteos son exactamente los campos de <code>/dashboard/admin</code>.</li>
+          <li><span class="n">3</span> ⚖️ <strong>CCR-006 resuelta con la alternativa:</strong> los traslapes se previenen, no se listan — el panel de conflictos salió del MVP. En su lugar va <code>failedJobs</code>, que sí necesita intervención humana. Su pantalla de detalle llega en Fase 4, así que hoy es número, no enlace roto.</li>
+          <li><span class="n">4</span> <strong>La columna de estado ya no dice "Confirmada".</strong> Una sesión es <code>SCHEDULED</code> aunque 5 de 8 hayan confirmado (DEC-007). La proporción sale de <code>confirmationSummary</code> y va en su propia columna, que es el dato operativo real.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> "En riesgo" y las stats se apilan; la tabla scrollea horizontalmente dentro de su contenedor — la página nunca scrollea de lado.</p>
+        </div>
+      </aside>
+    </article>
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A3 · MVP</span>
+        <h3>Detalle de sesión (supervisión)</h3>
+        <p>Mismo patrón que P3, con la información que el admin necesita: quién confirmó, quién asistió y qué pasó con la sesión.</p>
+        <p class="endpoints"><code>GET /sessions/{sessionId}</code> · <code>/reschedule</code> · <code>/cancel</code> · <code>/complete</code> — todas con <code>expectedVersion</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-top"><span class="w-btn link">← Sesiones</span><div class="w-btns"><span class="w-chip tag">Grupal · Semana 4</span><span class="w-chip off">Programada</span></div></div>
+          <div class="w-main">
+            <div class="w-split">
+              <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+                <div>
+                  <p class="w-h" style="font-size:16px;">Taller: Liderazgo con propósito</p>
+                  <p class="w-sub">Mar 18 ago 2026 · 14:00–15:30 · Carlos Ruiz · Oleada Tecnología</p>
+                </div>
+                <div class="w-card">
+                  <div class="w-sec-head"><p class="w-h">Participantes · 5 de 8 confirmaron <span class="m">1</span></p><span class="w-btn ghost">Recordar a los 3</span></div>
+                  <div class="w-file"><span class="w-av"></span><span class="grow">María L.</span><span class="w-chip ok">Confirmada</span></div>
+                  <div class="w-file"><span class="w-av"></span><span class="grow">Daniel V.</span><span class="w-chip ok">Confirmada</span></div>
+                  <div class="w-file"><span class="w-av"></span><span class="grow">Ana T.</span><span class="w-chip wait">Por confirmar</span></div>
+                  <div class="w-file"><span class="w-av"></span><span class="grow">Pedro G.</span><span class="w-chip no">No asistirá</span></div>
+                  <span class="w-btn link">Ver los 8</span>
+                </div>
+                <div class="w-card q">
+                  <p class="w-h">Historial <span class="m">2</span></p>
+                  <div class="w-file"><span class="grow">Reprogramada desde el 11 ago · 14:00</span><span class="w-hint">por Carlos R.</span></div>
+                  <div class="w-file"><span class="grow">Creada el 4 ago</span><span class="w-hint">por Coordinación</span></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="w-card">
+                  <p class="w-h">Acciones</p>
+                  <span class="w-btn ghost">Reprogramar</span>
+                  <span class="w-btn ghost">Cancelar sesión</span>
+                  <span class="w-btn ghost">Marcar como realizada</span>
+                  <span class="w-hint"><span class="m">3</span> El admin puede operar cualquier sesión de la organización; queda registrado quién lo hizo.</span>
+                </div>
+                <div class="w-note">Enlace de reunión configurado. Sin integración de calendario en el piloto (DEC-019).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> El dato operativo del admin es la proporción de confirmaciones, no un estado único de la sesión (DEC-007).</li>
+          <li><span class="n">2</span> El encadenamiento por <code>rescheduled_from</code> se ve como historial. Es la trazabilidad que pide el charter.</li>
+          <li><span class="n">3</span> Toda acción del admin sobre una sesión ajena se audita (DEC-023).</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> una columna; las acciones al final, con confirmación explícita antes de ejecutarse.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A4 · MVP</span>
+        <h3>Gestión de entregables</h3>
+        <p>Vista de cumplimiento por semana, no de contenido. Proyectos no evalúa: supervisa que el ciclo ocurra.</p>
+        <p class="endpoints"><code>GET /deliverables</code> + filtros</p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Dashboard</a><a href="#">Sesiones</a><a href="#" class="on">Entregables</a><a href="#">Oleadas</a><a href="#">Usuarios</a><a href="#" class="hide-m">Operación</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Entregables</strong><div class="who"><span class="w-chip tag">Admin</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-sec-head stack-m">
+                <div class="w-btns"><span class="w-chip tag">Oleada ▾</span><span class="w-chip tag">Semana ▾</span><span class="w-chip tag">Estado ▾</span><span class="w-chip tag">Mentor ▾</span></div>
+                <span class="w-btn ghost">Exportar CSV <span class="m">1</span></span>
+              </div>
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Semana</th><th>Consigna</th><th>Esperados</th><th>Enviados</th><th>Evaluados</th><th>Devueltos</th><th>Avance</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>S1</td><td>Análisis FODA personal</td><td class="num">18</td><td class="num">15 (83%)</td><td class="num">12</td><td class="num">1</td><td><div class="w-bar" style="min-width:70px;"><i style="width:83%"></i></div></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td>S2</td><td>Objetivo profesional</td><td class="num">18</td><td class="num">13 (72%)</td><td class="num">8</td><td class="num">2</td><td><div class="w-bar" style="min-width:70px;"><i style="width:72%"></i></div></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td>S3</td><td>Perfil y mercado</td><td class="num">18</td><td class="num">9 (50%)</td><td class="num">5</td><td class="num">0</td><td><div class="w-bar" style="min-width:70px;"><i style="width:50%"></i></div></td><td><span class="w-btn link">Ver</span></td></tr>
+                    <tr><td>S4</td><td>Realidad del sector</td><td class="num">18</td><td class="num">4 (22%) <span class="m">2</span></td><td class="num">1</td><td class="num">0</td><td><div class="w-bar" style="min-width:70px;"><i style="width:22%"></i></div></td><td><span class="w-btn link">Ver</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="w-note"><span class="m">3</span> La tasa de S3 cayó a la mitad. Revisa con los mentores antes del cierre de la semana.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Export mínimo, aprobado en Sprint 6. Sin datos personales más allá de lo necesario.</li>
+          <li><span class="n">2</span> Una semana en curso siempre se ve "mal": la fila del periodo activo se distingue para no leerla como alarma.</li>
+          <li><span class="n">3</span> El admin no abre los archivos de nadie. Supervisa el cumplimiento; el contenido es del mentor.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> tabla con scroll horizontal dentro de su contenedor; la página no se mueve de lado.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A5 · MVP</span>
+        <h3>Usuarios y roles</h3>
+        <p>Lo mínimo para operar sin SQL manual, como exige el charter. Un usuario puede tener más de un rol (DEC-002).</p>
+        <p class="endpoints">✅ <code>GET/POST /admin/users</code> · <code>POST /admin/users/{userId}/password-reset</code></p>
+      </div>
+      <div class="canvas">
+        <div class="w">
+          <nav class="w-nav">
+            <span class="w-logo">EDU-MENTOR</span>
+            <a href="#">Dashboard</a><a href="#">Sesiones</a><a href="#">Entregables</a><a href="#">Oleadas</a><a href="#" class="on">Usuarios</a><a href="#" class="hide-m">Operación</a>
+          </nav>
+          <div class="w-body">
+            <div class="w-top"><strong>Usuarios</strong><div class="w-btns"><span class="w-btn">+ Agregar usuario</span><span class="w-av"></span></div></div>
+            <div class="w-main">
+              <div class="w-sec-head stack-m">
+                <div class="w-btns"><span class="w-chip tag">Rol ▾</span><span class="w-chip tag">Estado ▾</span><span class="w-chip tag">Buscar…</span></div>
+                <span class="w-hint">21 usuarios · 18 participantes · 3 mentores</span>
+              </div>
+              <div class="w-scroll">
+                <table class="w-table">
+                  <thead><tr><th>Nombre</th><th>Roles</th><th>Oleada</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>Nancy Gómez</td><td><span class="w-chip tag">Mentora</span> <span class="w-chip tag">Admin <span class="m">1</span></span></td><td>Tecnología</td><td><span class="w-chip ok">Activa</span></td><td class="num">Hoy, 08:42</td><td><span class="w-btn link">Editar</span></td></tr>
+                    <tr><td>Carlos Ruiz</td><td><span class="w-chip tag">Mentor</span></td><td>Tecnología</td><td><span class="w-chip ok">Activo</span></td><td class="num">Ayer</td><td><span class="w-btn link">Editar</span></td></tr>
+                    <tr><td>Martín del Valle</td><td><span class="w-chip tag">Participante</span></td><td>Tecnología</td><td><span class="w-chip ok">Activo</span></td><td class="num">Hoy, 07:15</td><td><span class="w-btn link">Editar</span></td></tr>
+                    <tr><td>Ana Torres</td><td><span class="w-chip tag">Participante</span></td><td>Tecnología</td><td><span class="w-chip wait">Contraseña temporal <span class="m">2</span></span></td><td class="num">—</td><td><span class="w-btn">Restablecer acceso</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="w-note"><span class="m">3</span> Desactivar no borra: conserva sesiones, entregas y evaluaciones para la auditoría.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> ✅ <strong>DEC-002 aceptada:</strong> roles en plural. Una persona puede ser mentora y admin; el contrato ya devuelve <code>roles[]</code>.</li>
+          <li><span class="n">2</span> ⚖️ <strong>CCR-007 con alternativa:</strong> "contraseña temporal" (<code>mustChangePassword</code>) es el estado más útil de la primera semana — identifica a quien aún no logró entrar. "Restablecer acceso" genera una temporal nueva y revoca sus sesiones.</li>
+          <li><span class="n">3</span> Sin borrado duro. La auditoría (DEC-023) y la trazabilidad del programa dependen de conservar el historial.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> consulta. El alta de usuarios es tarea de escritorio.</p>
+        </div>
+      </aside>
+    </article>
+
+    <article class="plate" data-role="a">
+      <div class="plate-head">
+        <span class="plate-id">A10 + A11 · DIFERIDA a Fase 4</span>
+        <h3>Operación: recordatorios y auditoría</h3>
+        <p>Lo que hace operable un piloto: ver qué notificación falló y quién hizo qué. Se implementa en Fase 4, pero el diseño se define ahora.</p>
+        <p class="endpoints"><code>failedJobs</code> ya existe en <code>/dashboard/admin</code>; el detalle está <strong>pendiente</strong> <span class="ccr">DEC-014 · DEC-023</span></p>
+      </div>
+      <div class="canvas">
+        <div class="w solo">
+          <div class="w-top"><strong>Operación</strong><div class="w-btns"><span class="w-chip tag">Recordatorios</span><span class="w-chip tag">Auditoría</span></div></div>
+          <div class="w-main">
+            <div class="w-grid c2">
+              <div class="w-card">
+                <div class="w-sec-head"><p class="w-h">Recordatorios</p><span class="w-chip back">2 fallidos <span class="m">1</span></span></div>
+                <div class="w-file"><div class="grow"><strong style="font-size:11.5px;">Recordatorio 24 h · Daniel V.</strong><div class="w-hint">3 intentos · último error: proveedor no disponible</div></div><span class="w-btn">Reintentar</span></div>
+                <div class="w-file"><div class="grow"><strong style="font-size:11.5px;">Sesión reprogramada · Ana T.</strong><div class="w-hint">1 intento · próximo reintento en 4 min</div></div><span class="w-chip wait">En cola</span></div>
+                <div class="w-grid c3" style="margin-top:4px;">
+                  <div class="w-stat"><span class="v">142</span><span class="k">Enviados</span></div>
+                  <div class="w-stat"><span class="v">2</span><span class="k">Fallidos</span></div>
+                  <div class="w-stat"><span class="v">5</span><span class="k">En cola</span></div>
+                </div>
+                <span class="w-hint"><span class="m">2</span> Reintentar no duplica: la clave de idempotencia lo impide.</span>
+              </div>
+              <div class="w-card">
+                <div class="w-sec-head"><p class="w-h">Auditoría</p><div class="w-btns"><span class="w-chip tag">Acción ▾</span><span class="w-chip tag">Usuario ▾</span></div></div>
+                <div class="w-scroll">
+                  <table class="w-table">
+                    <thead><tr><th>Cuándo</th><th>Quién</th><th>Qué</th></tr></thead>
+                    <tbody>
+                      <tr><td class="num">09:20</td><td>Nancy G.</td><td>Reprogramó sesión · Daniel V.</td></tr>
+                      <tr><td class="num">08:41</td><td>Nancy G.</td><td>Evaluó entrega S1 · María L.</td></tr>
+                      <tr><td class="num">08:12</td><td>Coordinación</td><td>Asignó mentor · Ana T. <span class="m">3</span></td></tr>
+                      <tr><td class="num">Ayer</td><td>Carlos R.</td><td>Descargó archivo · S2 Pedro G.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <span class="w-hint">Solo lectura. Sin exportar ni borrar.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h4>Anotaciones</h4>
+        <ol>
+          <li><span class="n">1</span> Un fallo sin dueño visible es un fallo que nadie arregla. Esta pantalla convierte la cola en algo operable.</li>
+          <li><span class="n">2</span> DEC-014: la base guarda el outbox, BullMQ agenda y reintenta, n8n solo entrega. El reintento manual respeta la misma clave de idempotencia.</li>
+          <li><span class="n">3</span> Lo que se audita (DEC-023): auth, agenda, asistencia, entregas, evaluaciones, cambios de rol y descargas.</li>
+        </ol>
+        <div class="resp">
+          <p><strong>Móvil:</strong> las dos tarjetas se apilan. Es una pantalla de soporte, de uso ocasional.</p>
+        </div>
+      </aside>
+    </article>
+  </section>
+
+  <footer>
+    <p><strong>Lo que este kit deliberadamente no incluye:</strong> Job Search Tracking, mentor par y checkpoints de Fase 2, graduación, postulación y scoring, Demo Day, certificados, IA de CV/LinkedIn, citas de apoyo emocional y mensajería interna. Están mapeados en el modelo de datos con su feature gate apagado, pero no aparecen en ninguna navegación del piloto (DEC-015).</p>
+    <p><strong>Estado del contrato:</strong> 12 CCR procesadas; 11 cerradas y CCR-008 —la regla del Top 3— pendiente de Producto, diseñada y etiquetada como provisional. Ninguna espera respuesta de Codex. Las pantallas de operación (A10 · A11) están diseñadas pero diferidas a Fase 4.</p>
+    <p>EDU-US · Innovación Digital · Fase 0 · 25 de julio de 2026 · <code>docs/design/</code></p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var body = document.body;
+
+    document.querySelectorAll('[data-filter]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var role = btn.dataset.filter;
+        document.querySelectorAll('[data-filter]').forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b === btn));
+        });
+        document.querySelectorAll('.sec[data-role]').forEach(function (sec) {
+          sec.hidden = !(role === 'all' || sec.dataset.role === role);
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-vp]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('[data-vp]').forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b === btn));
+        });
+        body.classList.toggle('mobile', btn.dataset.vp === 'mobile');
+      });
+    });
+  })();
+</script>

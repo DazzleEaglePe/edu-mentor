@@ -1,0 +1,12 @@
+{
+  "name": "@edu-mentor/openapi-generator",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "generate": "openapi-typescript ../../docs/api/openapi.yaml --output ../../packages/shared-types/src/generated/openapi.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

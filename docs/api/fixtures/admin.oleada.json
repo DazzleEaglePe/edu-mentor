@@ -1,0 +1,11 @@
+{
+  "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "name": "Oleada Tecnología Demo 2026",
+  "sector": "Tecnología",
+  "status": "OPEN",
+  "startDate": "2026-08-01",
+  "endDate": "2027-02-28",
+  "capacity": 30,
+  "activeEnrollmentCount": 18,
+  "version": 2
+}

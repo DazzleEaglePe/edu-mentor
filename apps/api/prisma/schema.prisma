@@ -1,0 +1,278 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("organization_status")
+}
+
+enum RoleKey {
+  PARTICIPANT
+  MENTOR
+  ADMIN
+
+  @@map("role_key")
+}
+
+enum MentorCapabilityKind {
+  SPECIALIST
+  PEER
+
+  @@map("mentor_capability_kind")
+}
+
+enum OleadaStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  CLOSED
+
+  @@map("oleada_status")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  WITHDRAWN
+  COMPLETED
+
+  @@map("enrollment_status")
+}
+
+enum ProgramPhase {
+  FASE_0
+  FASE_1
+  FASE_2
+  FINISHED
+
+  @@map("program_phase")
+}
+
+model Organization {
+  id        String             @id @default(uuid()) @db.Uuid
+  name      String             @db.VarChar(160)
+  slug      String             @unique @db.VarChar(80)
+  status    OrganizationStatus @default(ACTIVE)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  users        User[]
+  oleadas      Oleada[]
+  auditLogs    AuditLog[]
+  outboxEvents OutboxEvent[]
+
+  @@map("organization")
+}
+
+model User {
+  id                 String   @id @default(uuid()) @db.Uuid
+  organizationId     String   @map("organization_id") @db.Uuid
+  email              String   @db.VarChar(254)
+  normalizedEmail    String   @map("normalized_email") @db.VarChar(254)
+  passwordHash       String   @map("password_hash") @db.VarChar(255)
+  fullName           String   @map("full_name") @db.VarChar(160)
+  sector             String?  @db.VarChar(120)
+  isActive           Boolean  @default(true) @map("is_active")
+  mustChangePassword Boolean  @default(true) @map("must_change_password")
+  version            Int      @default(1)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userRoles         UserRole[]         @relation("UserRoleUser")
+  assignedUserRoles UserRole[]         @relation("UserRoleAssignedBy")
+  mentorProfile     MentorProfile?
+  mentorAssignments MentorAssignment[] @relation("MentorAssignments")
+  enrollments       Enrollment[]       @relation("ParticipantEnrollments")
+  authSessions      AuthSession[]
+  auditLogs         AuditLog[]         @relation("AuditActor")
+
+  @@unique([organizationId, normalizedEmail])
+  @@index([organizationId, isActive])
+  @@map("user")
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       RoleKey  @unique
+  name      String   @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  userRoles UserRole[]
+
+  @@map("role")
+}
+
+model UserRole {
+  userId           String   @map("user_id") @db.Uuid
+  roleId           String   @map("role_id") @db.Uuid
+  assignedByUserId String?  @map("assigned_by_user_id") @db.Uuid
+  assignedAt       DateTime @default(now()) @map("assigned_at") @db.Timestamptz(3)
+
+  user       User  @relation("UserRoleUser", fields: [userId], references: [id], onDelete: Restrict)
+  role       Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  assignedBy User? @relation("UserRoleAssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_role")
+}
+
+model MentorProfile {
+  userId    String   @id @map("user_id") @db.Uuid
+  headline  String?  @db.VarChar(200)
+  bio       String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  capabilities MentorCapability[]
+
+  @@map("mentor_profile")
+}
+
+model MentorCapability {
+  mentorProfileId String               @map("mentor_profile_id") @db.Uuid
+  kind            MentorCapabilityKind
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  mentorProfile MentorProfile @relation(fields: [mentorProfileId], references: [userId], onDelete: Restrict)
+
+  @@id([mentorProfileId, kind])
+  @@map("mentor_capability")
+}
+
+model Oleada {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  name           String       @db.VarChar(160)
+  sector         String       @db.VarChar(120)
+  status         OleadaStatus @default(DRAFT)
+  startDate      DateTime     @map("start_date") @db.Date
+  endDate        DateTime     @map("end_date") @db.Date
+  capacity       Int
+  version        Int          @default(1)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  enrollments       Enrollment[]
+  mentorAssignments MentorAssignment[]
+
+  @@index([organizationId, status])
+  @@map("oleada")
+}
+
+model Enrollment {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @map("user_id") @db.Uuid
+  oleadaId          String           @map("oleada_id") @db.Uuid
+  status            EnrollmentStatus @default(ACTIVE)
+  currentPhase      ProgramPhase     @default(FASE_0) @map("current_phase")
+  currentWeek       Int?             @map("current_week")
+  phase1GraduatedAt DateTime?        @map("phase_1_graduated_at") @db.Timestamptz(3)
+  enrolledAt        DateTime         @default(now()) @map("enrolled_at") @db.Timestamptz(3)
+  version           Int              @default(1)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user              User               @relation("ParticipantEnrollments", fields: [userId], references: [id], onDelete: Restrict)
+  oleada            Oleada             @relation(fields: [oleadaId], references: [id], onDelete: Restrict)
+  mentorAssignments MentorAssignment[]
+
+  @@unique([userId, oleadaId])
+  @@index([oleadaId, status, currentPhase])
+  @@map("enrollment")
+}
+
+model MentorAssignment {
+  id           String               @id @default(uuid()) @db.Uuid
+  mentorUserId String               @map("mentor_user_id") @db.Uuid
+  oleadaId     String               @map("oleada_id") @db.Uuid
+  enrollmentId String?              @map("enrollment_id") @db.Uuid
+  capability   MentorCapabilityKind
+  startsAt     DateTime             @map("starts_at") @db.Timestamptz(3)
+  endsAt       DateTime?            @map("ends_at") @db.Timestamptz(3)
+  version      Int                  @default(1)
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  mentor     User        @relation("MentorAssignments", fields: [mentorUserId], references: [id], onDelete: Restrict)
+  oleada     Oleada      @relation(fields: [oleadaId], references: [id], onDelete: Restrict)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  @@index([mentorUserId, oleadaId, endsAt])
+  @@index([enrollmentId, endsAt])
+  @@map("mentor_assignment")
+}
+
+model AuthSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  tokenFamilyId    String    @map("token_family_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash") @db.VarChar(255)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(3)
+  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
+  replacedById     String?   @unique @map("replaced_by_id") @db.Uuid
+  userAgent        String?   @map("user_agent") @db.VarChar(512)
+  ipHash           String?   @map("ip_hash") @db.VarChar(128)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  replacedBy AuthSession? @relation("AuthSessionRotation", fields: [replacedById], references: [id], onDelete: SetNull)
+  replaces   AuthSession? @relation("AuthSessionRotation")
+
+  @@index([userId, revokedAt, expiresAt])
+  @@index([tokenFamilyId])
+  @@map("auth_session")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  action         String   @db.VarChar(120)
+  entityType     String   @map("entity_type") @db.VarChar(100)
+  entityId       String   @map("entity_id") @db.Uuid
+  beforeData     Json?    @map("before")
+  afterData      Json?    @map("after")
+  traceId        String   @map("trace_id") @db.VarChar(64)
+  occurredAt     DateTime @default(now()) @map("occurred_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actor        User?        @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, entityType, entityId, occurredAt])
+  @@index([traceId])
+  @@map("audit_log")
+}
+
+model OutboxEvent {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  aggregateType  String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId    String    @map("aggregate_id") @db.Uuid
+  eventType      String    @map("event_type") @db.VarChar(160)
+  payload        Json
+  occurredAt     DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz(3)
+  attemptCount   Int       @default(0) @map("attempt_count")
+  idempotencyKey String    @unique @map("idempotency_key") @db.VarChar(180)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt, occurredAt])
+  @@index([organizationId, aggregateType, aggregateId])
+  @@map("outbox_event")
+}

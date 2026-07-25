@@ -1,0 +1,2934 @@
+openapi: 3.1.0
+info:
+  title: EDU-MENTOR API
+  version: 0.1.0
+  description: |
+    Contrato inicial del piloto. La autorización combina roles, mentor assignments
+    y ownership. Los módulos futuros están deliberadamente excluidos.
+  x-contract-status: technical-baseline
+servers:
+  - url: /api/v1
+    description: Same-origin reverse proxy
+tags:
+  - name: Auth
+    description: Inicio, rotación y cierre de sesiones autenticadas.
+  - name: Dashboard
+    description: Resúmenes derivados sin entidades analíticas nuevas.
+  - name: Sessions
+    description: Agenda, participantes, confirmación y asistencia.
+  - name: Reschedule Requests
+    description: Solicitudes del participante y decisión del mentor/admin.
+  - name: Assignments
+    description: Consignas, rúbricas y selección provisional Top 3.
+  - name: Deliverables
+    description: Entregables lógicos, revisiones, archivos y evaluaciones.
+  - name: Admin
+    description: Soporte operativo mínimo dentro de la organización.
+security:
+  - accessCookie: []
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      operationId: login
+      security:
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Cookies de access/refresh establecidas.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotar la sesión
+      operationId: refreshSession
+      security:
+        - refreshCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: Tokens rotados y cookies actualizadas.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar la sesión actual
+      operationId: logout
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: Sesión revocada y cookies eliminadas.
+  /auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: Cerrar todas mis sesiones
+      operationId: logoutAll
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: Todas las familias refresh del usuario fueron revocadas.
+  /auth/csrf:
+    get:
+      tags: [Auth]
+      summary: Obtener token CSRF
+      operationId: getCsrfToken
+      security: []
+      responses:
+        "200":
+          description: Token vinculado al navegador same-site.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [csrfToken]
+                properties:
+                  csrfToken:
+                    type: string
+                    minLength: 32
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Consultar identidad y contexto
+      operationId: getAuthMe
+      responses:
+        "200":
+          description: Identidad y contexto activo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Cambiar la contraseña propia
+      operationId: changePassword
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: Password actualizado; otras sesiones revocadas.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /dashboard/participant:
+    get:
+      tags: [Dashboard]
+      summary: Consultar resumen de participante
+      operationId: getParticipantDashboard
+      responses:
+        "200":
+          description: Métricas derivables del participante.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParticipantDashboard"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /dashboard/mentor:
+    get:
+      tags: [Dashboard]
+      summary: Consultar resumen de mentor
+      operationId: getMentorDashboard
+      responses:
+        "200":
+          description: Métricas derivables del mentor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorDashboard"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /dashboard/admin:
+    get:
+      tags: [Dashboard]
+      summary: Consultar resumen administrativo
+      operationId: getAdminDashboard
+      responses:
+        "200":
+          description: Conteos operativos de la organización.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /sessions:
+    get:
+      tags: [Sessions]
+      summary: Listar sesiones
+      operationId: listSessions
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/OleadaId"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/SessionStatus"
+        - name: phase
+          in: query
+          schema:
+            $ref: "#/components/schemas/SessionPhase"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Sesiones scoped por identidad.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionPage"
+    post:
+      tags: [Sessions]
+      summary: Crear una sesión
+      operationId: createSession
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Sesión y reservas creadas atómicamente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/ScheduleConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /sessions/calendar:
+    get:
+      tags: [Sessions]
+      summary: Consultar calendario de sesiones
+      operationId: getSessionCalendar
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Sesiones livianas del rango autorizado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionSummary"
+  /sessions/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [Sessions]
+      summary: Consultar una sesión
+      operationId: getSession
+      responses:
+        "200":
+          description: Detalle autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Sessions]
+      summary: Actualizar contenido de una sesión
+      operationId: updateSession
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSessionRequest"
+      responses:
+        "200":
+          description: Contenido no temporal actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{sessionId}/reschedule:
+    post:
+      tags: [Sessions]
+      summary: Reprogramar directamente una sesión
+      operationId: rescheduleSession
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RescheduleSessionRequest"
+      responses:
+        "201":
+          description: Sesión reemplazo; original en RESCHEDULED.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "409":
+          $ref: "#/components/responses/ScheduleConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /sessions/{sessionId}/cancel:
+    post:
+      tags: [Sessions]
+      summary: Cancelar una sesión
+      operationId: cancelSession
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonedTransitionRequest"
+      responses:
+        "200":
+          description: Sesión cancelada y reservas liberadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{sessionId}/complete:
+    post:
+      tags: [Sessions]
+      summary: Completar una sesión
+      operationId: completeSession
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionedRequest"
+      responses:
+        "200":
+          description: Sesión completada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /sessions/{sessionId}/participants/me/confirmation:
+    put:
+      tags: [Sessions]
+      summary: Cambiar mi confirmación
+      operationId: setOwnSessionConfirmation
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status, expectedVersion]
+              properties:
+                status:
+                  type: string
+                  enum: [CONFIRMED, DECLINED]
+                expectedVersion:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Confirmación propia actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionParticipant"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ConfirmationClosed"
+  /sessions/{sessionId}/participants/{enrollmentId}/attendance:
+    put:
+      tags: [Sessions]
+      summary: Registrar asistencia de participante
+      operationId: setParticipantAttendance
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/EnrollmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status, expectedVersion]
+              properties:
+                status:
+                  type: string
+                  enum: [ATTENDED, ABSENT]
+                expectedVersion:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Asistencia registrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionParticipant"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /sessions/{sessionId}/reschedule-requests:
+    post:
+      tags: [Reschedule Requests]
+      summary: Solicitar reprogramación
+      operationId: createRescheduleRequest
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRescheduleRequest"
+      responses:
+        "201":
+          description: Solicitud pendiente creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RescheduleRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /reschedule-requests:
+    get:
+      tags: [Reschedule Requests]
+      summary: Listar solicitudes de reprogramación
+      operationId: listRescheduleRequests
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RescheduleRequestStatus"
+      responses:
+        "200":
+          description: Participante ve las propias; mentor las de sesiones autorizadas; admin las de su organización.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RescheduleRequest"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+  /reschedule-requests/{requestId}/approve:
+    post:
+      tags: [Reschedule Requests]
+      summary: Aprobar una reprogramación
+      operationId: approveRescheduleRequest
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveRescheduleRequest"
+      responses:
+        "201":
+          description: Solicitud aprobada y sesión reemplazo creada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request, replacementSession]
+                properties:
+                  request:
+                    $ref: "#/components/schemas/RescheduleRequest"
+                  replacementSession:
+                    $ref: "#/components/schemas/Session"
+        "409":
+          $ref: "#/components/responses/ScheduleConflict"
+  /reschedule-requests/{requestId}/reject:
+    post:
+      tags: [Reschedule Requests]
+      summary: Rechazar una reprogramación
+      operationId: rejectRescheduleRequest
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonedTransitionRequest"
+      responses:
+        "200":
+          description: Solicitud rechazada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RescheduleRequest"
+  /reschedule-requests/{requestId}/cancel:
+    post:
+      tags: [Reschedule Requests]
+      summary: Cancelar mi solicitud
+      operationId: cancelOwnRescheduleRequest
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionedRequest"
+      responses:
+        "200":
+          description: Solicitud propia cancelada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RescheduleRequest"
+  /assignments:
+    get:
+      tags: [Assignments]
+      summary: Listar consignas
+      operationId: listAssignments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/OleadaId"
+      responses:
+        "200":
+          description: Consignas autorizadas.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Assignment"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+    post:
+      tags: [Assignments]
+      summary: Crear una consigna
+      operationId: createAssignment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssignmentRequest"
+      responses:
+        "201":
+          description: Consigna creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /assignments/{assignmentId}:
+    get:
+      tags: [Assignments]
+      summary: Consultar una consigna
+      operationId: getAssignment
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      responses:
+        "200":
+          description: Consigna y rúbrica.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Assignments]
+      summary: Actualizar una consigna editable
+      operationId: updateAssignment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAssignmentRequest"
+      responses:
+        "200":
+          description: Consigna actualizada antes de recibir submissions enviadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /assignments/{assignmentId}/top-candidates:
+    get:
+      tags: [Assignments]
+      summary: Consultar Top 3 provisional
+      operationId: getTopCandidates
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      responses:
+        "200":
+          description: Baseline provisional Top 3 por assignment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopCandidates"
+    put:
+      tags: [Assignments]
+      summary: Reemplazar Top 3 provisional
+      operationId: replaceTopCandidates
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceTopCandidatesRequest"
+      responses:
+        "200":
+          description: Ranking reemplazado atómicamente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopCandidates"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables:
+    get:
+      tags: [Deliverables]
+      summary: Listar entregables
+      operationId: listDeliverables
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          description: Filtra por el estado de la revisión apuntada por currentSubmissionId.
+          schema:
+            $ref: "#/components/schemas/SubmissionStatus"
+      responses:
+        "200":
+          description: Entregables scoped.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverablePage"
+    post:
+      tags: [Deliverables]
+      summary: Crear entregable y primer draft
+      operationId: createDeliverable
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeliverableRequest"
+      responses:
+        "201":
+          description: Agregado y primera revisión draft.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deliverable"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables/pending-review:
+    get:
+      tags: [Deliverables]
+      summary: Listar revisiones por evaluar
+      operationId: listPendingReviews
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Cola de submissions enviadas autorizadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverablePage"
+  /deliverables/{deliverableId}:
+    get:
+      tags: [Deliverables]
+      summary: Consultar un entregable
+      operationId: getDeliverable
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+      responses:
+        "200":
+          description: Agregado con historial autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deliverable"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /deliverables/{deliverableId}/submissions/{submissionId}:
+    patch:
+      tags: [Deliverables]
+      summary: Editar notas de una revisión draft
+      operationId: updateSubmissionDraft
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubmissionRequest"
+      responses:
+        "200":
+          description: Notas actualizadas mientras la revisión permanece en DRAFT.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /deliverables/{deliverableId}/submissions/{submissionId}/files:
+    post:
+      tags: [Deliverables]
+      summary: Subir archivo a un draft
+      operationId: uploadSubmissionFile
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: Archivo almacenado en quarantine y scan pendiente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliverableFile"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /deliverables/{deliverableId}/submissions/{submissionId}/files/{fileId}:
+    delete:
+      tags: [Deliverables]
+      summary: Eliminar archivo de un draft
+      operationId: deleteSubmissionFile
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+        - $ref: "#/components/parameters/FileId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      responses:
+        "204":
+          description: Archivo desvinculado y programado para borrado seguro.
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables/{deliverableId}/submissions/{submissionId}/files/{fileId}/download:
+    get:
+      tags: [Deliverables]
+      summary: Descargar archivo autorizado
+      operationId: downloadSubmissionFile
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+        - $ref: "#/components/parameters/FileId"
+      responses:
+        "200":
+          description: Stream auditado de un archivo con scan CLEAN.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables/{deliverableId}/submissions:
+    post:
+      tags: [Deliverables]
+      summary: Crear la siguiente revisión
+      operationId: createNextSubmission
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [previousSubmissionId, notes]
+              properties:
+                previousSubmissionId:
+                  type: string
+                  format: uuid
+                notes:
+                  type: string
+                  maxLength: 2000
+      responses:
+        "201":
+          description: Nueva revisión draft tras devolución.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables/{deliverableId}/submissions/{submissionId}/submit:
+    post:
+      tags: [Deliverables]
+      summary: Enviar y congelar una revisión
+      operationId: submitDeliverableRevision
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionedRequest"
+      responses:
+        "200":
+          description: Revisión congelada y enviada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /deliverables/{deliverableId}/submissions/{submissionId}/start-review:
+    post:
+      tags: [Deliverables]
+      summary: Iniciar evaluación de una revisión
+      operationId: startDeliverableReview
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionedRequest"
+      responses:
+        "200":
+          description: Revisión tomada por mentor autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /deliverables/{deliverableId}/submissions/{submissionId}/evaluation:
+    post:
+      tags: [Deliverables]
+      summary: Evaluar una revisión
+      operationId: evaluateSubmission
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluateSubmissionRequest"
+      responses:
+        "201":
+          description: Evaluación inmutable creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /deliverables/{deliverableId}/submissions/{submissionId}/return:
+    post:
+      tags: [Deliverables]
+      summary: Devolver una revisión
+      operationId: returnSubmission
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/DeliverableId"
+        - $ref: "#/components/parameters/SubmissionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonedTransitionRequest"
+      responses:
+        "200":
+          description: Revisión devuelta para corrección.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Listar usuarios
+      operationId: listAdminUsers
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Usuarios de la organización.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminUser"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin]
+      summary: Crear un usuario
+      operationId: createAdminUser
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Usuario ficticio/real autorizado creado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/users/{userId}:
+    patch:
+      tags: [Admin]
+      summary: Actualizar un usuario
+      operationId: updateAdminUser
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Usuario actualizado dentro de la organización.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/users/{userId}/password-reset:
+    post:
+      tags: [Admin]
+      summary: Resetear contraseña de usuario
+      operationId: resetUserPassword
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [temporaryPassword]
+              properties:
+                temporaryPassword:
+                  type: string
+                  minLength: 12
+                  maxLength: 128
+                  writeOnly: true
+      responses:
+        "204":
+          description: Password temporal aplicado; sesiones revocadas.
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/oleadas:
+    get:
+      tags: [Admin]
+      summary: Listar oleadas
+      operationId: listAdminOleadas
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OleadaStatus"
+      responses:
+        "200":
+          description: Oleadas de la organización del admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OleadaPage"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin]
+      summary: Crear una oleada
+      operationId: createAdminOleada
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOleadaRequest"
+      responses:
+        "201":
+          description: Oleada creada en DRAFT.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Oleada"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/oleadas/{oleadaId}:
+    patch:
+      tags: [Admin]
+      summary: Actualizar una oleada
+      operationId: updateAdminOleada
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/OleadaPathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOleadaRequest"
+      responses:
+        "200":
+          description: Datos o estado de oleada actualizados.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Oleada"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/enrollments:
+    get:
+      tags: [Admin]
+      summary: Listar enrollments
+      operationId: listAdminEnrollments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/OleadaId"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/EnrollmentStatus"
+        - name: phase
+          in: query
+          schema:
+            $ref: "#/components/schemas/ProgramPhase"
+      responses:
+        "200":
+          description: Enrollments de la organización.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentPage"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin]
+      summary: Crear un enrollment
+      operationId: createAdminEnrollment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEnrollmentRequest"
+      responses:
+        "201":
+          description: Participante incorporado a la oleada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/enrollments/{enrollmentId}:
+    patch:
+      tags: [Admin]
+      summary: Actualizar un enrollment
+      operationId: updateAdminEnrollment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEnrollmentRequest"
+      responses:
+        "200":
+          description: Estado o fase actualizados mediante transición válida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/mentor-assignments:
+    get:
+      tags: [Admin]
+      summary: Listar asignaciones de mentor
+      operationId: listAdminMentorAssignments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/OleadaId"
+        - name: mentorUserId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Asignaciones scoped por organización.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorAssignmentPage"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin]
+      summary: Crear una asignación de mentor
+      operationId: createAdminMentorAssignment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMentorAssignmentRequest"
+      responses:
+        "201":
+          description: Alcance de mentor activado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorAssignment"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/mentor-assignments/{mentorAssignmentId}:
+    delete:
+      tags: [Admin]
+      summary: Cerrar una asignación de mentor
+      operationId: closeAdminMentorAssignment
+      security:
+        - accessCookie: []
+          csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/MentorAssignmentId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      responses:
+        "204":
+          description: Asignación cerrada; el historial se conserva.
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+components:
+  securitySchemes:
+    accessCookie:
+      type: apiKey
+      in: cookie
+      name: edu_access
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: edu_refresh
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    OleadaId:
+      name: oleadaId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    OleadaPathId:
+      name: oleadaId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EnrollmentId:
+      name: enrollmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AssignmentId:
+      name: assignmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DeliverableId:
+      name: deliverableId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SubmissionId:
+      name: submissionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MentorAssignmentId:
+      name: mentorAssignmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ExpectedVersion:
+      name: expectedVersion
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Unauthorized:
+      description: Autenticación ausente, expirada o revocada.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Identidad válida sin permiso para la acción.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Recurso ausente o deliberadamente oculto por ownership.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: Conflicto de horario, versión, estado o idempotencia.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    ScheduleConflict:
+      description: Conflicto de agenda tipado o conflicto concurrente/de idempotencia.
+      content:
+        application/json:
+          schema:
+            anyOf:
+              - $ref: "#/components/schemas/ScheduleConflictError"
+              - $ref: "#/components/schemas/ErrorEnvelope"
+    ConfirmationClosed:
+      description: La ventana de confirmación ya cerró.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfirmationClosedError"
+    ValidationError:
+      description: DTO o regla de negocio inválida.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          writeOnly: true
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          writeOnly: true
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    Role:
+      type: string
+      enum: [PARTICIPANT, MENTOR, ADMIN]
+    MentorCapability:
+      type: string
+      enum: [SPECIALIST, PEER]
+    ProgramPhase:
+      type: string
+      enum: [FASE_0, FASE_1, FASE_2, FINISHED]
+    SessionPhase:
+      type: string
+      enum: [FASE_1, FASE_2]
+    OleadaStatus:
+      type: string
+      enum: [DRAFT, OPEN, IN_PROGRESS, CLOSED]
+    EnrollmentStatus:
+      type: string
+      enum: [ACTIVE, WITHDRAWN, COMPLETED]
+    MentorAssignmentStatus:
+      type: string
+      enum: [ACTIVE, CLOSED]
+    AuthMe:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - fullName
+        - email
+        - organization
+        - roles
+        - mentorCapabilities
+        - mustChangePassword
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        organization:
+          $ref: "#/components/schemas/OrganizationRef"
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Role"
+        mentorCapabilities:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/MentorCapability"
+        activeEnrollment:
+          oneOf:
+            - $ref: "#/components/schemas/ActiveEnrollment"
+            - type: "null"
+        mustChangePassword:
+          type: boolean
+    OrganizationRef:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    OleadaRef:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    ActiveEnrollment:
+      type: object
+      additionalProperties: false
+      required: [id, oleada, currentPhase]
+      properties:
+        id:
+          type: string
+          format: uuid
+        oleada:
+          $ref: "#/components/schemas/OleadaRef"
+        currentPhase:
+          $ref: "#/components/schemas/ProgramPhase"
+        currentWeek:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 6
+    UserRef:
+      type: object
+      additionalProperties: false
+      required: [id, fullName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+    ParticipantDashboard:
+      type: object
+      additionalProperties: false
+      required: [sessions, deliverables]
+      properties:
+        sessions:
+          type: object
+          required: [attended, total]
+          properties:
+            attended:
+              type: integer
+              minimum: 0
+            total:
+              type: integer
+              minimum: 0
+            next:
+              oneOf:
+                - $ref: "#/components/schemas/SessionSummary"
+                - type: "null"
+        deliverables:
+          type: object
+          required: [submitted, expected]
+          properties:
+            submitted:
+              type: integer
+              minimum: 0
+            expected:
+              type: integer
+              minimum: 0
+            nextDueAt:
+              type:
+                - string
+                - "null"
+              format: date-time
+    MentorDashboard:
+      type: object
+      additionalProperties: false
+      required:
+        - completedMinutes
+        - upcomingSessions
+        - pendingConfirmations
+        - pendingRescheduleRequests
+        - pendingReviews
+      properties:
+        completedMinutes:
+          type: integer
+          minimum: 0
+        upcomingSessions:
+          type: integer
+          minimum: 0
+        pendingConfirmations:
+          type: integer
+          minimum: 0
+        pendingRescheduleRequests:
+          type: integer
+          minimum: 0
+        pendingReviews:
+          type: integer
+          minimum: 0
+    AdminDashboard:
+      type: object
+      additionalProperties: false
+      required:
+        - activeUsers
+        - upcomingSessions
+        - pendingDeliverables
+        - failedJobs
+      properties:
+        activeUsers:
+          type: integer
+          minimum: 0
+        upcomingSessions:
+          type: integer
+          minimum: 0
+        pendingDeliverables:
+          type: integer
+          minimum: 0
+        failedJobs:
+          type: integer
+          minimum: 0
+    SessionType:
+      type: string
+      enum: [ONE_ON_ONE, GROUP, CHECKPOINT]
+    SessionStatus:
+      type: string
+      enum: [SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED]
+    ConfirmationStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, DECLINED]
+    AttendanceStatus:
+      type: string
+      enum: [PENDING, ATTENDED, ABSENT]
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - oleadaId
+        - title
+        - type
+        - phase
+        - startsAt
+        - durationMinutes
+        - timezone
+        - enrollmentIds
+      properties:
+        oleadaId:
+          type: string
+          format: uuid
+        mentorUserId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 4000
+        type:
+          $ref: "#/components/schemas/SessionType"
+        phase:
+          $ref: "#/components/schemas/SessionPhase"
+        weekNumber:
+          type: integer
+          minimum: 1
+          maximum: 6
+        checkpointMonth:
+          type: integer
+          enum: [1, 2, 3, 6]
+        startsAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+          minimum: 15
+          maximum: 240
+        timezone:
+          type: string
+          example: America/Lima
+        meetingUrl:
+          type: string
+          format: uri
+          maxLength: 2048
+        enrollmentIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    UpdateSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 4000
+        meetingUrl:
+          type: string
+          format: uri
+        expectedVersion:
+          type: integer
+          minimum: 1
+    VersionedRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+    ReasonedTransitionRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, expectedVersion]
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        expectedVersion:
+          type: integer
+          minimum: 1
+    RescheduleSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [startsAt, durationMinutes, reason, expectedVersion]
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+          minimum: 15
+          maximum: 240
+        meetingUrl:
+          type: string
+          format: uri
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        expectedVersion:
+          type: integer
+          minimum: 1
+    SessionParticipant:
+      type: object
+      additionalProperties: false
+      required:
+        - enrollmentId
+        - participant
+        - confirmationStatus
+        - attendanceStatus
+        - version
+      properties:
+        enrollmentId:
+          type: string
+          format: uuid
+        participant:
+          $ref: "#/components/schemas/UserRef"
+        confirmationStatus:
+          $ref: "#/components/schemas/ConfirmationStatus"
+        attendanceStatus:
+          $ref: "#/components/schemas/AttendanceStatus"
+        confirmedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+    SessionSummary:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - phase
+        - startsAt
+        - endsAt
+        - timezone
+        - status
+        - confirmationClosesAt
+        - canConfirm
+        - confirmationSummary
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/SessionType"
+        phase:
+          $ref: "#/components/schemas/SessionPhase"
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        status:
+          $ref: "#/components/schemas/SessionStatus"
+        confirmationClosesAt:
+          type: string
+          format: date-time
+          description: En el piloto coincide con startsAt.
+        canConfirm:
+          type: boolean
+          description: Valor contextual para el usuario autenticado.
+        confirmationSummary:
+          $ref: "#/components/schemas/ConfirmationSummary"
+    ConfirmationSummary:
+      type: object
+      additionalProperties: false
+      required: [total, pending, confirmed, declined]
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        pending:
+          type: integer
+          minimum: 0
+        confirmed:
+          type: integer
+          minimum: 0
+        declined:
+          type: integer
+          minimum: 0
+    Session:
+      allOf:
+        - $ref: "#/components/schemas/SessionSummary"
+        - type: object
+          required: [oleada, mentor, participants, version]
+          properties:
+            oleada:
+              $ref: "#/components/schemas/OleadaRef"
+            mentor:
+              $ref: "#/components/schemas/UserRef"
+            description:
+              type:
+                - string
+                - "null"
+            weekNumber:
+              type:
+                - integer
+                - "null"
+              minimum: 1
+              maximum: 6
+            checkpointMonth:
+              type:
+                - integer
+                - "null"
+              enum: [1, 2, 3, 6, null]
+            meetingUrl:
+              type:
+                - string
+                - "null"
+              format: uri
+            participants:
+              type: array
+              items:
+                $ref: "#/components/schemas/SessionParticipant"
+            rescheduledFromId:
+              type:
+                - string
+                - "null"
+              format: uuid
+            version:
+              type: integer
+              minimum: 1
+      unevaluatedProperties: false
+    SessionPage:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+        meta:
+          $ref: "#/components/schemas/PageMeta"
+    RescheduleRequestStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+    CreateRescheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        proposedStartsAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+    ApproveRescheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [startsAt, expectedSessionVersion, expectedRequestVersion]
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+          minimum: 15
+          maximum: 240
+        meetingUrl:
+          type: string
+          format: uri
+        expectedSessionVersion:
+          type: integer
+          minimum: 1
+        expectedRequestVersion:
+          type: integer
+          minimum: 1
+    RescheduleRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - sessionId
+        - requestedBy
+        - reason
+        - status
+        - requestedAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        requestedBy:
+          $ref: "#/components/schemas/UserRef"
+        proposedStartsAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        reason:
+          type: string
+        status:
+          $ref: "#/components/schemas/RescheduleRequestStatus"
+        decisionReason:
+          type:
+            - string
+            - "null"
+        replacementSessionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        requestedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+    RubricCriterion:
+      type: object
+      additionalProperties: false
+      required: [id, label, maxScore]
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z][a-z0-9_-]*$"
+        label:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+        maxScore:
+          type: integer
+          minimum: 1
+          maximum: 100
+    Assignment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - oleada
+        - title
+        - instructions
+        - weekNumber
+        - dueAt
+        - maxScore
+        - rubric
+        - isActive
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        oleada:
+          $ref: "#/components/schemas/OleadaRef"
+        title:
+          type: string
+        instructions:
+          type: string
+        weekNumber:
+          type: integer
+          minimum: 1
+          maximum: 6
+        dueAt:
+          type: string
+          format: date-time
+        maxScore:
+          const: 100
+        rubric:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RubricCriterion"
+        isActive:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
+    CreateAssignmentRequest:
+      type: object
+      additionalProperties: false
+      required: [oleadaId, title, instructions, weekNumber, dueAt, rubric]
+      properties:
+        oleadaId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 160
+        instructions:
+          type: string
+          maxLength: 10000
+        weekNumber:
+          type: integer
+          minimum: 1
+          maximum: 6
+        dueAt:
+          type: string
+          format: date-time
+        rubric:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RubricCriterion"
+    UpdateAssignmentRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      anyOf:
+        - required: [title]
+        - required: [instructions]
+        - required: [weekNumber]
+        - required: [dueAt]
+        - required: [rubric]
+        - required: [isActive]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        instructions:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        weekNumber:
+          type: integer
+          minimum: 1
+          maximum: 6
+        dueAt:
+          type: string
+          format: date-time
+        rubric:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RubricCriterion"
+        isActive:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 1
+    SubmissionStatus:
+      type: string
+      enum: [DRAFT, SUBMITTED, UNDER_REVIEW, EVALUATED, RETURNED]
+    ScanStatus:
+      type: string
+      enum: [PENDING, CLEAN, REJECTED, ERROR]
+    DeliverableFile:
+      type: object
+      additionalProperties: false
+      required: [id, originalName, detectedMimeType, sizeBytes, scanStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        originalName:
+          type: string
+        detectedMimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          minimum: 1
+        scanStatus:
+          $ref: "#/components/schemas/ScanStatus"
+    Evaluation:
+      type: object
+      additionalProperties: false
+      required: [id, submissionId, mentor, score, feedback, rubricScores, evaluatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        submissionId:
+          type: string
+          format: uuid
+        mentor:
+          $ref: "#/components/schemas/UserRef"
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+        rubricScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/RubricScore"
+        evaluatedAt:
+          type: string
+          format: date-time
+    Submission:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - revisionNumber
+        - status
+        - notes
+        - files
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
+        previousSubmissionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        status:
+          $ref: "#/components/schemas/SubmissionStatus"
+        notes:
+          type: string
+        submittedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliverableFile"
+        evaluation:
+          oneOf:
+            - $ref: "#/components/schemas/Evaluation"
+            - type: "null"
+        version:
+          type: integer
+          minimum: 1
+    Deliverable:
+      type: object
+      additionalProperties: false
+      required: [id, assignment, enrollmentId, submissions]
+      properties:
+        id:
+          type: string
+          format: uuid
+        assignment:
+          $ref: "#/components/schemas/Assignment"
+        enrollmentId:
+          type: string
+          format: uuid
+        currentSubmissionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Submission"
+    DeliverablePage:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deliverable"
+        meta:
+          $ref: "#/components/schemas/PageMeta"
+    CreateDeliverableRequest:
+      type: object
+      additionalProperties: false
+      required: [assignmentId, notes]
+      properties:
+        assignmentId:
+          type: string
+          format: uuid
+        notes:
+          type: string
+          maxLength: 2000
+    UpdateSubmissionRequest:
+      type: object
+      additionalProperties: false
+      required: [notes, expectedVersion]
+      properties:
+        notes:
+          type: string
+          maxLength: 2000
+        expectedVersion:
+          type: integer
+          minimum: 1
+    RubricScore:
+      type: object
+      additionalProperties: false
+      required: [criterionId, score]
+      properties:
+        criterionId:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        comment:
+          type: string
+          maxLength: 1000
+    EvaluateSubmissionRequest:
+      type: object
+      additionalProperties: false
+      required: [score, feedback, rubricScores, expectedVersion]
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+          minLength: 10
+          maxLength: 4000
+        rubricScores:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RubricScore"
+        expectedVersion:
+          type: integer
+          minimum: 1
+    TopCandidate:
+      type: object
+      additionalProperties: false
+      required: [submissionId, rank]
+      properties:
+        submissionId:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 3
+    TopCandidates:
+      type: object
+      additionalProperties: false
+      required: [assignmentId, candidates, version, provisionalRule]
+      properties:
+        assignmentId:
+          type: string
+          format: uuid
+        candidates:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/TopCandidate"
+        version:
+          type: integer
+          minimum: 1
+        provisionalRule:
+          const: true
+    ReplaceTopCandidatesRequest:
+      type: object
+      additionalProperties: false
+      required: [candidates, expectedVersion]
+      properties:
+        candidates:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/TopCandidate"
+        expectedVersion:
+          type: integer
+          minimum: 1
+    AdminUser:
+      type: object
+      additionalProperties: false
+      required: [id, email, fullName, roles, isActive, mustChangePassword, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Role"
+        isActive:
+          type: boolean
+        mustChangePassword:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
+    CreateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [email, fullName, roles, temporaryPassword]
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+          maxLength: 160
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Role"
+        temporaryPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    UpdateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      anyOf:
+        - required: [fullName]
+        - required: [roles]
+        - required: [isActive]
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+          maxLength: 160
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Role"
+        isActive:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 1
+    Oleada:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - sector
+        - status
+        - startDate
+        - endDate
+        - capacity
+        - activeEnrollmentCount
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sector:
+          type: string
+        status:
+          $ref: "#/components/schemas/OleadaStatus"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        capacity:
+          type: integer
+          minimum: 1
+        activeEnrollmentCount:
+          type: integer
+          minimum: 0
+          readOnly: true
+        version:
+          type: integer
+          minimum: 1
+    CreateOleadaRequest:
+      type: object
+      additionalProperties: false
+      required: [name, sector, startDate, endDate, capacity]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sector:
+          type: string
+          minLength: 1
+          maxLength: 120
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        capacity:
+          type: integer
+          minimum: 1
+          maximum: 10000
+    UpdateOleadaRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      anyOf:
+        - required: [name]
+        - required: [sector]
+        - required: [status]
+        - required: [startDate]
+        - required: [endDate]
+        - required: [capacity]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sector:
+          type: string
+          minLength: 1
+          maxLength: 120
+        status:
+          $ref: "#/components/schemas/OleadaStatus"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        capacity:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        expectedVersion:
+          type: integer
+          minimum: 1
+    OleadaPage:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Oleada"
+        meta:
+          $ref: "#/components/schemas/PageMeta"
+    Enrollment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - user
+        - oleada
+        - status
+        - currentPhase
+        - currentWeek
+        - phase1GraduatedAt
+        - enrolledAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        user:
+          $ref: "#/components/schemas/AdminUser"
+        oleada:
+          $ref: "#/components/schemas/OleadaRef"
+        status:
+          $ref: "#/components/schemas/EnrollmentStatus"
+        currentPhase:
+          $ref: "#/components/schemas/ProgramPhase"
+        currentWeek:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 6
+        phase1GraduatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        enrolledAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+    CreateEnrollmentRequest:
+      type: object
+      additionalProperties: false
+      required: [userId, oleadaId]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        oleadaId:
+          type: string
+          format: uuid
+        currentPhase:
+          type: string
+          enum: [FASE_0, FASE_1]
+          default: FASE_0
+    UpdateEnrollmentRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      anyOf:
+        - required: [status]
+        - required: [currentPhase]
+        - required: [currentWeek]
+      properties:
+        status:
+          $ref: "#/components/schemas/EnrollmentStatus"
+        currentPhase:
+          $ref: "#/components/schemas/ProgramPhase"
+        currentWeek:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 6
+        expectedVersion:
+          type: integer
+          minimum: 1
+    EnrollmentPage:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Enrollment"
+        meta:
+          $ref: "#/components/schemas/PageMeta"
+    MentorAssignment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mentor
+        - oleada
+        - enrollmentId
+        - capability
+        - status
+        - startsAt
+        - endsAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor:
+          $ref: "#/components/schemas/UserRef"
+        oleada:
+          $ref: "#/components/schemas/OleadaRef"
+        enrollmentId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          description: Null para un especialista con alcance de toda la oleada.
+        capability:
+          $ref: "#/components/schemas/MentorCapability"
+        status:
+          $ref: "#/components/schemas/MentorAssignmentStatus"
+          readOnly: true
+          description: Derivado de la vigencia; cerrar fija endsAt y conserva historial.
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+    CreateMentorAssignmentRequest:
+      type: object
+      additionalProperties: false
+      required: [mentorUserId, oleadaId, capability, startsAt]
+      properties:
+        mentorUserId:
+          type: string
+          format: uuid
+        oleadaId:
+          type: string
+          format: uuid
+        enrollmentId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        capability:
+          const: SPECIALIST
+          description: PEER permanece fuera del alcance operativo del piloto.
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+    MentorAssignmentPage:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MentorAssignment"
+        meta:
+          $ref: "#/components/schemas/PageMeta"
+    PageMeta:
+      type: object
+      additionalProperties: false
+      required: [page, limit, total, hasNextPage]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        hasNextPage:
+          type: boolean
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, traceId]
+          properties:
+            code:
+              type: string
+              pattern: "^[A-Z][A-Z0-9_]+$"
+            message:
+              type: string
+            traceId:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+    ScheduleConflictError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, traceId, details]
+          properties:
+            code:
+              const: SCHEDULE_CONFLICT
+            message:
+              type: string
+            traceId:
+              type: string
+            details:
+              $ref: "#/components/schemas/ScheduleConflictDetails"
+    ScheduleConflictDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - resourceType
+        - resourceId
+        - occupiedInterval
+        - canViewConflictingSession
+        - conflictingSessionId
+      properties:
+        resourceType:
+          type: string
+          enum: [USER, ENROLLMENT]
+        resourceId:
+          type: string
+          format: uuid
+          description: Recurso incluido o autorizado en la operación solicitada.
+        occupiedInterval:
+          type: object
+          additionalProperties: false
+          required: [startsAt, endsAt, timezone]
+          properties:
+            startsAt:
+              type: string
+              format: date-time
+            endsAt:
+              type: string
+              format: date-time
+            timezone:
+              type: string
+        canViewConflictingSession:
+          type: boolean
+        conflictingSessionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          description: Null cuando ownership impide revelar la sesión existente.
+    ConfirmationClosedError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, traceId, details]
+          properties:
+            code:
+              const: CONFIRMATION_CLOSED
+            message:
+              type: string
+            traceId:
+              type: string
+            details:
+              type: object
+              additionalProperties: false
+              required: [confirmationClosesAt]
+              properties:
+                confirmationClosesAt:
+                  type: string
+                  format: date-time

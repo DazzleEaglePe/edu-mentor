@@ -1,0 +1,17 @@
+{
+  "id": "aaaaaaaa-1111-4aaa-8111-aaaaaaaaaaaa",
+  "mentor": {
+    "id": "44444444-4444-4444-8444-444444444444",
+    "fullName": "Mentora Demo"
+  },
+  "oleada": {
+    "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "name": "Oleada Tecnología Demo 2026"
+  },
+  "enrollmentId": null,
+  "capability": "SPECIALIST",
+  "status": "ACTIVE",
+  "startsAt": "2026-08-01T14:00:00Z",
+  "endsAt": null,
+  "version": 1
+}

@@ -1,0 +1,20 @@
+.DS_Store
+node_modules/
+.next/
+dist/
+coverage/
+.turbo/
+.pnpm-store/
+
+.env
+.env.*
+!.env.example
+
+uploads/
+tmp/
+*.log
+*.tsbuildinfo
+apps/api/src/generated/prisma/
+
+# Snapshot de contexto ya extraído.
+newfiles.zip

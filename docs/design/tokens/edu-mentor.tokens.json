@@ -1,0 +1,109 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "$description": "EDU-MENTOR design tokens — propuesta Fase 0. Marca EDU-US. Ver docs/design/02-design-tokens.md",
+  "color": {
+    "navy": {
+      "900": { "$type": "color", "$value": "#0B1526" },
+      "800": { "$type": "color", "$value": "#16243B", "$description": "Color de marca" },
+      "700": { "$type": "color", "$value": "#1F3355" },
+      "600": { "$type": "color", "$value": "#2C466F" },
+      "500": { "$type": "color", "$value": "#5B6B82" }
+    },
+    "teal": {
+      "800": { "$type": "color", "$value": "#075049" },
+      "700": { "$type": "color", "$value": "#0B6E66", "$description": "Relleno accesible con texto blanco (6.11:1)" },
+      "600": { "$type": "color", "$value": "#0F7C72" },
+      "500": { "$type": "color", "$value": "#2DB6A8", "$description": "Color de marca — no usar con texto blanco" },
+      "200": { "$type": "color", "$value": "#A8E3DC" },
+      "100": { "$type": "color", "$value": "#D9F3EF" },
+      "50": { "$type": "color", "$value": "#EEFAF8" }
+    },
+    "yellow": {
+      "800": { "$type": "color", "$value": "#7A5200" },
+      "500": { "$type": "color", "$value": "#F5A623", "$description": "Color de marca — solo con texto navy-800" },
+      "200": { "$type": "color", "$value": "#FBDFB0" },
+      "100": { "$type": "color", "$value": "#FDF1DC" }
+    },
+    "coral": {
+      "800": { "$type": "color", "$value": "#8F2A10" },
+      "700": { "$type": "color", "$value": "#B23414" },
+      "500": { "$type": "color", "$value": "#E8461E", "$description": "Color de marca — no usar con texto blanco en tamaño normal" },
+      "200": { "$type": "color", "$value": "#F7B9A8" },
+      "100": { "$type": "color", "$value": "#FBE0D8" }
+    },
+    "neutral": {
+      "bg": { "$type": "color", "$value": "#F4F1EA", "$description": "Off-white de marca" },
+      "surface": { "$type": "color", "$value": "#FFFFFF" },
+      "surfaceSunken": { "$type": "color", "$value": "#EEEAE1" },
+      "border": { "$type": "color", "$value": "#DCD7CC" },
+      "borderStrong": { "$type": "color", "$value": "#7E7869" }
+    }
+  },
+  "semantic": {
+    "text": {
+      "primary": { "$type": "color", "$value": "{color.navy.800}" },
+      "secondary": { "$type": "color", "$value": "{color.navy.500}" },
+      "onDark": { "$type": "color", "$value": "#FFFFFF" },
+      "link": { "$type": "color", "$value": "{color.teal.600}" }
+    },
+    "action": {
+      "primaryBg": { "$type": "color", "$value": "{color.teal.700}" },
+      "primaryText": { "$type": "color", "$value": "#FFFFFF" },
+      "dangerBg": { "$type": "color", "$value": "{color.coral.700}" },
+      "dangerText": { "$type": "color", "$value": "#FFFFFF" },
+      "focusRing": { "$type": "color", "$value": "{color.teal.700}" }
+    },
+    "status": {
+      "confirmedBg": { "$type": "color", "$value": "{color.teal.100}", "$description": "confirmationStatus CONFIRMED · attendanceStatus ATTENDED · submission EVALUATED · rescheduleRequest APPROVED · file CLEAN" },
+      "confirmedText": { "$type": "color", "$value": "{color.teal.800}" },
+      "pendingBg": { "$type": "color", "$value": "{color.yellow.100}", "$description": "confirmationStatus PENDING · submission SUBMITTED · rescheduleRequest PENDING · file PENDING" },
+      "pendingText": { "$type": "color", "$value": "{color.yellow.800}" },
+      "reviewBg": { "$type": "color", "$value": "{color.teal.50}", "$description": "submission UNDER_REVIEW" },
+      "reviewText": { "$type": "color", "$value": "{color.teal.800}" },
+      "returnedBg": { "$type": "color", "$value": "{color.coral.100}", "$description": "submission RETURNED" },
+      "returnedText": { "$type": "color", "$value": "{color.coral.800}" },
+      "declinedBg": { "$type": "color", "$value": "{color.coral.100}", "$description": "confirmationStatus DECLINED · attendanceStatus ABSENT · rescheduleRequest REJECTED · file REJECTED" },
+      "declinedText": { "$type": "color", "$value": "{color.coral.800}" },
+      "neutralBg": { "$type": "color", "$value": "{color.neutral.surfaceSunken}", "$description": "submission DRAFT · session SCHEDULED · attendanceStatus PENDING" },
+      "neutralText": { "$type": "color", "$value": "{color.navy.500}" },
+      "inactiveBg": { "$type": "color", "$value": "{color.neutral.surfaceSunken}", "$description": "session COMPLETED/CANCELLED/RESCHEDULED · rescheduleRequest CANCELLED" },
+      "inactiveText": { "$type": "color", "$value": "{color.navy.700}" }
+    }
+  },
+  "font": {
+    "family": {
+      "sans": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"] },
+      "mono": { "$type": "fontFamily", "$value": ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"] }
+    },
+    "scale": {
+      "display": { "$type": "typography", "$value": { "fontSize": "32px", "lineHeight": "40px", "fontWeight": 700 } },
+      "h1": { "$type": "typography", "$value": { "fontSize": "26px", "lineHeight": "34px", "fontWeight": 700 } },
+      "h2": { "$type": "typography", "$value": { "fontSize": "21px", "lineHeight": "28px", "fontWeight": 600 } },
+      "h3": { "$type": "typography", "$value": { "fontSize": "18px", "lineHeight": "26px", "fontWeight": 600 } },
+      "body": { "$type": "typography", "$value": { "fontSize": "16px", "lineHeight": "24px", "fontWeight": 400 } },
+      "bodySm": { "$type": "typography", "$value": { "fontSize": "14px", "lineHeight": "20px", "fontWeight": 400 } },
+      "caption": { "$type": "typography", "$value": { "fontSize": "13px", "lineHeight": "18px", "fontWeight": 500 } }
+    }
+  },
+  "space": {
+    "1": { "$type": "dimension", "$value": "4px" },
+    "2": { "$type": "dimension", "$value": "8px" },
+    "3": { "$type": "dimension", "$value": "12px" },
+    "4": { "$type": "dimension", "$value": "16px" },
+    "6": { "$type": "dimension", "$value": "24px" },
+    "8": { "$type": "dimension", "$value": "32px" },
+    "12": { "$type": "dimension", "$value": "48px" },
+    "16": { "$type": "dimension", "$value": "64px" }
+  },
+  "radius": {
+    "sm": { "$type": "dimension", "$value": "6px" },
+    "md": { "$type": "dimension", "$value": "10px" },
+    "lg": { "$type": "dimension", "$value": "14px" },
+    "pill": { "$type": "dimension", "$value": "999px" }
+  },
+  "breakpoint": {
+    "sm": { "$type": "dimension", "$value": "640px" },
+    "md": { "$type": "dimension", "$value": "1024px" },
+    "lg": { "$type": "dimension", "$value": "1280px" }
+  }
+}

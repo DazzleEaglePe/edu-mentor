@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.next/
+.pnpm-store/
+design-platform/
+docs/
+**/*.md
+packages/shared-types/src/generated/
+apps/api/src/generated/prisma/
+pnpm-lock.yaml
