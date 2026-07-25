@@ -1,14 +1,18 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 
-interface HealthResponse {
+import { HealthService, type ReadinessResponse } from './health.service.js';
+
+interface LivenessResponse {
   readonly service: 'api';
   readonly status: 'ok';
 }
 
 @Controller('health')
 export class HealthController {
+  constructor(@Inject(HealthService) private readonly healthService: HealthService) {}
+
   @Get('live')
-  getLiveness(): HealthResponse {
+  getLiveness(): LivenessResponse {
     return {
       service: 'api',
       status: 'ok',
@@ -16,10 +20,7 @@ export class HealthController {
   }
 
   @Get('ready')
-  getReadiness(): HealthResponse {
-    return {
-      service: 'api',
-      status: 'ok',
-    };
+  getReadiness(): Promise<ReadinessResponse> {
+    return this.healthService.getReadiness();
   }
 }

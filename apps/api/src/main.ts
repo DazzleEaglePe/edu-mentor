@@ -5,14 +5,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ErrorEnvelopeFilter } from './common/http/error-envelope.filter.js';
 import { traceIdMiddleware } from './common/http/trace-id.js';
+import { loadRuntimeConfig } from './config/runtime-config.js';
 
 interface ConfigurableHttpServer {
   disable(setting: string): void;
 }
 
 async function bootstrap(): Promise<void> {
+  const runtimeConfig = loadRuntimeConfig();
   const app = await NestFactory.create(AppModule);
-  const port = Number(process.env.PORT ?? 3001);
   const httpServer = app.getHttpAdapter().getInstance() as ConfigurableHttpServer;
 
   httpServer.disable('x-powered-by');
@@ -21,7 +22,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api/v1');
   app.enableShutdownHooks();
 
-  await app.listen(port, '0.0.0.0');
+  await app.listen(runtimeConfig.port, '0.0.0.0');
 }
 
 void bootstrap().catch((error: unknown) => {

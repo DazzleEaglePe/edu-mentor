@@ -92,18 +92,21 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 
 ## Fase 1 · Fundaciones
 
-- [ ] Inicializar Git y baseline aprobado.
+- [x] Inicializar Git y baseline aprobado.
 - [x] Crear monorepo pnpm.
 - [ ] Crear `apps/web`, `apps/api`, `packages/shared-types`, config compartida.
 - [x] Configurar TypeScript estricto.
 - [x] Configurar lint, format, typecheck, tests y CI.
 - [x] Generar `packages/shared-types` desde OpenAPI sin mantener un contrato manual paralelo.
 - [ ] Configurar secret scan y dependency audit.
-- [ ] Crear Docker Compose local.
-- [ ] Configurar Postgres, Redis y health checks.
-- [ ] Configurar Prisma y migraciones.
+- [x] Crear Docker Compose local.
+- [x] Configurar Postgres, Redis y health checks.
+  - [x] Implementar clientes y readiness fail-closed con prueba negativa.
+  - [x] Ejecutar ambos servicios y demostrar readiness positivo.
+- [x] Configurar Prisma y migraciones.
   - [x] Definir y validar el schema Prisma inicial de fundaciones.
-  - [ ] Generar y ejecutar la migración inicial contra PostgreSQL.
+  - [x] Generar la migración SQL inicial con constraints fundacionales.
+  - [x] Ejecutar la migración inicial contra PostgreSQL.
 - [x] Implementar config/feature gates tipados.
 - [x] Implementar errors + traceId + logs estructurados.
 - [ ] Implementar usuarios, roles y mentor capabilities.
@@ -113,11 +116,11 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Implementar audit log.
 - [ ] Crear seed ficticio por rol.
 - [ ] Crear shell web y navegación por rol.
-- [ ] Probar instalación limpia.
+- [x] Probar instalación limpia.
 
 ### Gate 1
 
-- [ ] CI verde.
+- [x] CI verde.
 - [ ] Migración/seed reproducibles.
 - [ ] Auth positive/negative tests.
 - [ ] Ownership cross-user bloqueado.
