@@ -60,7 +60,31 @@ stateDiagram-v2
 - Un fallo de negocio revierte también la reserva idempotente: después de liberar un cupo, el mismo
   request fallido puede reintentarse.
 
-## 2. Sesión
+## 2. Mentor assignment
+
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: crear alcance
+    ACTIVE --> CLOSED: finalizar vigencia
+    CLOSED --> [*]
+```
+
+- Solo `ADMIN` crea o cierra asignaciones dentro de su organización.
+- El mentor debe estar activo, tener rol `MENTOR`, perfil y capability `SPECIALIST`.
+- `enrollmentId = null` significa alcance de oleada; un UUID limita el alcance a un enrollment
+  `ACTIVE` de esa misma oleada.
+- En el piloto existe una asignación activa por combinación
+  `oleada + enrollmentId + capability`. Reasignar exige cerrar la vigente antes de crear otra.
+- `ACTIVE|CLOSED` se deriva de `endsAt`; no se persiste otro estado que pueda contradecir la
+  vigencia.
+- Cerrar usa `DELETE` semántico, pero no borra: fija `endsAt`, incrementa `version` y audita
+  before/after. Una asignación programada solo puede cerrarse después de `startsAt`.
+- Crear bloquea la oleada para serializar carreras por el mismo alcance y usa `Idempotency-Key`;
+  cerrar bloquea la asignación y exige `expectedVersion`.
+- `PEER` puede existir como capability de perfil, pero no puede crearse como asignación en el
+  piloto.
+
+## 3. Sesión
 
 ```mermaid
 stateDiagram-v2
@@ -82,7 +106,7 @@ stateDiagram-v2
 
 Una reprogramación nunca edita silenciosamente el horario original. Crea un registro reemplazo y conserva trazabilidad.
 
-## 3. Confirmación y asistencia
+## 4. Confirmación y asistencia
 
 Son dos conceptos separados:
 
@@ -111,7 +135,7 @@ stateDiagram-v2
 - Asistencia es terminal en el MVP. Una corrección administrativa excepcional se audita con before/after.
 - `CONFIRMED` no implica `ATTENDED`; `DECLINED` tampoco debe convertirse automáticamente en `ABSENT`.
 
-## 4. Solicitud de reprogramación
+## 5. Solicitud de reprogramación
 
 ```mermaid
 stateDiagram-v2
@@ -135,7 +159,7 @@ Invariantes:
 
 El `409 SCHEDULE_CONFLICT` identifica el recurso que colisiona y el intervalo ocupado. `conflictingSessionId` solo aparece si el actor ya tiene permiso para leer esa sesión; nunca se filtran título, mentor ni otros participantes de una sesión ajena.
 
-## 5. Revisión de entregable
+## 6. Revisión de entregable
 
 ```mermaid
 stateDiagram-v2
@@ -160,7 +184,7 @@ La flecha `RETURNED → DRAFT` crea otra fila con `revision_number + 1`; no reci
 
 Submit exige al menos un archivo o contenido aceptado por la consigna, todos los archivos `CLEAN`, deadline/regla de tardanza válida, ownership y versión vigentes.
 
-## 6. Reminder y outbox
+## 7. Reminder y outbox
 
 ```mermaid
 stateDiagram-v2
@@ -178,7 +202,7 @@ stateDiagram-v2
 - Un lock con expiración recupera jobs abandonados en `PROCESSING`.
 - n8n puede transportar el mensaje, pero no decidir si el evento existió.
 
-## 7. Matriz de invariantes
+## 8. Matriz de invariantes
 
 | Invariante | DTO | Service/transacción | DB | Test mínimo |
 |---|:---:|:---:|:---:|---|
@@ -194,7 +218,7 @@ stateDiagram-v2
 
 La duplicación deliberada de una regla entre DTO, service y DB no es desperdicio: cada capa evita una clase diferente de fallo.
 
-## 8. Regla para cambios futuros
+## 9. Regla para cambios futuros
 
 Cambiar un estado requiere, como mínimo:
 

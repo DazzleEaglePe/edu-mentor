@@ -10,7 +10,7 @@ Plataforma digital para operar y visibilizar el programa de mentoría y empleabi
 
 ## Estado
 
-Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y setup administrativo de usuarios, oleadas y enrollments con aislamiento multi-tenant, idempotencia y control concurrente de cupos. `apps/web` permanece bajo ownership de Claude Code.
+Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y setup administrativo completo de usuarios, oleadas, enrollments y asignaciones de mentor con aislamiento multi-tenant, idempotencia e historial auditable. `apps/web` permanece bajo ownership de Claude Code.
 
 ## Documentos de entrada
 
@@ -30,6 +30,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Ciclo administrativo idempotente de usuarios](./docs/checkpoints/2026-07-25-phase1-admin-user-lifecycle.md)
 - [Oleadas idempotentes y estados protegidos](./docs/checkpoints/2026-07-25-phase1-admin-oleadas.md)
 - [Enrollments y protección concurrente de cupos](./docs/checkpoints/2026-07-25-phase1-admin-enrollments.md)
+- [Asignaciones de mentor con vigencia e historial](./docs/checkpoints/2026-07-25-phase1-admin-mentor-assignments.md)
 - [Lección L01](./docs/learning/01-domain-modeling-and-state-machines.md)
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)
@@ -37,6 +38,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Lección de idempotencia y reset de credenciales](./docs/learning/06-idempotent-user-creation-and-credential-reset.md)
 - [Lección de estados y concurrencia de capacidad](./docs/learning/07-cohort-state-and-capacity-concurrency.md)
 - [Lección de invariantes transaccionales en enrollments](./docs/learning/08-enrollment-transactional-invariants.md)
+- [Lección de alcance temporal en asignaciones](./docs/learning/09-temporal-mentor-assignments.md)
 - [Coordinación con Claude Code](./docs/09-claude-code-coordination.md)
 
 `newfiles.zip` se conserva como snapshot de contexto; los documentos extraídos son la fuente de trabajo.

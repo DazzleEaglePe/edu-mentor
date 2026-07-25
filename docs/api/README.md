@@ -50,9 +50,14 @@ runtime multi-tenant. El alta valida participante y oleada, bloquea el cupo, es 
 sobrecapacidad bajo concurrencia. Estado, fase y semana siguen las transiciones documentadas en
 `../12-domain-state-machines.md` y cada edición exige `expectedVersion`.
 
+`GET/POST /admin/mentor-assignments` y
+`DELETE /admin/mentor-assignments/{mentorAssignmentId}?expectedVersion=` completan el setup
+administrativo. El alta valida rol/capability del mentor y alcance de oleada o enrollment; el
+`DELETE` cierra la vigencia sin borrar historial.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
-DTO/decorators Nest ya cubren usuarios, oleadas y enrollments; aún corresponde automatizar su
-comparación con OpenAPI para evitar drift entre ambas representaciones.
+DTO/decorators Nest ya cubren usuarios, oleadas, enrollments y mentor assignments; aún corresponde
+automatizar su comparación con OpenAPI para evitar drift entre ambas representaciones.
 
 ## Regla de fixtures
 
