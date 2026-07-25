@@ -4,9 +4,18 @@ import { describe, it } from 'node:test';
 import type { AuthPrincipal } from '../../common/auth/auth-principal.js';
 import { ApiError } from '../../common/http/api-error.js';
 import { AuthorizationPolicy } from '../auth/authorization-policy.js';
-import type { AdminUserPage, UpdateAdminUserResult } from './admin-user.js';
+import type { PasswordHasher } from '../auth/crypto/password-hasher.js';
+import type {
+  AdminUserPage,
+  CreateAdminUserInput,
+  CreateAdminUserResult,
+  ResetAdminUserPasswordInput,
+  ResetAdminUserPasswordResult,
+  UpdateAdminUserResult,
+} from './admin-user.js';
 import type { AdminUsersRepository } from './admin-users.repository.js';
 import { AdminUsersService } from './admin-users.service.js';
+import type { IdempotencyFingerprintService } from './idempotency-fingerprint.service.js';
 
 const ORGANIZATION_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const EXTERNAL_ORGANIZATION_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -39,12 +48,17 @@ const page: AdminUserPage = {
 };
 
 interface RepositoryCalls {
+  createInput?: CreateAdminUserInput;
+  hashedPassword?: string;
   listOrganizationId?: string;
+  resetInput?: ResetAdminUserPasswordInput;
   updateCount: number;
 }
 
 function createService(options?: {
+  readonly createResult?: CreateAdminUserResult;
   readonly organizationId?: string | null;
+  readonly resetResult?: ResetAdminUserPasswordResult;
   readonly updateResult?: UpdateAdminUserResult;
 }): {
   readonly calls: RepositoryCalls;
@@ -54,10 +68,31 @@ function createService(options?: {
     updateCount: 0,
   };
   const repository = {
+    create: async (input: CreateAdminUserInput) => {
+      calls.createInput = input;
+      return (
+        options?.createResult ?? {
+          kind: 'created',
+          user: {
+            email: input.email,
+            fullName: input.fullName,
+            id: TARGET_USER_ID,
+            isActive: true,
+            mustChangePassword: true,
+            roles: input.roles,
+            version: 1,
+          },
+        }
+      );
+    },
     findOrganizationId: async () => options?.organizationId ?? ORGANIZATION_ID,
     list: async (organizationId: string) => {
       calls.listOrganizationId = organizationId;
       return page;
+    },
+    resetPassword: async (input: ResetAdminUserPasswordInput) => {
+      calls.resetInput = input;
+      return options?.resetResult ?? { kind: 'reset', sessionsRevoked: 1 };
     },
     update: async () => {
       calls.updateCount += 1;
@@ -77,12 +112,24 @@ function createService(options?: {
       );
     },
   };
+  const passwords = {
+    hash: async (password: string) => {
+      calls.hashedPassword = password;
+      return 'synthetic-password-hash';
+    },
+  };
+  const fingerprints = {
+    hashCreateAdminUserRequest: () => 'request-hash',
+    hashIdempotencyKey: () => 'idempotency-key-hash',
+  };
 
   return {
     calls,
     service: new AdminUsersService(
       repository as unknown as AdminUsersRepository,
       new AuthorizationPolicy(),
+      passwords as unknown as PasswordHasher,
+      fingerprints as unknown as IdempotencyFingerprintService,
     ),
   };
 }
@@ -109,6 +156,75 @@ describe('AdminUsersService', () => {
 
     assert.equal(await service.list(principal, 1, 20), page);
     assert.equal(calls.listOrganizationId, ORGANIZATION_ID);
+  });
+
+  it('normalizes a creation before hashing and persisting it', async () => {
+    const { calls, service } = createService();
+
+    const user = await service.create(principal, {
+      email: '  NEW.USER@Example.Test ',
+      fullName: '  Nueva Mentora  ',
+      idempotencyKey: '  admin-create-000001  ',
+      roles: ['MENTOR', 'ADMIN'],
+      temporaryPassword: 'Temporary-2026!',
+      traceId: 'trace-create',
+    });
+
+    assert.equal(user.email, 'new.user@example.test');
+    assert.equal(calls.hashedPassword, 'Temporary-2026!');
+    assert.deepEqual(calls.createInput, {
+      actorUserId: ADMIN_USER_ID,
+      email: 'new.user@example.test',
+      expiresAt: calls.createInput?.expiresAt,
+      fullName: 'Nueva Mentora',
+      idempotencyKeyHash: 'idempotency-key-hash',
+      organizationId: ORGANIZATION_ID,
+      passwordHash: 'synthetic-password-hash',
+      requestHash: 'request-hash',
+      roles: ['ADMIN', 'MENTOR'],
+      traceId: 'trace-create',
+    });
+    assert.ok(calls.createInput?.expiresAt instanceof Date);
+  });
+
+  it('rejects a missing idempotency key before hashing the password', async () => {
+    const { calls, service } = createService();
+
+    await expectApiError(
+      service.create(principal, {
+        email: 'new.user@example.test',
+        fullName: 'New user',
+        idempotencyKey: undefined,
+        roles: ['PARTICIPANT'],
+        temporaryPassword: 'Temporary-2026!',
+        traceId: 'trace-no-key',
+      }),
+      422,
+      'VALIDATION_ERROR',
+    );
+    assert.equal(calls.hashedPassword, undefined);
+    assert.equal(calls.createInput, undefined);
+  });
+
+  it('reports semantic idempotency-key reuse as a stable conflict', async () => {
+    const { service } = createService({
+      createResult: {
+        kind: 'idempotency_key_reused',
+      },
+    });
+
+    await expectApiError(
+      service.create(principal, {
+        email: 'new.user@example.test',
+        fullName: 'New user',
+        idempotencyKey: 'admin-create-000001',
+        roles: ['PARTICIPANT'],
+        temporaryPassword: 'Temporary-2026!',
+        traceId: 'trace-reused-key',
+      }),
+      409,
+      'IDEMPOTENCY_KEY_REUSED',
+    );
   });
 
   it('conceals a cross-organization target before executing the update', async () => {
@@ -182,5 +298,42 @@ describe('AdminUsersService', () => {
       currentVersion: 4,
       expectedVersion: 3,
     });
+  });
+
+  it('scopes a password reset to the authenticated organization', async () => {
+    const { calls, service } = createService();
+
+    await service.resetPassword(principal, {
+      temporaryPassword: 'Replacement-2026!',
+      traceId: 'trace-reset',
+      userId: TARGET_USER_ID,
+    });
+
+    assert.equal(calls.hashedPassword, 'Replacement-2026!');
+    assert.deepEqual(calls.resetInput, {
+      actorUserId: ADMIN_USER_ID,
+      organizationId: ORGANIZATION_ID,
+      passwordHash: 'synthetic-password-hash',
+      traceId: 'trace-reset',
+      userId: TARGET_USER_ID,
+    });
+  });
+
+  it('conceals a password-reset target outside the organization', async () => {
+    const { service } = createService({
+      resetResult: {
+        kind: 'not_found',
+      },
+    });
+
+    await expectApiError(
+      service.resetPassword(principal, {
+        temporaryPassword: 'Replacement-2026!',
+        traceId: 'trace-reset-hidden',
+        userId: TARGET_USER_ID,
+      }),
+      404,
+      'RESOURCE_NOT_FOUND',
+    );
   });
 });

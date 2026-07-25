@@ -29,6 +29,7 @@
 | [learning/03-runtime-migrations-and-health-checks.md](./learning/03-runtime-migrations-and-health-checks.md) | Compose, digests, migraciones aplicadas y semántica live/ready |
 | [learning/04-authentication-sessions-and-authorization.md](./learning/04-authentication-sessions-and-authorization.md) | Sesiones, rotación refresh, cookies, CSRF, RBAC y ownership |
 | [learning/05-multi-tenant-data-and-optimistic-locking.md](./learning/05-multi-tenant-data-and-optimistic-locking.md) | Seed reproducible, autorización multi-tenant y control de versiones |
+| [learning/06-idempotent-user-creation-and-credential-reset.md](./learning/06-idempotent-user-creation-and-credential-reset.md) | Idempotencia concurrente, HMAC, credenciales temporales y revocación |
 | [checkpoints/2026-07-25-planning-baseline.md](./checkpoints/2026-07-25-planning-baseline.md) | Primer checkpoint de planificación |
 | [checkpoints/2026-07-25-technical-contract-baseline.md](./checkpoints/2026-07-25-technical-contract-baseline.md) | Contratos, estados, matriz y evidencia del spike |
 | [checkpoints/2026-07-25-contract-reconciliation-closure.md](./checkpoints/2026-07-25-contract-reconciliation-closure.md) | Cierre de CCR-010–012 y contrato listo para consumo de diseño |

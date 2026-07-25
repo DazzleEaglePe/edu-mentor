@@ -2498,6 +2498,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
         fullName:
           type: string
           maxLength: 160

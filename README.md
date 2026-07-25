@@ -10,7 +10,7 @@ Plataforma digital para operar y visibilizar el programa de mentoría y empleabi
 
 ## Estado
 
-Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migración Prisma, PostgreSQL/Redis, auth revocable, seed por rol y primer recurso administrativo con aislamiento multi-tenant. `apps/web` permanece bajo ownership de Claude Code.
+Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y ciclo administrativo de usuarios con aislamiento multi-tenant e idempotencia. `apps/web` permanece bajo ownership de Claude Code.
 
 ## Documentos de entrada
 
@@ -31,6 +31,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)
 - [Lección de multi-tenancy y optimistic locking](./docs/learning/05-multi-tenant-data-and-optimistic-locking.md)
+- [Lección de idempotencia y reset de credenciales](./docs/learning/06-idempotent-user-creation-and-credential-reset.md)
 - [Coordinación con Claude Code](./docs/09-claude-code-coordination.md)
 
 `newfiles.zip` se conserva como snapshot de contexto; los documentos extraídos son la fuente de trabajo.

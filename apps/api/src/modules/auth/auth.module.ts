@@ -18,7 +18,7 @@ import { CsrfService } from './security/csrf.service.js';
 
 @Module({
   controllers: [AuthController],
-  exports: [AuthorizationPolicy],
+  exports: [AuthorizationPolicy, PasswordHasher],
   providers: [
     AccessTokenService,
     AuthCookieService,

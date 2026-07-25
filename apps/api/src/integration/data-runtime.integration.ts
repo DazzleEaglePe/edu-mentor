@@ -34,9 +34,11 @@ describe('data runtime', () => {
         rolled_back_at: Date | null;
       }>('SELECT finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY started_at');
 
-      assert.equal(migrations.rowCount, 1);
+      assert.equal(migrations.rowCount, 2);
       assert.ok(migrations.rows[0]?.finished_at instanceof Date);
       assert.equal(migrations.rows[0]?.rolled_back_at, null);
+      assert.ok(migrations.rows[1]?.finished_at instanceof Date);
+      assert.equal(migrations.rows[1]?.rolled_back_at, null);
 
       const constraints = await pool.query<{ conname: string }>(
         `SELECT conname
@@ -48,6 +50,9 @@ describe('data runtime', () => {
             'auth_session_expiration_valid',
             'enrollment_current_week_valid',
             'enrollment_version_positive',
+            'idempotency_record_completion_consistent',
+            'idempotency_record_expiration_valid',
+            'idempotency_record_response_status_valid',
             'mentor_assignment_period_valid',
             'mentor_assignment_version_positive',
             'oleada_capacity_positive',
@@ -59,7 +64,7 @@ describe('data runtime', () => {
         ],
       );
 
-      assert.equal(constraints.rowCount, 10);
+      assert.equal(constraints.rowCount, 13);
 
       await pool.query('BEGIN');
       await pool.query(
