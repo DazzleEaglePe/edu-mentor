@@ -48,6 +48,9 @@ Lección práctica: [learning/01-domain-modeling-and-state-machines.md](./learni
 - cookies, XSS y CSRF;
 - audit logs.
 
+Lección práctica:
+[learning/04-authentication-sessions-and-authorization.md](./learning/04-authentication-sessions-and-authorization.md).
+
 ### L03 · Sistemas distribuidos prácticos
 
 - retry vs. idempotencia;
@@ -117,6 +120,7 @@ Cuando se incorpore el CV:
 ## Checklist de aprendizaje
 
 - [x] Publicar material y laboratorio de L01 durante Fase 0.
+- [x] Publicar material y laboratorio práctico de autenticación durante Fase 1.
 - [ ] Completar la autoevaluación de L01 con el usuario.
 - [ ] Explicar DEC-001, DEC-002 y DEC-010 sin leer documentos.
 - [ ] Dibujar la arquitectura MVP.
