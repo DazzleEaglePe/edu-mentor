@@ -9,3 +9,4 @@ allowBuilds:
   msgpackr-extract: false
   prisma: true
   sharp: true
+  unrs-resolver: false

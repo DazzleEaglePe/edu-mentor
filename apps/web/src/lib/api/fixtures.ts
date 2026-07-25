@@ -1,0 +1,33 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import type { AuthMe, Deliverable, Session } from '@edu-mentor/shared-types';
+
+/**
+ * Fuente de datos **provisional** mientras la API no expone auth ni sesiones.
+ *
+ * Lee los fixtures sintéticos que publicó Codex en `docs/api/fixtures/`. Son la
+ * fuente única: el diseño no mantiene una copia propia para no crear una
+ * segunda verdad.
+ *
+ * Este módulo desaparece cuando exista el primer vertical slice de auth; hasta
+ * entonces, ninguna pantalla debe simular una respuesta que el contrato no
+ * describa.
+ */
+
+async function readFixture<T>(name: string): Promise<T> {
+  const path = resolve(process.cwd(), '../../docs/api/fixtures', name);
+  const raw = await readFile(path, 'utf8');
+  return JSON.parse(raw) as T;
+}
+
+export function loadAuthMe(): Promise<AuthMe> {
+  return readFixture<AuthMe>('auth-me.participant.json');
+}
+
+export function loadSessionDetail(): Promise<Session> {
+  return readFixture<Session>('session.detail.json');
+}
+
+export function loadDeliverableDetail(): Promise<Deliverable> {
+  return readFixture<Deliverable>('deliverable.detail.json');
+}
