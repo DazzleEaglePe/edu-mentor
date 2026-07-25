@@ -6,14 +6,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
     "db:status": "prisma migrate status",
     "db:validate": "prisma validate",
     "dev": "tsx watch src/main.ts",
     "generate": "prisma generate",
     "start": "node dist/main.js",
     "test": "tsx --test 'src/**/*.spec.ts'",
-    "test:integration": "tsx --test --test-concurrency=1 'src/integration/*.integration.ts'",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "test:integration": "tsx --test --test-concurrency=1 src/integration/data-runtime.integration.ts src/integration/auth-flow.integration.ts",
+    "test:seed-integration": "tsx --test src/integration/core-access.integration.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.seed.json"
   },
   "dependencies": {
     "@nestjs/common": "11.1.28",

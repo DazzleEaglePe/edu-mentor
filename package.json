@@ -13,6 +13,7 @@
     "check": "pnpm format:check && pnpm lint && pnpm contracts:lint && pnpm typecheck && pnpm test && pnpm build",
     "contracts:lint": "REDOCLY_TELEMETRY=off redocly lint docs/api/openapi.yaml --extends=minimal",
     "db:migrate": "pnpm --filter @edu-mentor/api db:migrate",
+    "db:seed": "pnpm --filter @edu-mentor/api db:seed",
     "db:status": "pnpm --filter @edu-mentor/api db:status",
     "dev:api": "pnpm --filter @edu-mentor/api dev",
     "format": "prettier --write .",
