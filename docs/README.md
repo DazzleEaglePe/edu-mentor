@@ -30,6 +30,7 @@
 | [learning/04-authentication-sessions-and-authorization.md](./learning/04-authentication-sessions-and-authorization.md) | Sesiones, rotación refresh, cookies, CSRF, RBAC y ownership |
 | [learning/05-multi-tenant-data-and-optimistic-locking.md](./learning/05-multi-tenant-data-and-optimistic-locking.md) | Seed reproducible, autorización multi-tenant y control de versiones |
 | [learning/06-idempotent-user-creation-and-credential-reset.md](./learning/06-idempotent-user-creation-and-credential-reset.md) | Idempotencia concurrente, HMAC, credenciales temporales y revocación |
+| [learning/07-cohort-state-and-capacity-concurrency.md](./learning/07-cohort-state-and-capacity-concurrency.md) | Máquinas de estado, locks de fila, capacidad y versiones |
 | [checkpoints/2026-07-25-planning-baseline.md](./checkpoints/2026-07-25-planning-baseline.md) | Primer checkpoint de planificación |
 | [checkpoints/2026-07-25-technical-contract-baseline.md](./checkpoints/2026-07-25-technical-contract-baseline.md) | Contratos, estados, matriz y evidencia del spike |
 | [checkpoints/2026-07-25-contract-reconciliation-closure.md](./checkpoints/2026-07-25-contract-reconciliation-closure.md) | Cierre de CCR-010–012 y contrato listo para consumo de diseño |
@@ -39,6 +40,7 @@
 | [checkpoints/2026-07-25-phase1-auth-foundation.md](./checkpoints/2026-07-25-phase1-auth-foundation.md) | Auth persistida, rotación/replay, CSRF, guards y evidencia HTTP |
 | [checkpoints/2026-07-25-phase1-core-access.md](./checkpoints/2026-07-25-phase1-core-access.md) | Seed por rol, administración multi-tenant y optimistic locking |
 | [checkpoints/2026-07-25-phase1-admin-user-lifecycle.md](./checkpoints/2026-07-25-phase1-admin-user-lifecycle.md) | Creación idempotente, reset seguro y prueba concurrente real |
+| [checkpoints/2026-07-25-phase1-admin-oleadas.md](./checkpoints/2026-07-25-phase1-admin-oleadas.md) | Oleadas idempotentes, estado lineal y capacidad protegida |
 
 ## Regla de precedencia
 
