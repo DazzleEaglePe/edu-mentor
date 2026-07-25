@@ -13,6 +13,7 @@ cleanup() {
 
 trap cleanup EXIT
 
+pnpm generate
 pnpm db:migrate
 pnpm db:status
 pnpm --filter @edu-mentor/api test:integration
