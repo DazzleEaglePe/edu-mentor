@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import type { ApiComponents } from '@edu-mentor/shared-types';
 import { AppShell } from '@/components/shell/app-shell';
 import { Card, Metric } from '@/components/ui/card';
 import { StatusChip } from '@/components/ui/status-chip';
@@ -7,23 +6,7 @@ import { EmptyState } from '@/components/ui/states';
 import { loadAuthMe, loadDeliverableDetail, loadSessionDetail } from '@/lib/api/fixtures';
 import { formatDate, formatInterval } from '@/lib/format';
 import { translateProgramPhase, translateSessionType } from '@/lib/domain/labels';
-
-type SubmissionStatus = ApiComponents['schemas']['SubmissionStatus'];
-
-/**
- * Qué dice la tarjeta del entregable según el estado **real** de la revisión.
- *
- * Sin este mapa, la pantalla decía "Pendiente de entregar" sobre una revisión
- * ya enviada: afirmaba una tarea que la persona ya había hecho. El texto se
- * deriva del estado, nunca se asume.
- */
-const deliverableHeading: Record<SubmissionStatus, { title: string; needsAction: boolean }> = {
-  DRAFT: { title: 'Pendiente de entregar', needsAction: true },
-  RETURNED: { title: 'Tu mentora pide ajustes', needsAction: true },
-  SUBMITTED: { title: 'Enviado, esperando evaluación', needsAction: false },
-  UNDER_REVIEW: { title: 'Tu mentora lo está revisando', needsAction: false },
-  EVALUATED: { title: 'Tienes retroalimentación', needsAction: false },
-};
+import { currentSubmission, summarizeSubmission } from '@/lib/domain/deliverables';
 
 /**
  * P1 · Inicio del participante.
@@ -46,9 +29,7 @@ export default async function InicioPage() {
   const mine = session.participants.find(
     (participant) => participant.enrollmentId === enrollment?.id,
   );
-  const currentSubmission = deliverable.submissions.find(
-    (submission) => submission.id === deliverable.currentSubmissionId,
-  );
+  const submission = currentSubmission(deliverable);
 
   // Asistencia y envío se cuentan por su estado, no por la existencia del dato:
   // una sesión confirmada todavía no es una sesión asistida.
@@ -60,8 +41,7 @@ export default async function InicioPage() {
     (submission) => submission.status !== 'DRAFT',
   ).length;
 
-  const heading =
-    currentSubmission === undefined ? null : deliverableHeading[currentSubmission.status];
+  const heading = submission === null ? null : summarizeSubmission(submission.status);
   const dueDate = formatDate(deliverable.assignment.dueAt, session.timezone);
 
   return (
@@ -126,7 +106,7 @@ export default async function InicioPage() {
         </Link>
       </Card>
 
-      {currentSubmission === undefined || heading === null ? (
+      {submission === null || heading === null ? (
         <Card title="Tus entregables">
           <EmptyState
             title="Aún no hay consignas publicadas para tu semana"
@@ -143,11 +123,17 @@ export default async function InicioPage() {
               <p className="text-sm text-[var(--edu-text-secondary)]">
                 {heading.needsAction
                   ? `Entrega hasta el ${dueDate}`
-                  : `Revisión ${currentSubmission.revisionNumber}`}
+                  : `Revisión ${submission.revisionNumber}`}
               </p>
             </div>
-            <StatusChip kind="submissionStatus" value={currentSubmission.status} />
+            <StatusChip kind="submissionStatus" value={submission.status} />
           </div>
+          <Link
+            href={`/entregables/${deliverable.id}`}
+            className="text-sm font-semibold text-[var(--edu-text-link)] underline underline-offset-2"
+          >
+            Ver consigna y mi entrega
+          </Link>
         </Card>
       )}
 
