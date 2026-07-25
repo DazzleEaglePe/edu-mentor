@@ -53,6 +53,18 @@ Next 16 eliminó `next lint`, por lo que el paquete web usa ESLint CLI. El prese
 
 El parser y `eslint-plugin-react@7.37.5` que trae `eslint-config-next@16.2.11` aún no son compatibles con APIs retiradas en ESLint 10. El workspace conserva su parser `typescript-eslint@8.65.0`, y temporalmente activa del preset las reglas compatibles de Next, Hooks, imports y `jsx-a11y`. Las reglas `react/*` se reactivarán cuando el plugin publique soporte.
 
+## Typecheck desde una instalación limpia
+
+El primer CI del PR web reveló una diferencia que el workspace local ocultaba: `packages/shared-types/dist` ya existía localmente. En el runner limpio, el `typecheck` del paquete terminaba sin emitir y `apps/web` no podía resolver los tipos exportados desde `dist`.
+
+El comando raíz ahora ejecuta esta secuencia:
+
+```text
+generar OpenAPI → compilar shared-types → typecheck recursivo
+```
+
+El build de este paquete desactiva `incremental`: es pequeño y debe reconstruir `dist` incluso si alguien borró los outputs pero quedó un `.tsbuildinfo` local. No se apunta el frontend directamente a archivos fuente internos ni se depende de un artefacto residual. El mismo contrato empaquetado que consumiría una aplicación es el que valida el frontend.
+
 ## Próximo slice coordinado
 
 ### Codex

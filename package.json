@@ -18,7 +18,7 @@
     "generate": "pnpm -r --if-present generate",
     "lint": "eslint . --max-warnings=0",
     "test": "pnpm -r --if-present test",
-    "typecheck": "pnpm generate && pnpm -r --if-present typecheck"
+    "typecheck": "pnpm generate && pnpm --filter @edu-mentor/shared-types build && pnpm -r --if-present typecheck"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
