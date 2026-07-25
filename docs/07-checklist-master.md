@@ -111,9 +111,16 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [x] Implementar errors + traceId + logs estructurados.
 - [ ] Implementar usuarios, roles y mentor capabilities.
 - [ ] Implementar oleadas, enrollments y assignments.
-- [ ] Implementar auth sessions y rotación/revocación.
+- [x] Implementar auth sessions y rotación/revocación.
+  - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
+  - [x] Cookies seguras, CSRF stateful y validación de origen.
+  - [x] Rotación refresh con detección de replay y revocación de familia.
 - [ ] Implementar RBAC y ownership.
+  - [x] Crear guards de roles y policy reutilizable de organización/ownership.
+  - [ ] Probar scoping cross-user sobre un recurso funcional.
 - [ ] Implementar audit log.
+  - [x] Auditar login, rotación, replay, logout y cambio de contraseña.
+  - [ ] Aplicar auditoría a las mutaciones de los demás módulos.
 - [ ] Crear seed ficticio por rol.
 - [ ] Crear shell web y navegación por rol.
 - [x] Probar instalación limpia.
@@ -122,7 +129,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 
 - [x] CI verde.
 - [ ] Migración/seed reproducibles.
-- [ ] Auth positive/negative tests.
+- [x] Auth positive/negative tests.
 - [ ] Ownership cross-user bloqueado.
 - [ ] Layout responsive y accesible.
 - [ ] Cero secretos/PII en repo.

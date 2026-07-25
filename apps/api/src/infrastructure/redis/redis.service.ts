@@ -3,6 +3,14 @@ import { createClient, type RedisClientType } from 'redis';
 
 import { RUNTIME_CONFIG, type RuntimeConfig } from '../../config/runtime-config.js';
 
+const INCREMENT_WITH_EXPIRY_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return count
+`;
+
 @Injectable()
 export class RedisService implements OnModuleDestroy {
   private connectionAttempt: Promise<void> | undefined;
@@ -36,6 +44,35 @@ export class RedisService implements OnModuleDestroy {
     if (response !== 'PONG') {
       throw new Error('Redis returned an unexpected health response.');
     }
+  }
+
+  async get(key: string): Promise<string | null> {
+    await this.ensureConnected();
+    return this.client.get(key);
+  }
+
+  async setExpiring(key: string, value: string, ttlSeconds: number): Promise<void> {
+    await this.ensureConnected();
+    await this.client.set(key, value, { EX: ttlSeconds });
+  }
+
+  async incrementWithExpiry(key: string, ttlSeconds: number): Promise<number> {
+    await this.ensureConnected();
+    const result = await this.client.eval(INCREMENT_WITH_EXPIRY_SCRIPT, {
+      arguments: [String(ttlSeconds)],
+      keys: [key],
+    });
+
+    if (typeof result !== 'number') {
+      throw new Error('Redis returned an unexpected rate-limit response.');
+    }
+
+    return result;
+  }
+
+  async delete(key: string): Promise<void> {
+    await this.ensureConnected();
+    await this.client.del(key);
   }
 
   onModuleDestroy(): void {
