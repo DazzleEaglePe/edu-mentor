@@ -18,40 +18,10 @@ import {
   type UpdateAdminUserInput,
   type UpdateAdminUserResult,
 } from './admin-user.js';
+import { adminUserInclude, toAdminUser, userSnapshot } from './admin-user-mapper.js';
 
 const CREATE_ADMIN_USER_OPERATION = 'admin.users.create';
 const ROLE_KEYS = new Set<RoleKey>(['ADMIN', 'MENTOR', 'PARTICIPANT']);
-
-const adminUserInclude = {
-  userRoles: {
-    include: {
-      role: true,
-    },
-  },
-} as const satisfies Prisma.UserInclude;
-
-type UserWithRoles = Prisma.UserGetPayload<{ include: typeof adminUserInclude }>;
-
-function toAdminUser(user: UserWithRoles): AdminUser {
-  return {
-    email: user.email,
-    fullName: user.fullName,
-    id: user.id,
-    isActive: user.isActive,
-    mustChangePassword: user.mustChangePassword,
-    roles: user.userRoles.map((userRole) => userRole.role.key).sort(),
-    version: user.version,
-  };
-}
-
-function userSnapshot(user: AdminUser): Prisma.InputJsonValue {
-  return {
-    fullName: user.fullName,
-    isActive: user.isActive,
-    roles: [...user.roles],
-    version: user.version,
-  };
-}
 
 function userResponse(user: AdminUser): Prisma.InputJsonObject {
   return {
