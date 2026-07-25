@@ -2,17 +2,18 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import type { AuthPrincipal } from '../../common/auth/auth-principal.js';
 import { ApiError } from '../../common/http/api-error.js';
+import { IdempotencyFingerprintService } from '../../common/idempotency/idempotency-fingerprint.service.js';
+import {
+  IDEMPOTENCY_RETENTION_MS,
+  requireIdempotencyKey,
+} from '../../common/idempotency/idempotency-key.js';
 import type { RoleKey } from '../../generated/prisma/enums.js';
 import { AuthorizationPolicy } from '../auth/authorization-policy.js';
 import { PasswordHasher } from '../auth/crypto/password-hasher.js';
 import type { AdminUser, AdminUserPage } from './admin-user.js';
 import { AdminUsersRepository } from './admin-users.repository.js';
-import { IdempotencyFingerprintService } from './idempotency-fingerprint.service.js';
 
-const IDEMPOTENCY_KEY_MIN_LENGTH = 16;
-const IDEMPOTENCY_KEY_MAX_LENGTH = 128;
-const IDEMPOTENCY_RETENTION_MS = 24 * 60 * 60 * 1_000;
-
+const CREATE_ADMIN_USER_OPERATION = 'admin.users.create';
 export interface CreateAdminUserCommand {
   readonly email: string;
   readonly fullName: string;
@@ -56,17 +57,7 @@ export class AdminUsersService {
   }
 
   async create(principal: AuthPrincipal, command: CreateAdminUserCommand): Promise<AdminUser> {
-    const idempotencyKey = command.idempotencyKey?.trim();
-
-    if (
-      idempotencyKey === undefined ||
-      idempotencyKey.length < IDEMPOTENCY_KEY_MIN_LENGTH ||
-      idempotencyKey.length > IDEMPOTENCY_KEY_MAX_LENGTH
-    ) {
-      throw new ApiError(422, 'VALIDATION_ERROR', 'No pudimos procesar los datos enviados.', {
-        fields: ['Idempotency-Key'],
-      });
-    }
+    const idempotencyKey = requireIdempotencyKey(command.idempotencyKey);
 
     const email = command.email.trim().toLowerCase();
     const fullName = command.fullName.trim();
@@ -78,7 +69,7 @@ export class AdminUsersService {
     }
 
     const roles = [...command.roles].sort();
-    const requestHash = this.fingerprints.hashCreateAdminUserRequest({
+    const requestHash = this.fingerprints.hashRequest(CREATE_ADMIN_USER_OPERATION, {
       email,
       fullName,
       roles,

@@ -115,7 +115,9 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
   - [x] Crear usuarios y resetear contraseña desde administración.
 - [ ] Implementar oleadas, enrollments y assignments.
   - [x] Sembrar una oleada, enrollment y mentor assignment sintéticos coherentes.
-  - [ ] Publicar operaciones administrativas runtime para las tres entidades.
+  - [x] Publicar operaciones runtime de oleadas con idempotencia, versión y capacidad protegida.
+  - [ ] Publicar operaciones runtime de enrollments.
+  - [ ] Publicar operaciones runtime de mentor assignments.
 - [x] Implementar auth sessions y rotación/revocación.
   - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
   - [x] Cookies seguras, CSRF stateful y validación de origen.

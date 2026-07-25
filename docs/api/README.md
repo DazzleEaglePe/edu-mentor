@@ -41,6 +41,10 @@ implementación runtime. La creación exige `Idempotency-Key`, devuelve la respu
 un reintento equivalente y rechaza con `409 IDEMPOTENCY_KEY_REUSED` si la misma clave llega con
 otro payload.
 
+`GET/POST /admin/oleadas` y `PATCH /admin/oleadas/{oleadaId}` también tienen implementación
+runtime. La máquina de estados es lineal (`DRAFT → OPEN → IN_PROGRESS → CLOSED`), una oleada
+cerrada queda de solo lectura y la capacidad no puede bajar del número de enrollments activos.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
 DTO/decorators Nest ya cubren el ciclo de usuarios; aún corresponde automatizar su comparación con
 OpenAPI para evitar drift entre ambas representaciones.

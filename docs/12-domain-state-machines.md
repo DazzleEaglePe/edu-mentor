@@ -5,6 +5,26 @@ Contrato complementario de `02-modelo-datos.md` y `03-api-design.md`.
 
 Una máquina de estados define qué transiciones existen, quién puede ejecutarlas y bajo qué condiciones. Los nombres visuales pueden cambiar; estas transiciones no cambian sin decisión de contrato.
 
+## 0. Oleada
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: crear
+    DRAFT --> OPEN: abrir convocatoria
+    OPEN --> IN_PROGRESS: iniciar programa
+    IN_PROGRESS --> CLOSED: cerrar
+    CLOSED --> [*]
+```
+
+- Solo `ADMIN` transiciona una oleada y siempre dentro de su organización.
+- No se permiten saltos ni retrocesos. Un patch sin cambio de estado puede editar datos mientras
+  la oleada no esté `CLOSED`.
+- `CLOSED` es de solo lectura; no se borra ni se reabre en el piloto.
+- `capacity` nunca puede quedar por debajo de `activeEnrollmentCount`.
+- Crear usa `Idempotency-Key`; editar usa `expectedVersion`.
+- La edición bloquea la fila de oleada. La creación futura de enrollments usará el mismo lock para
+  que capacidad y altas concurrentes no se contradigan.
+
 ## 1. Sesión
 
 ```mermaid
