@@ -227,6 +227,17 @@ describe('synthetic seed and organization-scoped administration', () => {
       false,
     );
 
+    const invalidPagination = await fetch(`${baseUrl}/api/v1/admin/users?page=1&limit=101`, {
+      headers: {
+        cookie: admin.accessCookie,
+      },
+    });
+    assert.equal(invalidPagination.status, 422);
+    assert.equal(
+      ((await invalidPagination.json()) as ErrorResponse).error.code,
+      'VALIDATION_ERROR',
+    );
+
     const externalPatch = await fetch(
       `${baseUrl}/api/v1/admin/users/${SYNTHETIC_IDS.externalParticipantUser}`,
       {
