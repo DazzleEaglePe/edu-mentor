@@ -110,27 +110,33 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [x] Implementar config/feature gates tipados.
 - [x] Implementar errors + traceId + logs estructurados.
 - [ ] Implementar usuarios, roles y mentor capabilities.
+  - [x] Sembrar usuarios por rol y capacidades de mentor con datos sintéticos.
+  - [x] Listar y editar usuarios de la organización con roles múltiples y versión.
+  - [ ] Crear usuarios y resetear contraseña desde administración.
 - [ ] Implementar oleadas, enrollments y assignments.
+  - [x] Sembrar una oleada, enrollment y mentor assignment sintéticos coherentes.
+  - [ ] Publicar operaciones administrativas runtime para las tres entidades.
 - [x] Implementar auth sessions y rotación/revocación.
   - [x] Login, refresh, logout, logout-all, identidad y cambio de contraseña.
   - [x] Cookies seguras, CSRF stateful y validación de origen.
   - [x] Rotación refresh con detección de replay y revocación de familia.
 - [ ] Implementar RBAC y ownership.
   - [x] Crear guards de roles y policy reutilizable de organización/ownership.
-  - [ ] Probar scoping cross-user sobre un recurso funcional.
+  - [x] Probar scoping cross-role y cross-organization sobre un recurso funcional.
 - [ ] Implementar audit log.
   - [x] Auditar login, rotación, replay, logout y cambio de contraseña.
+  - [x] Auditar la edición administrativa de usuarios dentro de su transacción.
   - [ ] Aplicar auditoría a las mutaciones de los demás módulos.
-- [ ] Crear seed ficticio por rol.
+- [x] Crear seed ficticio por rol.
 - [ ] Crear shell web y navegación por rol.
 - [x] Probar instalación limpia.
 
 ### Gate 1
 
 - [x] CI verde.
-- [ ] Migración/seed reproducibles.
+- [x] Migración/seed reproducibles.
 - [x] Auth positive/negative tests.
-- [ ] Ownership cross-user bloqueado.
+- [x] Ownership cross-user bloqueado.
 - [ ] Layout responsive y accesible.
 - [ ] Cero secretos/PII en repo.
 

@@ -121,10 +121,11 @@ Cuando se incorpore el CV:
 
 - [x] Publicar material y laboratorio de L01 durante Fase 0.
 - [x] Publicar material y laboratorio práctico de autenticación durante Fase 1.
+- [x] Publicar laboratorio de multi-tenancy y optimistic locking durante Fase 1.
 - [ ] Completar la autoevaluación de L01 con el usuario.
 - [ ] Explicar DEC-001, DEC-002 y DEC-010 sin leer documentos.
 - [ ] Dibujar la arquitectura MVP.
-- [ ] Implementar y romper una regla de ownership en laboratorio.
+- [x] Implementar y atacar una regla de ownership en laboratorio automatizado.
 - [ ] Demostrar doble reserva y su solución.
 - [ ] Demostrar retry duplicado y su idempotencia.
 - [ ] Restaurar una revisión anterior de entregable.

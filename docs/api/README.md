@@ -4,6 +4,7 @@
 
 - `openapi.yaml`: OpenAPI 3.1 inicial del piloto.
 - `fixtures/auth-me.participant.json`: contexto autenticado del participante.
+- `fixtures/participant-dashboard.json`: resumen coherente para la pantalla Inicio del participante.
 - `fixtures/session.detail.json`: sesión con confirmación y asistencia separadas.
 - `fixtures/deliverable.detail.json`: entregable con submission inmutable.
 - `fixtures/error.schedule-conflict.json`: error estable de doble reserva.
@@ -12,6 +13,9 @@
 - `fixtures/admin.mentor-assignment.json`: alcance vigente de mentor especialista.
 
 Todos los datos son sintéticos y usan el dominio reservado `example.test`.
+
+`participant-dashboard.json` es un fixture de contrato para frontend. No representa todavía un
+endpoint persistido: sus fuentes reales pertenecen a Agenda y Entregables, en Fases 2 y 3.
 
 ## Cobertura actual
 
