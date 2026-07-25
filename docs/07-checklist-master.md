@@ -92,9 +92,9 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 
 ## Fase 1 · Fundaciones
 
-- [ ] Inicializar Git y baseline aprobado.
+- [x] Inicializar Git y baseline aprobado.
 - [x] Crear monorepo pnpm.
-- [ ] Crear `apps/web`, `apps/api`, `packages/shared-types`, config compartida.
+- [x] Crear `apps/web`, `apps/api`, `packages/shared-types`, config compartida.
 - [x] Configurar TypeScript estricto.
 - [x] Configurar lint, format, typecheck, tests y CI.
 - [x] Generar `packages/shared-types` desde OpenAPI sin mantener un contrato manual paralelo.
@@ -112,7 +112,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Implementar RBAC y ownership.
 - [ ] Implementar audit log.
 - [ ] Crear seed ficticio por rol.
-- [ ] Crear shell web y navegación por rol.
+- [x] Crear shell web y navegación por rol.
 - [ ] Probar instalación limpia.
 
 ### Gate 1

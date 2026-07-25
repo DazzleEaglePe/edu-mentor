@@ -21,6 +21,7 @@ Gate activo: **Fase 0 · Alineación y contratos**. No hay implementación autor
 | [07-componentes.md](./07-componentes.md) | 54 componentes que cubren el piloto | Base de `apps/web` |
 | [08-handoff.md](./08-handoff.md) | Handoff a Codex + **confirmación de sincronización** | ✅ "Diseño y backend comparten estados/contratos" |
 | [09-copy.md](./09-copy.md) | Errores, vacíos, confirmaciones, notificaciones, glosario | Insumo de UAT |
+| [10-handoff-web-scaffold.md](./10-handoff-web-scaffold.md) | Scaffold de `apps/web` · verificado por Codex; correcciones y evidencia en §9 | Fase 1 |
 | [wireframes/index.html](./wireframes/index.html) | Kit navegable: 27 planchas, responsive, anotado | — |
 | [tokens/](./tokens/) | `edu-mentor.tokens.json` · `tokens.css` | Base de `apps/web` |
 

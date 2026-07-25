@@ -1,0 +1,158 @@
+/* EDU-MENTOR · design tokens
+ * Propuesta Fase 0 — pendiente de aprobación.
+ * Fuente de marca: paleta EDU-US en CLAUDE.md. Ver docs/design/02-design-tokens.md.
+ * Regla: los componentes usan SOLO tokens semánticos (--edu-action-*, --edu-status-*, --edu-text-*).
+ */
+
+:root {
+  /* ---------- primitivos: navy ---------- */
+  --edu-navy-900: #0b1526;
+  --edu-navy-800: #16243b; /* marca */
+  --edu-navy-700: #1f3355;
+  --edu-navy-600: #2c466f;
+  --edu-navy-500: #5b6b82;
+
+  /* ---------- primitivos: teal ---------- */
+  --edu-teal-800: #075049;
+  --edu-teal-700: #0b6e66;
+  --edu-teal-600: #0f7c72;
+  --edu-teal-500: #2db6a8; /* marca */
+  --edu-teal-200: #a8e3dc;
+  --edu-teal-100: #d9f3ef;
+  --edu-teal-50: #eefaf8;
+
+  /* ---------- primitivos: amarillo ---------- */
+  --edu-yellow-800: #7a5200;
+  --edu-yellow-500: #f5a623; /* marca */
+  --edu-yellow-200: #fbdfb0;
+  --edu-yellow-100: #fdf1dc;
+
+  /* ---------- primitivos: coral ---------- */
+  --edu-coral-800: #8f2a10;
+  --edu-coral-700: #b23414;
+  --edu-coral-500: #e8461e; /* marca */
+  --edu-coral-200: #f7b9a8;
+  --edu-coral-100: #fbe0d8;
+
+  /* ---------- primitivos: neutros ---------- */
+  --edu-bg: #f4f1ea; /* marca */
+  --edu-surface: #ffffff;
+  --edu-surface-sunken: #eeeae1;
+  --edu-border: #dcd7cc;
+  --edu-border-strong: #7e7869;
+  --edu-overlay: rgba(11, 21, 38, 0.55);
+
+  /* ---------- semánticos: texto ---------- */
+  --edu-text-primary: var(--edu-navy-800);
+  --edu-text-secondary: var(--edu-navy-500);
+  --edu-text-on-dark: #ffffff;
+  --edu-text-link: var(--edu-teal-600);
+
+  /* ---------- semánticos: acción ---------- */
+  --edu-action-primary-bg: var(--edu-teal-700);
+  --edu-action-primary-bg-hover: var(--edu-teal-800);
+  --edu-action-primary-text: #ffffff;
+
+  --edu-action-secondary-bg: var(--edu-surface);
+  --edu-action-secondary-border: var(--edu-border-strong);
+  --edu-action-secondary-text: var(--edu-navy-800);
+
+  --edu-action-danger-bg: var(--edu-coral-700);
+  --edu-action-danger-bg-hover: var(--edu-coral-800);
+  --edu-action-danger-text: #ffffff;
+
+  --edu-focus-ring: var(--edu-teal-700);
+
+  /* ---------- semánticos: estado ----------
+   * Mapeo al contrato vigente (docs/design/00-inventario-pantallas.md §6).
+   * OJO: session.status ya NO tiene CONFIRMED. La confirmación y la asistencia
+   * son ejes propios de session_participant y no se derivan uno del otro.
+   *
+   * confirmed → confirmationStatus CONFIRMED · attendanceStatus ATTENDED
+   *             submission EVALUATED · rescheduleRequest APPROVED · file CLEAN
+   * pending   → confirmationStatus PENDING · submission SUBMITTED
+   *             rescheduleRequest PENDING · file PENDING (analizando)
+   * review    → submission UNDER_REVIEW
+   * returned  → submission RETURNED
+   * declined  → confirmationStatus DECLINED · attendanceStatus ABSENT
+   *             rescheduleRequest REJECTED · file REJECTED
+   * neutral   → submission DRAFT · session SCHEDULED · attendanceStatus PENDING
+   * inactive  → session COMPLETED|CANCELLED|RESCHEDULED · rescheduleRequest CANCELLED
+   */
+  --edu-status-confirmed-bg: var(--edu-teal-100);
+  --edu-status-confirmed-text: var(--edu-teal-800);
+
+  --edu-status-pending-bg: var(--edu-yellow-100);
+  --edu-status-pending-text: var(--edu-yellow-800);
+
+  --edu-status-review-bg: var(--edu-teal-50);
+  --edu-status-review-text: var(--edu-teal-800);
+
+  --edu-status-returned-bg: var(--edu-coral-100);
+  --edu-status-returned-text: var(--edu-coral-800);
+
+  --edu-status-declined-bg: var(--edu-coral-100);
+  --edu-status-declined-text: var(--edu-coral-800);
+
+  --edu-status-neutral-bg: var(--edu-surface-sunken);
+  --edu-status-neutral-text: var(--edu-navy-500);
+
+  --edu-status-inactive-bg: var(--edu-surface-sunken);
+  --edu-status-inactive-text: var(--edu-navy-700);
+
+  /* ---------- tipografía ---------- */
+  --edu-font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --edu-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  --edu-text-display: 700 2rem/2.5rem var(--edu-font-sans);
+  --edu-text-h1: 700 1.625rem/2.125rem var(--edu-font-sans);
+  --edu-text-h2: 600 1.3125rem/1.75rem var(--edu-font-sans);
+  --edu-text-h3: 600 1.125rem/1.625rem var(--edu-font-sans);
+  --edu-text-body: 400 1rem/1.5rem var(--edu-font-sans);
+  --edu-text-body-sm: 400 0.875rem/1.25rem var(--edu-font-sans);
+  --edu-text-caption: 500 0.8125rem/1.125rem var(--edu-font-sans);
+
+  /* ---------- espaciado ---------- */
+  --edu-space-1: 4px;
+  --edu-space-2: 8px;
+  --edu-space-3: 12px;
+  --edu-space-4: 16px;
+  --edu-space-6: 24px;
+  --edu-space-8: 32px;
+  --edu-space-12: 48px;
+  --edu-space-16: 64px;
+
+  /* ---------- radio y elevación ---------- */
+  --edu-radius-sm: 6px;
+  --edu-radius-md: 10px;
+  --edu-radius-lg: 14px;
+  --edu-radius-pill: 999px;
+
+  --edu-shadow-sm: 0 1px 2px rgba(11, 21, 38, 0.06);
+  --edu-shadow-md: 0 4px 12px rgba(11, 21, 38, 0.08);
+  --edu-shadow-lg: 0 12px 28px rgba(11, 21, 38, 0.12);
+
+  /* ---------- layout ---------- */
+  --edu-sidebar-width: 240px;
+  --edu-context-width: 320px;
+  --edu-content-max: 1440px;
+  --edu-touch-target: 44px;
+}
+
+/* Foco visible obligatorio: nunca sustituir por outline:none */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--edu-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--edu-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/*
+ * Los tokens de `docs/design/tokens/tokens.css` son la fuente de marca.
+ * Aquí solo se exponen a Tailwind y se fijan las reglas de accesibilidad
+ * que `docs/design/02-design-tokens.md` §6 declara no negociables.
+ *
+ * Ningún componente escribe un hex: todo pasa por un token semántico.
+ */
+
+@theme inline {
+  --color-ink: var(--edu-text-primary);
+  --color-ink-soft: var(--edu-text-secondary);
+  --color-ground: var(--edu-bg);
+  --color-surface: var(--edu-surface);
+  --color-surface-sunken: var(--edu-surface-sunken);
+  --color-line: var(--edu-border);
+  --color-line-strong: var(--edu-border-strong);
+
+  --color-action: var(--edu-action-primary-bg);
+  --color-action-hover: var(--edu-action-primary-bg-hover);
+  --color-danger: var(--edu-action-danger-bg);
+  --color-danger-hover: var(--edu-action-danger-bg-hover);
+
+  --color-nav: var(--edu-navy-900);
+  --color-nav-active: var(--edu-teal-700);
+
+  --font-sans: var(--edu-font-sans);
+  --font-mono: var(--edu-font-mono);
+
+  --radius-sm: var(--edu-radius-sm);
+  --radius-md: var(--edu-radius-md);
+  --radius-lg: var(--edu-radius-lg);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--edu-bg);
+  color: var(--edu-text-primary);
+  font-family: var(--edu-font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Objetivo táctil mínimo en móvil: 44px (WCAG 2.2 AA · 2.5.8). */
+@media (pointer: coarse) {
+  button,
+  a[role='button'],
+  input[type='submit'] {
+    min-height: var(--edu-touch-target);
+  }
+}
+
+/* Cifras alineadas en tablas y calendarios. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Salto al contenido: visible solo al enfocarlo con teclado. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: var(--edu-space-2);
+  z-index: 50;
+  padding: var(--edu-space-2) var(--edu-space-4);
+  background: var(--edu-surface);
+  border-radius: var(--edu-radius-sm);
+}
+
+.skip-link:focus {
+  left: var(--edu-space-2);
+}

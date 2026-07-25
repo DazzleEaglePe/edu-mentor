@@ -18,12 +18,13 @@
     "generate": "pnpm -r --if-present generate",
     "lint": "eslint . --max-warnings=0",
     "test": "pnpm -r --if-present test",
-    "typecheck": "pnpm generate && pnpm -r --if-present typecheck"
+    "typecheck": "pnpm generate && pnpm --filter @edu-mentor/shared-types build && pnpm -r --if-present typecheck"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@redocly/cli": "2.40.0",
     "eslint": "10.7.0",
+    "eslint-config-next": "16.2.11",
     "globals": "17.7.0",
     "prettier": "3.9.6",
     "typescript": "6.0.3",

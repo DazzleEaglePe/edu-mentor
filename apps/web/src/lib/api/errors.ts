@@ -1,0 +1,127 @@
+import type { ApiComponents, ApiError } from '@edu-mentor/shared-types';
+
+/**
+ * El backend devuelve `{ error: { code, message, traceId, details? } }`.
+ *
+ * Regla de `docs/design/09-copy.md` §8: **la UI redacta desde `code`** y nunca
+ * muestra `message` crudo. Así el texto se mejora durante el piloto sin tocar
+ * la API ni desplegar el backend.
+ */
+
+type Schemas = ApiComponents['schemas'];
+type ScheduleConflictDetails = Schemas['ScheduleConflictDetails'];
+
+export interface ErrorCopy {
+  readonly title: string;
+  readonly body: string;
+  /** Acción sugerida. `null` cuando no hay salida distinta de volver. */
+  readonly action: string | null;
+  /** El código de soporte solo se muestra cuando de verdad ayuda a soporte. */
+  readonly showTraceId: boolean;
+}
+
+const fallback: ErrorCopy = {
+  title: 'Algo no salió como esperábamos',
+  body: 'Inténtalo de nuevo. Si sigue pasando, comparte el código de soporte con tu coordinación.',
+  action: 'Reintentar',
+  showTraceId: true,
+};
+
+const catalog: Record<string, ErrorCopy> = {
+  NOT_FOUND: {
+    title: 'Este contenido no está disponible',
+    body: 'Puede haber sido cancelado o ya no tienes acceso.',
+    action: 'Volver',
+    showTraceId: false,
+  },
+  FORBIDDEN: {
+    title: 'No tienes acceso a esta sección',
+    body: 'Si crees que es un error, escribe a tu coordinación.',
+    action: 'Volver a mi inicio',
+    showTraceId: false,
+  },
+  UNAUTHORIZED: {
+    title: 'Tu sesión expiró',
+    body: 'Por seguridad cerramos tu sesión después de un tiempo sin actividad.',
+    action: 'Iniciar sesión',
+    showTraceId: false,
+  },
+  VERSION_CONFLICT: {
+    title: 'Alguien actualizó esto mientras trabajabas',
+    body: 'Tus cambios no se guardaron para no sobrescribir los de otra persona. Copia lo que escribiste antes de recargar.',
+    action: 'Recargar',
+    showTraceId: false,
+  },
+  CONFIRMATION_CLOSED: {
+    title: 'Ya no puedes cambiar tu respuesta',
+    body: 'La confirmación cerró. Avisa a tu mentora si tu situación cambió.',
+    action: null,
+    showTraceId: false,
+  },
+  PAYLOAD_TOO_LARGE: {
+    title: 'El archivo supera el límite',
+    body: 'Comprímelo o divídelo en partes. Los archivos que ya subiste se conservan.',
+    action: null,
+    showTraceId: false,
+  },
+  UNSUPPORTED_MEDIA_TYPE: {
+    title: 'Este formato no se acepta',
+    body: 'Revisa los formatos permitidos en la consigna.',
+    action: null,
+    showTraceId: false,
+  },
+};
+
+export function errorCopy(error: ApiError['error']): ErrorCopy {
+  return catalog[error.code] ?? fallback;
+}
+
+/**
+ * `SCHEDULE_CONFLICT` tiene dos redacciones según lo que el actor puede ver.
+ *
+ * Con `canViewConflictingSession: false` el contrato ni siquiera entrega el id
+ * de la sesión: no se nombra, no se enlaza y no se insinúa que exista. Y en
+ * ningún caso prometemos "el siguiente horario libre" — el backend no lo
+ * calcula, así que sugerirlo solo produce un segundo 409.
+ */
+export interface ScheduleConflictCopy extends ErrorCopy {
+  readonly conflictingSessionId: string | null;
+}
+
+export function scheduleConflictCopy(
+  details: ScheduleConflictDetails,
+  resourceName: string,
+  formatInterval: (startsAt: string, endsAt: string, timezone: string) => string,
+): ScheduleConflictCopy {
+  const interval = formatInterval(
+    details.occupiedInterval.startsAt,
+    details.occupiedInterval.endsAt,
+    details.occupiedInterval.timezone,
+  );
+
+  const body = details.canViewConflictingSession
+    ? `${resourceName} ya tiene una sesión ${interval}.`
+    : `${resourceName} no está disponible ${interval}.`;
+
+  return {
+    title: 'Hay un cruce de horario',
+    body,
+    action: 'Elegir otro horario',
+    showTraceId: false,
+    conflictingSessionId: details.canViewConflictingSession ? details.conflictingSessionId : null,
+  };
+}
+
+/** Type guard para el envelope, sin confiar en el `status` HTTP. */
+export function isApiError(value: unknown): value is ApiError {
+  if (typeof value !== 'object' || value === null || !('error' in value)) {
+    return false;
+  }
+  const candidate = (value as { error: unknown }).error;
+  return (
+    typeof candidate === 'object' &&
+    candidate !== null &&
+    'code' in candidate &&
+    'traceId' in candidate
+  );
+}

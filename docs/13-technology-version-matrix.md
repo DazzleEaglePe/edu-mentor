@@ -78,9 +78,10 @@ allowBuilds:
   msgpackr-extract: false
   prisma: true
   sharp: true
+  unrs-resolver: false
 ```
 
-pnpm 11.17 usa `allowBuilds` para registrar la decisión positiva o negativa por paquete. `esbuild` se autorizó tras confirmar que es la dependencia directa de ejecución de `tsx`; su postinstall selecciona/verifica el binario de plataforma. `msgpackr-extract` se bloquea porque es una optimización nativa opcional. No se habilita una autorización global. Toda dependencia nueva que solicite script debe revisarse de forma explícita.
+pnpm 11.17 usa `allowBuilds` para registrar la decisión positiva o negativa por paquete. `esbuild` se autorizó tras confirmar que es la dependencia directa de ejecución de `tsx`; su postinstall selecciona/verifica el binario de plataforma. `msgpackr-extract` se bloquea porque es una optimización nativa opcional. `unrs-resolver`, dependencia transitiva del resolver de imports de ESLint, ya instala el binding nativo de la plataforma mediante `optionalDependencies`; su postinstall de recuperación queda bloqueado. No se habilita una autorización global. Toda dependencia nueva que solicite script debe revisarse de forma explícita.
 
 También se activará:
 

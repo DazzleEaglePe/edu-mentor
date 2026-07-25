@@ -26,11 +26,13 @@
 | [api/README.md](./api/README.md) | OpenAPI inicial y fixtures sintéticos compartidos |
 | [learning/01-domain-modeling-and-state-machines.md](./learning/01-domain-modeling-and-state-machines.md) | Primera lección práctica del track AI Engineer |
 | [learning/02-persistence-and-observability.md](./learning/02-persistence-and-observability.md) | Schema, migraciones, concurrencia, auditoría y trace ID |
+| [learning/04-contract-driven-frontend.md](./learning/04-contract-driven-frontend.md) | UI guiada por contrato, tipos y gates de calidad |
 | [checkpoints/2026-07-25-planning-baseline.md](./checkpoints/2026-07-25-planning-baseline.md) | Primer checkpoint de planificación |
 | [checkpoints/2026-07-25-technical-contract-baseline.md](./checkpoints/2026-07-25-technical-contract-baseline.md) | Contratos, estados, matriz y evidencia del spike |
 | [checkpoints/2026-07-25-contract-reconciliation-closure.md](./checkpoints/2026-07-25-contract-reconciliation-closure.md) | Cierre de CCR-010–012 y contrato listo para consumo de diseño |
 | [checkpoints/2026-07-25-phase1-foundation-scaffold.md](./checkpoints/2026-07-25-phase1-foundation-scaffold.md) | Workspace, API mínima, tipos generados y pipeline inicial |
 | [checkpoints/2026-07-25-phase1-data-and-http-foundations.md](./checkpoints/2026-07-25-phase1-data-and-http-foundations.md) | Schema Prisma y frontera HTTP observable |
+| [checkpoints/2026-07-25-phase1-web-scaffold.md](./checkpoints/2026-07-25-phase1-web-scaffold.md) | Verificación del scaffold web y cobertura de lint TSX/a11y |
 
 ## Regla de precedencia
 
