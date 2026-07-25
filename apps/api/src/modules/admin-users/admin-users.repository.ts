@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -6,9 +7,16 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import {
   type AdminUser,
   type AdminUserPage,
+  type CreateAdminUserInput,
+  type CreateAdminUserResult,
+  type ResetAdminUserPasswordInput,
+  type ResetAdminUserPasswordResult,
   type UpdateAdminUserInput,
   type UpdateAdminUserResult,
 } from './admin-user.js';
+
+const CREATE_ADMIN_USER_OPERATION = 'admin.users.create';
+const ROLE_KEYS = new Set<RoleKey>(['ADMIN', 'MENTOR', 'PARTICIPANT']);
 
 const adminUserInclude = {
   userRoles: {
@@ -39,6 +47,55 @@ function userSnapshot(user: AdminUser): Prisma.InputJsonValue {
     roles: [...user.roles],
     version: user.version,
   };
+}
+
+function userResponse(user: AdminUser): Prisma.InputJsonObject {
+  return {
+    email: user.email,
+    fullName: user.fullName,
+    id: user.id,
+    isActive: user.isActive,
+    mustChangePassword: user.mustChangePassword,
+    roles: [...user.roles],
+    version: user.version,
+  };
+}
+
+function parseStoredUser(value: Prisma.JsonValue | null): AdminUser | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const { email, fullName, id, isActive, mustChangePassword, roles, version } = value;
+
+  if (
+    typeof email !== 'string' ||
+    typeof fullName !== 'string' ||
+    typeof id !== 'string' ||
+    typeof isActive !== 'boolean' ||
+    typeof mustChangePassword !== 'boolean' ||
+    !Array.isArray(roles) ||
+    !roles.every(
+      (role): role is RoleKey => typeof role === 'string' && ROLE_KEYS.has(role as RoleKey),
+    ) ||
+    typeof version !== 'number'
+  ) {
+    return null;
+  }
+
+  return {
+    email,
+    fullName,
+    id,
+    isActive,
+    mustChangePassword,
+    roles,
+    version,
+  };
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 @Injectable()
@@ -86,6 +143,131 @@ export class AdminUsersRepository {
     });
 
     return user?.organizationId ?? null;
+  }
+
+  async create(input: CreateAdminUserInput): Promise<CreateAdminUserResult> {
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        await transaction.idempotencyRecord.deleteMany({
+          where: {
+            expiresAt: {
+              lte: new Date(),
+            },
+            keyHash: input.idempotencyKeyHash,
+            operation: CREATE_ADMIN_USER_OPERATION,
+            organizationId: input.organizationId,
+          },
+        });
+
+        const reservation = await transaction.idempotencyRecord.createMany({
+          data: {
+            expiresAt: input.expiresAt,
+            id: randomUUID(),
+            keyHash: input.idempotencyKeyHash,
+            operation: CREATE_ADMIN_USER_OPERATION,
+            organizationId: input.organizationId,
+            requestHash: input.requestHash,
+          },
+          skipDuplicates: true,
+        });
+
+        if (reservation.count === 0) {
+          const stored = await transaction.idempotencyRecord.findUnique({
+            where: {
+              organizationId_operation_keyHash: {
+                keyHash: input.idempotencyKeyHash,
+                operation: CREATE_ADMIN_USER_OPERATION,
+                organizationId: input.organizationId,
+              },
+            },
+          });
+
+          if (stored === null) {
+            throw new Error('The idempotency reservation disappeared unexpectedly.');
+          }
+
+          if (stored.requestHash !== input.requestHash) {
+            return { kind: 'idempotency_key_reused' };
+          }
+
+          const user = parseStoredUser(stored.responseBody);
+
+          if (stored.responseStatus !== 201 || user === null) {
+            throw new Error('The stored idempotency response is incomplete or invalid.');
+          }
+
+          return {
+            kind: 'replayed',
+            user,
+          };
+        }
+
+        const createdRecord = await transaction.user.create({
+          data: {
+            email: input.email,
+            fullName: input.fullName,
+            id: randomUUID(),
+            isActive: true,
+            mustChangePassword: true,
+            normalizedEmail: input.email,
+            organizationId: input.organizationId,
+            passwordHash: input.passwordHash,
+            version: 1,
+          },
+          include: adminUserInclude,
+        });
+        await this.replaceRoles(transaction, input.actorUserId, createdRecord.id, input.roles);
+
+        const storedRecord = await transaction.user.findUnique({
+          include: adminUserInclude,
+          where: {
+            id: createdRecord.id,
+          },
+        });
+
+        if (storedRecord === null) {
+          throw new Error('The newly created user disappeared unexpectedly.');
+        }
+
+        const user = toAdminUser(storedRecord);
+        await transaction.auditLog.create({
+          data: {
+            action: 'admin.user_created',
+            actorUserId: input.actorUserId,
+            afterData: userSnapshot(user),
+            entityId: user.id,
+            entityType: 'USER',
+            organizationId: input.organizationId,
+            traceId: input.traceId,
+          },
+        });
+        await transaction.idempotencyRecord.update({
+          data: {
+            resourceId: user.id,
+            responseBody: userResponse(user),
+            responseStatus: 201,
+          },
+          where: {
+            organizationId_operation_keyHash: {
+              keyHash: input.idempotencyKeyHash,
+              operation: CREATE_ADMIN_USER_OPERATION,
+              organizationId: input.organizationId,
+            },
+          },
+        });
+
+        return {
+          kind: 'created',
+          user,
+        };
+      });
+    } catch (error: unknown) {
+      if (isUniqueConstraintError(error)) {
+        return { kind: 'email_conflict' };
+      }
+
+      throw error;
+    }
   }
 
   async update(input: UpdateAdminUserInput): Promise<UpdateAdminUserResult> {
@@ -180,6 +362,86 @@ export class AdminUsersRepository {
       return {
         kind: 'updated',
         user,
+      };
+    });
+  }
+
+  async resetPassword(input: ResetAdminUserPasswordInput): Promise<ResetAdminUserPasswordResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const locked = await transaction.$queryRaw<readonly { id: string }[]>`
+        SELECT "id"
+        FROM "user"
+        WHERE "id" = ${input.userId}::uuid
+          AND "organization_id" = ${input.organizationId}::uuid
+        FOR UPDATE
+      `;
+
+      if (locked.length === 0) {
+        return { kind: 'not_found' };
+      }
+
+      const current = await transaction.user.findUnique({
+        select: {
+          mustChangePassword: true,
+          version: true,
+        },
+        where: {
+          id: input.userId,
+        },
+      });
+
+      if (current === null) {
+        return { kind: 'not_found' };
+      }
+
+      const updated = await transaction.user.update({
+        data: {
+          mustChangePassword: true,
+          passwordHash: input.passwordHash,
+          version: {
+            increment: 1,
+          },
+        },
+        select: {
+          mustChangePassword: true,
+          version: true,
+        },
+        where: {
+          id: input.userId,
+        },
+      });
+      const sessions = await transaction.authSession.updateMany({
+        data: {
+          revokedAt: new Date(),
+        },
+        where: {
+          revokedAt: null,
+          userId: input.userId,
+        },
+      });
+      await transaction.auditLog.create({
+        data: {
+          action: 'admin.user_password_reset',
+          actorUserId: input.actorUserId,
+          afterData: {
+            mustChangePassword: updated.mustChangePassword,
+            sessionsRevoked: sessions.count,
+            version: updated.version,
+          },
+          beforeData: {
+            mustChangePassword: current.mustChangePassword,
+            version: current.version,
+          },
+          entityId: input.userId,
+          entityType: 'USER',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+
+      return {
+        kind: 'reset',
+        sessionsRevoked: sessions.count,
       };
     });
   }
