@@ -117,7 +117,7 @@ La imagen Redis 8 usa el esquema de licenciamiento publicado por Redis; la selec
 Pendientes:
 
 1. imagen Linux exacta de Node y digest;
-2. ejecutar la migración y sus constraints SQL contra PostgreSQL;
-3. presupuesto de RAM medido;
+2. presupuesto de RAM medido;
+3. `vm.overcommit_memory=1` y hardening del host Linux;
 4. estrategia de patches de seguridad;
 5. revisión de licencia Redis para producción.

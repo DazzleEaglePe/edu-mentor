@@ -22,7 +22,7 @@ Son tres evidencias distintas:
 2. **migración generada:** existe SQL versionado para transformar una base vacía;
 3. **migración aplicada:** PostgreSQL ejecutó ese SQL y Prisma registró su historial.
 
-En este checkpoint existen las dos primeras. La tercera permanece abierta porque no hay un servidor PostgreSQL disponible.
+En este checkpoint existen las tres: las dos primeras se validan localmente y GitHub Actions aplica la migración sobre un PostgreSQL efímero real. El entorno local todavía no tiene Docker, pero esa limitación ya no se confunde con falta de evidencia ejecutable.
 
 Prisma Migrate es híbrido: genera SQL desde el modelo declarativo, pero permite añadir SQL imperativo para reglas que el schema no expresa, como `CHECK`.
 

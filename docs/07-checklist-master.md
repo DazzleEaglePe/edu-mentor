@@ -100,13 +100,13 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [x] Generar `packages/shared-types` desde OpenAPI sin mantener un contrato manual paralelo.
 - [ ] Configurar secret scan y dependency audit.
 - [x] Crear Docker Compose local.
-- [ ] Configurar Postgres, Redis y health checks.
+- [x] Configurar Postgres, Redis y health checks.
   - [x] Implementar clientes y readiness fail-closed con prueba negativa.
-  - [ ] Ejecutar ambos servicios y demostrar readiness positivo.
-- [ ] Configurar Prisma y migraciones.
+  - [x] Ejecutar ambos servicios y demostrar readiness positivo.
+- [x] Configurar Prisma y migraciones.
   - [x] Definir y validar el schema Prisma inicial de fundaciones.
   - [x] Generar la migración SQL inicial con constraints fundacionales.
-  - [ ] Ejecutar la migración inicial contra PostgreSQL.
+  - [x] Ejecutar la migración inicial contra PostgreSQL.
 - [x] Implementar config/feature gates tipados.
 - [x] Implementar errors + traceId + logs estructurados.
 - [ ] Implementar usuarios, roles y mentor capabilities.

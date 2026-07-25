@@ -47,6 +47,12 @@ prisma_models=12
 prisma_migration_generated=yes
 prisma_provider_lock=postgresql
 foundation_check_constraints=10
+github_ci_run=30172807828
+github_quality_job=passed_in_42s
+github_data_runtime_job=passed_in_58s
+prisma_migrate_deploy=ok
+prisma_migrate_status=up_to_date
+database_integration_tests=1_passed
 runtime_config_tests=4_passed
 health_service_tests=2_passed
 total_api_tests=12_passed
@@ -54,6 +60,10 @@ runtime_liveness_without_dependencies=200
 runtime_readiness_without_dependencies=503
 runtime_readiness_code=SERVICE_NOT_READY
 runtime_dependency_details_sanitized=yes
+runtime_liveness_with_dependencies=200
+runtime_readiness_with_dependencies=200
+runtime_postgres_status=ok
+runtime_redis_status=ok
 frozen_install=ok
 format_check=ok
 eslint=ok
@@ -64,21 +74,21 @@ local_markdown_links=54
 broken_local_markdown_links=0
 ```
 
+La evidencia positiva se ejecutó en [GitHub Actions](https://github.com/DazzleEaglePe/edu-mentor/actions/runs/30172807828), usando exactamente las imágenes fijadas en Compose.
+
 ## Límite explícito
 
-Docker, Podman, Colima, `psql` y `postgres` no están disponibles en el entorno actual. Por eso todavía no se afirma que:
+Docker, Podman, Colima, `psql` y `postgres` no están disponibles en el entorno local actual. La ejecución real fue trasladada a CI y permite cerrar los checkboxes técnicos, pero aún quedan pendientes:
 
-- los contenedores iniciaron;
-- la migración se aplicó;
-- los constraints fueron aceptados por un servidor real;
-- readiness positivo fue demostrado.
-
-Los checkboxes conjuntos de Postgres/Redis y Prisma/migraciones permanecen abiertos hasta obtener esa evidencia.
+- probar el flujo manual local cuando exista Docker;
+- comprobar persistencia de volúmenes después de reiniciar;
+- medir consumo de RAM;
+- configurar `vm.overcommit_memory=1` en el host Linux del piloto, advertido por Redis;
+- crear seed sintético reproducible.
 
 ## Siguiente slice
 
-1. ejecutar `pnpm infra:up`;
-2. ejecutar `pnpm db:migrate`;
-3. demostrar readiness positivo;
-4. crear seed sintético de organización/roles;
-5. iniciar auth session con rotación y revocación.
+1. crear seed sintético de organización/roles;
+2. iniciar auth session con rotación y revocación;
+3. implementar el primer repository con scoping por organización;
+4. probar ownership negativo.
