@@ -31,6 +31,8 @@ Estado: baseline reproducible para scaffold; patches se actualizan solo mediante
 | `openapi-typescript` | `7.13.0` | Generador aislado con TypeScript `5.9.3` porque su peer estable aún declara `^5.x`; el código generado se compila con TypeScript `6.0.3`. |
 | `tsx` | `4.23.1` | Runner de desarrollo y pruebas de la API. |
 | Redocly CLI | `2.40.0` | Lint del contrato OpenAPI en local y CI. |
+| `jose` | `6.2.3` | Firma/verificación JWT con algoritmo, issuer, audience y tipo explícitos; se evitó el patch `6.2.4` por su menor edad. |
+| `class-validator` / `class-transformer` | `0.15.1` / `0.5.1` | Validación estricta de DTOs en la frontera HTTP de Nest. |
 
 ## 2. Por qué TypeScript 6
 

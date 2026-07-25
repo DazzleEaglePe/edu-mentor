@@ -1,5 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 
+import { Public } from '../../common/auth/auth-metadata.js';
 import { HealthService, type ReadinessResponse } from './health.service.js';
 
 interface LivenessResponse {
@@ -8,6 +9,7 @@ interface LivenessResponse {
 }
 
 @Controller('health')
+@Public()
 export class HealthController {
   constructor(@Inject(HealthService) private readonly healthService: HealthService) {}
 
