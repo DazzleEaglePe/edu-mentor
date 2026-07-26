@@ -71,6 +71,17 @@ const catalog: Record<string, ErrorCopy> = {
     action: null,
     showTraceId: false,
   },
+  /**
+   * El backend valida cada criterio contra su propio `maxScore`. La UI ya lo
+   * previene con `validateRubricScores`, así que este error solo debería llegar
+   * si la rúbrica cambió mientras el mentor escribía.
+   */
+  SCORE_EXCEEDS_MAX: {
+    title: 'Un puntaje supera el máximo del criterio',
+    body: 'Revisa los criterios: cada uno tiene su propio máximo y puede haber cambiado.',
+    action: 'Revisar puntajes',
+    showTraceId: false,
+  },
   EMAIL_ALREADY_EXISTS: {
     title: 'Ese correo ya está registrado',
     body: 'Busca a la persona en la lista: puede estar desactivada en vez de ausente.',

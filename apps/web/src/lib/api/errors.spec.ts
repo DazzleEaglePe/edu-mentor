@@ -60,6 +60,14 @@ describe('errorCopy', () => {
     }
   });
 
+  it('explica el puntaje excedido apuntando al criterio, no al total', () => {
+    // La UI ya lo previene; si llega, es que la rúbrica cambió mientras el
+    // mentor escribía, así que el texto invita a revisarla.
+    const copy = errorCopy({ code: 'SCORE_EXCEEDS_MAX', message: '', traceId: 't' });
+    assert.ok(copy.body.includes('su propio máximo'));
+    assert.equal(copy.action, 'Revisar puntajes');
+  });
+
   it('trata el reuso de idempotencia como resultado, no como fallo', () => {
     // La operación ya ocurrió: alarmar por un reintento haría que alguien
     // intente crear el usuario otra vez, que es justo lo que evitamos.
