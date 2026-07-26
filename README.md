@@ -10,7 +10,7 @@ Plataforma digital para operar y visibilizar el programa de mentoría y empleabi
 
 ## Estado
 
-Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y setup administrativo completo de usuarios, oleadas, enrollments y asignaciones de mentor con aislamiento multi-tenant, idempotencia e historial auditable. Fase 2 ya cuenta con el primer slice vertical de Agenda: crear, consultar y confirmar una sesión 1:1, con reservas temporales, control de concurrencia y scoping por rol. `apps/web` permanece bajo ownership de Claude Code.
+Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto pendientes y, en paralelo, avanzó la fundación técnica de Fase 1: workspace pnpm, API Nest, tipos OpenAPI, migraciones Prisma, PostgreSQL/Redis, auth revocable, seed por rol y setup administrativo completo de usuarios, oleadas, enrollments y asignaciones de mentor con aislamiento multi-tenant, idempotencia e historial auditable. Fase 2 ya cubre Agenda 1:1 y grupal, checkpoint de Fase 2, confirmaciones independientes y asistencia auditable, con reservas temporales, control de concurrencia y scoping por rol. `apps/web` permanece bajo ownership de Claude Code.
 
 ## Documentos de entrada
 
@@ -33,6 +33,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Asignaciones de mentor con vigencia e historial](./docs/checkpoints/2026-07-25-phase1-admin-mentor-assignments.md)
 - [Fundación de Agenda y lecturas de sesiones](./docs/checkpoints/2026-07-25-phase2-agenda-read-foundation.md)
 - [Vertical 2A: crear, consultar y confirmar 1:1](./docs/checkpoints/2026-07-25-phase2-agenda-one-to-one.md)
+- [Vertical 2B: grupo, checkpoint y asistencia](./docs/checkpoints/2026-07-25-phase2-agenda-group-attendance.md)
 - [Lección L01](./docs/learning/01-domain-modeling-and-state-machines.md)
 - [Lección L02](./docs/learning/02-persistence-and-observability.md)
 - [Lección L03](./docs/learning/03-runtime-migrations-and-health-checks.md)
@@ -43,6 +44,7 @@ Diseño y backend ya comparten contratos. Fase 0 mantiene decisiones de Producto
 - [Lección de alcance temporal en asignaciones](./docs/learning/09-temporal-mentor-assignments.md)
 - [Lección de reservas temporales y read models](./docs/learning/10-temporal-reservations-and-role-scoped-reads.md)
 - [Lección de creación idempotente y confirmación concurrente](./docs/learning/11-idempotent-session-creation-and-confirmation.md)
+- [Lección de estado grupal y asistencia terminal](./docs/learning/12-group-sessions-and-terminal-attendance.md)
 - [Coordinación con Claude Code](./docs/09-claude-code-coordination.md)
 
 `newfiles.zip` se conserva como snapshot de contexto; los documentos extraídos son la fuente de trabajo.

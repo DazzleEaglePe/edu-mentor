@@ -2,7 +2,7 @@
 
 Fecha: 2026-07-25  
 Rama: `agent/phase2-agenda-sessions`  
-Estado: implementación lista; integración PostgreSQL pendiente de confirmación en CI.
+Estado: vertical 2B verificada en PostgreSQL y Redis reales.
 
 ## Alcance
 
@@ -19,17 +19,27 @@ Estado: implementación lista; integración PostgreSQL pendiente de confirmació
 11. corrección administrativa auditable;
 12. auditoría y outbox solo cuando cambia el estado.
 
-## Evidencia local
+## Evidencia
 
 ```text
 unit_tests=61 passed
 api_typecheck=passed
 openapi_lint=passed
-postgres_integration=not_run_no_local_docker
+quality_job=passed_in_48s
+data_runtime_job=passed_in_1m29s
+seed_integrations=14_passed
+group_confirmations=5_confirmed_1_declined_2_pending
+group_checkpoint_workflow=passed
+terminal_attendance_workflow=passed
+pr_mergeable=MERGEABLE
 ```
 
-La indisponibilidad local de Docker se registra como límite de infraestructura. La misma prueba se
-ejecuta en el job `data-runtime` de GitHub Actions.
+[GitHub Actions run 30183924599](https://github.com/DazzleEaglePe/edu-mentor/actions/runs/30183924599)
+
+El primer run detectó que las identidades adicionales agotaban el límite de IP compartido entre
+archivos de integración. No se debilitó la protección: el suite nuevo aísla el namespace temporal
+`auth:login:*` antes y después de ejecutarse. El segundo run verificó que el flujo grupal, las
+lecturas y la vertical 1:1 conviven sin `429`.
 
 ## Códigos estables añadidos
 

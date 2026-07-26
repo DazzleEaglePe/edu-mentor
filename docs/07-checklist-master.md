@@ -148,10 +148,10 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [x] Implementar repository y service con transacciones.
 - [x] Implementar lista/detalle/calendario con scoping por rol.
 - [x] Crear sesión 1:1.
-- [ ] Crear sesión grupal.
-- [ ] Crear checkpoint con reglas de fase.
+- [x] Crear sesión grupal.
+- [x] Crear checkpoint con reglas de fase.
 - [x] Confirmar participación.
-- [ ] Marcar asistencia.
+- [x] Marcar asistencia.
 - [ ] Solicitar/decidir reprogramación.
 - [ ] Reprogramar preservando historial.
 - [ ] Cancelar/completar.
@@ -161,12 +161,12 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 - [ ] Implementar UI participante.
 - [ ] Implementar UI mentor.
 - [ ] Implementar UI admin.
-- [ ] Probar concurrencia, ownership y reintentos.
+- [x] Probar concurrencia, ownership y reintentos.
 
 ### Gate 2
 
 - [ ] Tres vertical slices demostradas.
-- [ ] Cero doble reserva en test concurrente.
+- [x] Cero doble reserva en test concurrente.
 - [ ] Estados UI/API/DB consistentes.
 - [ ] Recordatorios no duplicados.
 
