@@ -11,7 +11,7 @@ import type {
   SessionView,
 } from './session-view.js';
 
-const sessionViewInclude = {
+export const sessionViewInclude = {
   mentor: {
     select: {
       fullName: true,
@@ -43,9 +43,13 @@ const sessionViewInclude = {
   },
 } as const satisfies Prisma.SessionInclude;
 
-type SessionWithRelations = Prisma.SessionGetPayload<{
+export type SessionWithRelations = Prisma.SessionGetPayload<{
   include: typeof sessionViewInclude;
 }>;
+
+interface SessionViewer {
+  readonly userId: string;
+}
 
 function accessFilter(principal: AuthPrincipal): Prisma.SessionWhereInput {
   if (principal.roles.includes('ADMIN')) {
@@ -115,7 +119,7 @@ function confirmationSummary(session: SessionWithRelations): ConfirmationSummary
   };
 }
 
-function canConfirm(session: SessionWithRelations, principal: AuthPrincipal, now: Date): boolean {
+function canConfirm(session: SessionWithRelations, principal: SessionViewer, now: Date): boolean {
   return (
     session.status === 'SCHEDULED' &&
     now.getTime() < session.confirmationClosesAt.getTime() &&
@@ -125,7 +129,7 @@ function canConfirm(session: SessionWithRelations, principal: AuthPrincipal, now
 
 function toSessionSummary(
   session: SessionWithRelations,
-  principal: AuthPrincipal,
+  principal: SessionViewer,
   now: Date,
 ): SessionSummaryView {
   return {
@@ -143,9 +147,9 @@ function toSessionSummary(
   };
 }
 
-function toSessionView(
+export function toSessionView(
   session: SessionWithRelations,
-  principal: AuthPrincipal,
+  principal: SessionViewer,
   now: Date,
 ): SessionView {
   return {

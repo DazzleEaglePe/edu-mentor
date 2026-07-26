@@ -14,7 +14,7 @@
     "start": "node dist/main.js",
     "test": "tsx --test 'src/**/*.spec.ts'",
     "test:integration": "tsx --test --test-concurrency=1 src/integration/data-runtime.integration.ts src/integration/auth-flow.integration.ts",
-    "test:seed-integration": "tsx --test --test-concurrency=1 src/integration/core-access.integration.ts src/integration/admin-user-lifecycle.integration.ts src/integration/admin-program.integration.ts src/integration/sessions-read.integration.ts",
+    "test:seed-integration": "tsx --test --test-concurrency=1 src/integration/core-access.integration.ts src/integration/admin-user-lifecycle.integration.ts src/integration/admin-program.integration.ts src/integration/sessions-read.integration.ts src/integration/sessions-workflow.integration.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.seed.json"
   },
   "dependencies": {
