@@ -58,8 +58,8 @@ export default async function AdminAsignacionesPage() {
         <Card variant="quiet" title="Dos alcances">
           <p className="text-sm text-[var(--edu-text-secondary)]">
             Una asignación puede cubrir <strong>toda la oleada</strong> —útil para quien dicta las
-            sesiones grupales— o a <strong>un participante</strong>. El contrato modela ambos con
-            un <code>enrollmentId</code> que puede venir vacío.
+            sesiones grupales— o a <strong>un participante</strong>. El contrato modela ambos con un{' '}
+            <code>enrollmentId</code> que puede venir vacío.
           </p>
           <p className="text-sm text-[var(--edu-text-secondary)]">
             Reasignar cierra la anterior y la deja en el historial: no se borra.
@@ -143,9 +143,7 @@ export default async function AdminAsignacionesPage() {
                 return (
                   <tr key={item.id} className="border-t border-[var(--edu-border)] align-top">
                     <td className="px-3 py-2 font-medium">{item.mentor.fullName}</td>
-                    <td className="px-3 py-2">
-                      {scope === 'OLEADA' ? <em>{target}</em> : target}
-                    </td>
+                    <td className="px-3 py-2">{scope === 'OLEADA' ? <em>{target}</em> : target}</td>
                     <td className="px-3 py-2 text-[var(--edu-text-secondary)]">
                       {item.capability === 'SPECIALIST' ? 'Especialista' : 'Mentor par'}
                     </td>
