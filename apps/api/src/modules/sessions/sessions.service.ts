@@ -50,6 +50,19 @@ export interface CreateSessionCommand {
   readonly weekNumber?: number;
 }
 
+export interface CompleteSessionCommand {
+  readonly expectedVersion: number;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
+export interface CancelSessionCommand {
+  readonly expectedVersion: number;
+  readonly reason: string;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
 export interface SetOwnConfirmationCommand {
   readonly expectedVersion: number;
   readonly sessionId: string;
@@ -273,6 +286,94 @@ export class SessionsService {
           resourceId: result.conflict.resourceId,
           resourceType: result.conflict.resourceType,
         });
+    }
+  }
+
+  async complete(
+    principal: AuthPrincipal,
+    command: CompleteSessionCommand,
+  ): Promise<SessionView> {
+    const result = await this.mutations.complete({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      expectedVersion: command.expectedVersion,
+      organizationId: principal.organization.id,
+      sessionId: command.sessionId,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'updated':
+        return result.session;
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+          {
+            currentVersion: result.currentVersion,
+            expectedVersion: command.expectedVersion,
+          },
+        );
+      case 'session_not_started':
+        throw new ApiError(422, 'SESSION_NOT_STARTED', 'La sesión todavía no ha comenzado.', {
+          startsAt: result.startsAt,
+        });
+      case 'session_not_scheduled':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_SCHEDULED',
+          'La sesión ya no admite esta transición.',
+        );
+    }
+  }
+
+  async cancel(principal: AuthPrincipal, command: CancelSessionCommand): Promise<SessionView> {
+    const reason = command.reason.trim();
+
+    if (reason.length < 3 || reason.length > 1_000) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'No pudimos procesar los datos enviados.', {
+        fields: ['reason'],
+      });
+    }
+
+    const result = await this.mutations.cancel({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      expectedVersion: command.expectedVersion,
+      organizationId: principal.organization.id,
+      reason,
+      sessionId: command.sessionId,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'updated':
+        return result.session;
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+          {
+            currentVersion: result.currentVersion,
+            expectedVersion: command.expectedVersion,
+          },
+        );
+      case 'session_not_scheduled':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_SCHEDULED',
+          'La sesión ya no admite esta transición.',
+        );
     }
   }
 

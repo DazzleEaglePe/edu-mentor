@@ -9,6 +9,10 @@ import {
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type {
+  CancelSessionInput,
+  CancelSessionResult,
+  CompleteSessionInput,
+  CompleteSessionResult,
   CreateSessionInput,
   CreateSessionResult,
   ScheduleConflict,
@@ -49,6 +53,13 @@ interface LockedAttendance {
   readonly mentor_user_id: string;
   readonly session_status: string;
   readonly starts_at: Date;
+}
+
+interface LockedSessionLifecycle {
+  readonly mentor_user_id: string;
+  readonly session_status: string;
+  readonly starts_at: Date;
+  readonly version: number;
 }
 
 class CreateSessionAbort extends Error {
@@ -276,6 +287,16 @@ function sessionSnapshot(session: SessionView): Prisma.InputJsonObject {
     type: session.type,
     version: session.version,
     weekNumber: session.weekNumber,
+  };
+}
+
+function lifecycleSnapshot(
+  session: SessionView,
+  reason: string | null = null,
+): Prisma.InputJsonObject {
+  return {
+    ...sessionSnapshot(session),
+    reason,
   };
 }
 
@@ -707,6 +728,217 @@ export class SessionMutationsRepository {
 
       throw error;
     }
+  }
+
+  complete(input: CompleteSessionInput): Promise<CompleteSessionResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const locked = await transaction.$queryRaw<readonly LockedSessionLifecycle[]>`
+        SELECT
+          "session"."mentor_user_id",
+          "session"."starts_at",
+          "session"."status"::text AS session_status,
+          "session"."version"
+        FROM "session"
+        INNER JOIN "oleada"
+          ON "oleada"."id" = "session"."oleada_id"
+        WHERE "session"."id" = ${input.sessionId}::uuid
+          AND "oleada"."organization_id" = ${input.organizationId}::uuid
+        FOR UPDATE OF "session"
+      `;
+      const currentLock = locked[0];
+
+      if (currentLock === undefined) {
+        return { kind: 'not_found' };
+      }
+
+      if (!input.actorIsAdmin && currentLock.mentor_user_id !== input.actorUserId) {
+        return { kind: 'forbidden' };
+      }
+
+      if (currentLock.version !== input.expectedVersion) {
+        return {
+          currentVersion: currentLock.version,
+          kind: 'conflict',
+        };
+      }
+
+      if (currentLock.session_status !== 'SCHEDULED') {
+        return { kind: 'session_not_scheduled' };
+      }
+
+      const now = new Date();
+
+      if (now.getTime() < currentLock.starts_at.getTime()) {
+        return {
+          kind: 'session_not_started',
+          startsAt: currentLock.starts_at.toISOString(),
+        };
+      }
+
+      const currentRecord = await transaction.session.findUnique({
+        include: sessionViewInclude,
+        where: {
+          id: input.sessionId,
+        },
+      });
+
+      if (currentRecord === null) {
+        return { kind: 'not_found' };
+      }
+
+      const current = toSessionView(currentRecord, { userId: input.actorUserId }, now);
+      const updatedRecord = await transaction.session.update({
+        data: {
+          status: 'COMPLETED',
+          version: {
+            increment: 1,
+          },
+        },
+        include: sessionViewInclude,
+        where: {
+          id: input.sessionId,
+        },
+      });
+      const updated = toSessionView(updatedRecord, { userId: input.actorUserId }, now);
+      await transaction.auditLog.create({
+        data: {
+          action: 'session.completed',
+          actorUserId: input.actorUserId,
+          afterData: lifecycleSnapshot(updated),
+          beforeData: lifecycleSnapshot(current),
+          entityId: input.sessionId,
+          entityType: 'SESSION',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+      await transaction.outboxEvent.create({
+        data: {
+          aggregateId: input.sessionId,
+          aggregateType: 'SESSION',
+          eventType: 'session.completed',
+          idempotencyKey: `session:${input.sessionId}:completed:v${updated.version}`,
+          organizationId: input.organizationId,
+          payload: lifecycleSnapshot(updated),
+        },
+      });
+
+      return {
+        kind: 'updated',
+        session: updated,
+      };
+    });
+  }
+
+  cancel(input: CancelSessionInput): Promise<CancelSessionResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const locked = await transaction.$queryRaw<readonly LockedSessionLifecycle[]>`
+        SELECT
+          "session"."mentor_user_id",
+          "session"."starts_at",
+          "session"."status"::text AS session_status,
+          "session"."version"
+        FROM "session"
+        INNER JOIN "oleada"
+          ON "oleada"."id" = "session"."oleada_id"
+        WHERE "session"."id" = ${input.sessionId}::uuid
+          AND "oleada"."organization_id" = ${input.organizationId}::uuid
+        FOR UPDATE OF "session"
+      `;
+      const currentLock = locked[0];
+
+      if (currentLock === undefined) {
+        return { kind: 'not_found' };
+      }
+
+      if (!input.actorIsAdmin && currentLock.mentor_user_id !== input.actorUserId) {
+        return { kind: 'forbidden' };
+      }
+
+      if (currentLock.version !== input.expectedVersion) {
+        return {
+          currentVersion: currentLock.version,
+          kind: 'conflict',
+        };
+      }
+
+      if (currentLock.session_status !== 'SCHEDULED') {
+        return { kind: 'session_not_scheduled' };
+      }
+
+      const now = new Date();
+      const currentRecord = await transaction.session.findUnique({
+        include: sessionViewInclude,
+        where: {
+          id: input.sessionId,
+        },
+      });
+
+      if (currentRecord === null) {
+        return { kind: 'not_found' };
+      }
+
+      const current = toSessionView(currentRecord, { userId: input.actorUserId }, now);
+      const updatedRecord = await transaction.session.update({
+        data: {
+          status: 'CANCELLED',
+          version: {
+            increment: 1,
+          },
+        },
+        include: sessionViewInclude,
+        where: {
+          id: input.sessionId,
+        },
+      });
+      await transaction.scheduleReservation.updateMany({
+        data: {
+          releasedAt: now,
+        },
+        where: {
+          releasedAt: null,
+          sessionId: input.sessionId,
+        },
+      });
+      await transaction.sessionReminder.updateMany({
+        data: {
+          status: 'CANCELLED',
+        },
+        where: {
+          sessionId: input.sessionId,
+          status: 'PENDING',
+        },
+      });
+
+      const updated = toSessionView(updatedRecord, { userId: input.actorUserId }, now);
+      await transaction.auditLog.create({
+        data: {
+          action: 'session.cancelled',
+          actorUserId: input.actorUserId,
+          afterData: lifecycleSnapshot(updated, input.reason),
+          beforeData: lifecycleSnapshot(current),
+          entityId: input.sessionId,
+          entityType: 'SESSION',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+      await transaction.outboxEvent.create({
+        data: {
+          aggregateId: input.sessionId,
+          aggregateType: 'SESSION',
+          eventType: 'session.cancelled',
+          idempotencyKey: `session:${input.sessionId}:cancelled:v${updated.version}`,
+          organizationId: input.organizationId,
+          payload: lifecycleSnapshot(updated, input.reason),
+        },
+      });
+
+      return {
+        kind: 'updated',
+        session: updated,
+      };
+    });
   }
 
   setOwnConfirmation(input: SetOwnConfirmationInput): Promise<SetOwnConfirmationResult> {

@@ -132,3 +132,64 @@ export type SetParticipantAttendanceResult =
   | {
       readonly kind: 'attendance_already_recorded';
     };
+
+export interface CompleteSessionInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly expectedVersion: number;
+  readonly organizationId: string;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
+export type CompleteSessionResult =
+  | {
+      readonly kind: 'updated';
+      readonly session: SessionView;
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentVersion: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'session_not_started';
+      readonly startsAt: string;
+    }
+  | {
+      readonly kind: 'session_not_scheduled';
+    };
+
+export interface CancelSessionInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly expectedVersion: number;
+  readonly organizationId: string;
+  readonly reason: string;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
+export type CancelSessionResult =
+  | {
+      readonly kind: 'updated';
+      readonly session: SessionView;
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentVersion: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'session_not_scheduled';
+    };
