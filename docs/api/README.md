@@ -55,6 +55,11 @@ sobrecapacidad bajo concurrencia. Estado, fase y semana siguen las transiciones 
 administrativo. El alta valida rol/capability del mentor y alcance de oleada o enrollment; el
 `DELETE` cierra la vigencia sin borrar historial.
 
+`GET /sessions`, `GET /sessions/calendar` y `GET /sessions/{sessionId}` ya leen el primer agregado
+persistido de Agenda. La consulta se limita a la organización autenticada y después aplica la unión
+de scopes del rol: administración ve la organización, mentor solo sus sesiones y participante solo
+aquellas en las que su enrollment aparece. Un detalle fuera de alcance se oculta con `404`.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
 DTO/decorators Nest ya cubren usuarios, oleadas, enrollments y mentor assignments; aún corresponde
 automatizar su comparación con OpenAPI para evitar drift entre ambas representaciones.

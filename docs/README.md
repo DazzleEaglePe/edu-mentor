@@ -33,6 +33,7 @@
 | [learning/07-cohort-state-and-capacity-concurrency.md](./learning/07-cohort-state-and-capacity-concurrency.md) | Máquinas de estado, locks de fila, capacidad y versiones |
 | [learning/08-enrollment-transactional-invariants.md](./learning/08-enrollment-transactional-invariants.md) | Cupos concurrentes, rollback idempotente y transiciones de inscripción |
 | [learning/09-temporal-mentor-assignments.md](./learning/09-temporal-mentor-assignments.md) | Alcance nullable, vigencia derivada y cierre sin borrado |
+| [learning/10-temporal-reservations-and-role-scoped-reads.md](./learning/10-temporal-reservations-and-role-scoped-reads.md) | Rangos temporales, exclusión de solapamientos y lecturas contextuales |
 | [checkpoints/2026-07-25-planning-baseline.md](./checkpoints/2026-07-25-planning-baseline.md) | Primer checkpoint de planificación |
 | [checkpoints/2026-07-25-technical-contract-baseline.md](./checkpoints/2026-07-25-technical-contract-baseline.md) | Contratos, estados, matriz y evidencia del spike |
 | [checkpoints/2026-07-25-contract-reconciliation-closure.md](./checkpoints/2026-07-25-contract-reconciliation-closure.md) | Cierre de CCR-010–012 y contrato listo para consumo de diseño |
@@ -45,6 +46,7 @@
 | [checkpoints/2026-07-25-phase1-admin-oleadas.md](./checkpoints/2026-07-25-phase1-admin-oleadas.md) | Oleadas idempotentes, estado lineal y capacidad protegida |
 | [checkpoints/2026-07-25-phase1-admin-enrollments.md](./checkpoints/2026-07-25-phase1-admin-enrollments.md) | Enrollments multi-tenant y carrera por el último cupo |
 | [checkpoints/2026-07-25-phase1-admin-mentor-assignments.md](./checkpoints/2026-07-25-phase1-admin-mentor-assignments.md) | Asignaciones de mentor con vigencia, scope e historial |
+| [checkpoints/2026-07-25-phase2-agenda-read-foundation.md](./checkpoints/2026-07-25-phase2-agenda-read-foundation.md) | Persistencia inicial de Agenda y lecturas de sesiones por rol |
 
 ## Regla de precedencia
 

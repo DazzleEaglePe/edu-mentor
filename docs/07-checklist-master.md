@@ -8,7 +8,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 |---|---|---|
 | 0 · Alineación y contratos | En curso | Pendiente |
 | 1 · Fundaciones | En curso | Pendiente |
-| 2 · Agenda | No iniciada | Pendiente |
+| 2 · Agenda | En curso | Pendiente |
 | 3 · Entregables | No iniciada | Pendiente |
 | 4 · Notificaciones/Admin | No iniciada | Pendiente |
 | 5 · Hardening/UAT | No iniciada | Pendiente |
@@ -144,9 +144,9 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 
 ## Fase 2 · Agenda y Sesiones
 
-- [ ] Modelar Session, participant, reminder y reschedule request.
+- [x] Modelar Session, participant, reminder y reschedule request.
 - [ ] Implementar repository y service con transacciones.
-- [ ] Implementar lista/detalle/calendario con scoping por rol.
+- [x] Implementar lista/detalle/calendario con scoping por rol.
 - [ ] Crear sesión 1:1.
 - [ ] Crear sesión grupal.
 - [ ] Crear checkpoint con reglas de fase.
