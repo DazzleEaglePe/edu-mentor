@@ -4,6 +4,7 @@
 
 - `openapi.yaml`: OpenAPI 3.1 inicial del piloto.
 - `fixtures/auth-me.participant.json`: contexto autenticado del participante.
+- `fixtures/auth-me.mentor.json`: contexto autenticado del mentor especialista y par.
 - `fixtures/participant-dashboard.json`: resumen coherente para la pantalla Inicio del participante.
 - `fixtures/admin.users-page.json`: página administrativa limitada a una organización.
 - `fixtures/session.detail.json`: sesión con confirmación y asistencia separadas.
