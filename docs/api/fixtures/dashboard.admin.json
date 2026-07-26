@@ -1,11 +1,14 @@
 {
+  "activeUsers": 57,
+  "upcomingSessions": 14,
+  "pendingDeliverables": 5,
+  "failedJobs": 0,
   "totalOleadas": 3,
   "activeOleadas": 2,
   "totalParticipants": 45,
   "activeMentors": 12,
   "pendingReviews": 5,
   "completedSessions": 28,
-  "upcomingSessions": 14,
   "submissionsSummary": {
     "total": 32,
     "evaluated": 22,

@@ -1762,6 +1762,13 @@ components:
         - upcomingSessions
         - pendingDeliverables
         - failedJobs
+        - totalOleadas
+        - activeOleadas
+        - totalParticipants
+        - activeMentors
+        - pendingReviews
+        - completedSessions
+        - submissionsSummary
       properties:
         activeUsers:
           type: integer
@@ -1775,6 +1782,42 @@ components:
         failedJobs:
           type: integer
           minimum: 0
+        totalOleadas:
+          type: integer
+          minimum: 0
+        activeOleadas:
+          type: integer
+          minimum: 0
+        totalParticipants:
+          type: integer
+          minimum: 0
+        activeMentors:
+          type: integer
+          minimum: 0
+        pendingReviews:
+          type: integer
+          minimum: 0
+        completedSessions:
+          type: integer
+          minimum: 0
+        submissionsSummary:
+          type: object
+          additionalProperties: false
+          required: [total, evaluated, pending, returned]
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            evaluated:
+              type: integer
+              minimum: 0
+            pending:
+              type: integer
+              minimum: 0
+            returned:
+              type: integer
+              minimum: 0
+
     SessionType:
       type: string
       enum: [ONE_ON_ONE, GROUP, CHECKPOINT]
