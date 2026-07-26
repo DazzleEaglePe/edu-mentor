@@ -143,10 +143,7 @@ describe('coveredEnrollmentIds', () => {
 
   it('las asignaciones individuales cubren solo a los suyos', () => {
     const covered = coveredEnrollmentIds(
-      [
-        assignment({ id: 'a1', enrollmentId: 'e1' }),
-        assignment({ id: 'a2', enrollmentId: 'e3' }),
-      ],
+      [assignment({ id: 'a1', enrollmentId: 'e1' }), assignment({ id: 'a2', enrollmentId: 'e3' })],
       enrollments,
     );
 

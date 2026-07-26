@@ -136,11 +136,9 @@ export default async function AdminAsignacionesPage() {
             <tbody>
               {assignments.map((item) => {
                 const scope = scopeOf(item);
-                const target =
-                  scope === 'OLEADA'
-                    ? 'Toda la oleada'
-                    : (activeEnrollments.find((row) => row.id === item.enrollmentId)?.user
-                        .fullName ?? 'Participante');
+                const owner = activeEnrollments.find((row) => row.id === item.enrollmentId);
+                const participantName = owner?.user.fullName ?? 'Participante';
+                const target = scope === 'OLEADA' ? 'Toda la oleada' : participantName;
 
                 return (
                   <tr key={item.id} className="border-t border-[var(--edu-border)] align-top">

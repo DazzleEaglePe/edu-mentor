@@ -65,7 +65,9 @@ const nextStatuses: Record<OleadaStatus, readonly OleadaStatus[]> = {
 };
 
 export function allowedTransitions(status: OleadaStatus): readonly OleadaStatus[] {
-  return lookupOr(nextStatuses, status, []);
+  // El argumento de tipo es explícito porque `[]` se infiere como `never[]` y
+  // no reconcilia con `readonly OleadaStatus[]`.
+  return lookupOr<readonly OleadaStatus[]>(nextStatuses, status, []);
 }
 
 export function canTransition(from: OleadaStatus, to: OleadaStatus): boolean {
