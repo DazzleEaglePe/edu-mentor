@@ -21,6 +21,9 @@ export type ScanStatus = Schemas['ScanStatus'];
 export type SessionType = Schemas['SessionType'];
 export type ProgramPhase = Schemas['ProgramPhase'];
 export type Role = Schemas['Role'];
+export type OleadaStatus = Schemas['OleadaStatus'];
+export type EnrollmentStatus = Schemas['EnrollmentStatus'];
+export type MentorAssignmentStatus = Schemas['MentorAssignmentStatus'];
 
 /**
  * Tono visual del estado. Deliberadamente NO es un color: el color lo resuelve
@@ -76,6 +79,24 @@ const scanStatus: Record<ScanStatus, StatusLabel> = {
   ERROR: { label: 'No se pudo analizar', tone: 'declined' },
 };
 
+const oleadaStatus: Record<OleadaStatus, StatusLabel> = {
+  DRAFT: { label: 'Borrador', tone: 'neutral' },
+  OPEN: { label: 'Convocatoria', tone: 'pending' },
+  IN_PROGRESS: { label: 'En curso', tone: 'confirmed' },
+  CLOSED: { label: 'Cerrada', tone: 'inactive' },
+};
+
+const enrollmentStatus: Record<EnrollmentStatus, StatusLabel> = {
+  ACTIVE: { label: 'Activo', tone: 'confirmed' },
+  WITHDRAWN: { label: 'Retirado', tone: 'declined' },
+  COMPLETED: { label: 'Completado', tone: 'inactive' },
+};
+
+const mentorAssignmentStatus: Record<MentorAssignmentStatus, StatusLabel> = {
+  ACTIVE: { label: 'Vigente', tone: 'confirmed' },
+  CLOSED: { label: 'Cerrada', tone: 'inactive' },
+};
+
 const sessionType: Record<SessionType, string> = {
   ONE_ON_ONE: '1:1',
   GROUP: 'Grupal',
@@ -102,6 +123,9 @@ const statusDictionaries = {
   submissionStatus,
   rescheduleRequestStatus,
   scanStatus,
+  oleadaStatus,
+  enrollmentStatus,
+  mentorAssignmentStatus,
 } as const;
 
 export type StatusKind = keyof typeof statusDictionaries;

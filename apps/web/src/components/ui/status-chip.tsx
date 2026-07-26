@@ -2,6 +2,9 @@ import {
   translateStatus,
   type AttendanceStatus,
   type ConfirmationStatus,
+  type EnrollmentStatus,
+  type MentorAssignmentStatus,
+  type OleadaStatus,
   type RescheduleRequestStatus,
   type ScanStatus,
   type SessionStatus,
@@ -50,6 +53,9 @@ type StatusValueByKind = {
   readonly submissionStatus: SubmissionStatus;
   readonly rescheduleRequestStatus: RescheduleRequestStatus;
   readonly scanStatus: ScanStatus;
+  readonly oleadaStatus: OleadaStatus;
+  readonly enrollmentStatus: EnrollmentStatus;
+  readonly mentorAssignmentStatus: MentorAssignmentStatus;
 };
 
 export type StatusChipProps = {
