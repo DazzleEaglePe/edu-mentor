@@ -7,7 +7,7 @@ import { AdminProgramModule } from './modules/admin-program/admin-program.module
 import { AdminUsersModule } from './modules/admin-users/admin-users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { DeliverablesModule } from './modules/deliverables/deliverables.module.js';
-import { HealthModule } from './modules/health/health.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { SessionsModule } from './modules/sessions/sessions.module.js';
 
 @Module({
@@ -20,8 +20,10 @@ import { SessionsModule } from './modules/sessions/sessions.module.js';
     AdminProgramModule,
     SessionsModule,
     DeliverablesModule,
+    NotificationsModule,
     HealthModule,
   ],
 })
 export class AppModule {}
+
 
