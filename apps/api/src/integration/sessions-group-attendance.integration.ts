@@ -5,6 +5,7 @@ import { after, before, describe, it } from 'node:test';
 import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
+import { createClient } from 'redis';
 
 import { AppModule } from '../app.module.js';
 import { configureHttpApp } from '../configure-http-app.js';
@@ -197,6 +198,29 @@ async function authenticate(baseUrl: string, email: string): Promise<BrowserSess
   };
 }
 
+async function clearLoginRateLimits(): Promise<void> {
+  const client = createClient({
+    url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+    socket: {
+      connectTimeout: 1_000,
+      reconnectStrategy: false,
+    },
+  });
+
+  try {
+    await client.connect();
+    const keys = await client.keys('auth:login:*');
+
+    if (keys.length > 0) {
+      await client.del(keys);
+    }
+  } finally {
+    if (client.isOpen) {
+      client.destroy();
+    }
+  }
+}
+
 function createSessionRequest(
   baseUrl: string,
   session: BrowserSession,
@@ -369,6 +393,7 @@ describe('group sessions, checkpoints and attendance workflow', () => {
       connectionTimeoutMillis: 2_000,
       max: 6,
     });
+    await clearLoginRateLimits();
     await deleteWorkflowData(pool);
     await insertTemporaryParticipants(pool);
 
@@ -392,6 +417,7 @@ describe('group sessions, checkpoints and attendance workflow', () => {
     await app?.close();
 
     if (pool !== undefined) {
+      await clearLoginRateLimits();
       await deleteWorkflowData(pool);
       await pool.query('DELETE FROM auth_session WHERE user_id = ANY($1::uuid[])', [
         [SYNTHETIC_IDS.mentorUser, SYNTHETIC_IDS.adminUser, SYNTHETIC_IDS.participantUser],
