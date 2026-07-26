@@ -2,16 +2,23 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   actionsFor,
+  attendanceBreakdown,
   awaitingResponse,
+  canDecideRequest,
   checkpointMonthOptions,
   dayKey,
+  describeAttendance,
   describeConfirmations,
   describePeriod,
   groupByDay,
+  isSuperseded,
   periodFieldFor,
   periodOptionsFor,
+  replacedAnother,
+  sessionStillStands,
   sortForAgenda,
   validatePeriod,
+  type RescheduleRequest,
   type Session,
   type SessionParticipant,
 } from './agenda';
@@ -234,6 +241,108 @@ describe('dayKey', () => {
     // Mismo instante, otra zona: es el día siguiente.
     assert.equal(dayKey('2026-08-26T20:00:00.000Z', 'Europe/Madrid'), '2026-08-26');
     assert.equal(dayKey('2026-08-26T23:30:00.000Z', 'Europe/Madrid'), '2026-08-27');
+  });
+});
+
+describe('attendanceBreakdown', () => {
+  const withAttendance = (statuses: readonly SessionParticipant['attendanceStatus'][]): Session =>
+    session({
+      participants: statuses.map((status, index) => ({
+        ...participant(`p${index}`, 'CONFIRMED'),
+        attendanceStatus: status,
+      })),
+    });
+
+  it('no trata "sin registrar" como ausencia', () => {
+    // Un mentor que aún no pasó lista no está diciendo que nadie vino.
+    const breakdown = attendanceBreakdown(withAttendance(['PENDING', 'PENDING']));
+    assert.equal(breakdown.absent, 0);
+    assert.equal(breakdown.unregistered, 2);
+    assert.equal(breakdown.isComplete, false);
+  });
+
+  it('cuenta asistencias y ausencias por separado', () => {
+    const breakdown = attendanceBreakdown(withAttendance(['ATTENDED', 'ATTENDED', 'ABSENT']));
+    assert.equal(breakdown.attended, 2);
+    assert.equal(breakdown.absent, 1);
+    assert.equal(breakdown.unregistered, 0);
+    assert.equal(breakdown.isComplete, true);
+  });
+
+  it('una sesión sin participantes no está completa', () => {
+    const breakdown = attendanceBreakdown(withAttendance([]));
+    assert.equal(breakdown.isComplete, false);
+    assert.equal(describeAttendance(breakdown), 'Sin participantes');
+  });
+
+  it('distingue "sin registrar" de un registro parcial', () => {
+    assert.equal(
+      describeAttendance(attendanceBreakdown(withAttendance(['PENDING', 'PENDING']))),
+      'Asistencia sin registrar',
+    );
+    assert.equal(
+      describeAttendance(attendanceBreakdown(withAttendance(['ATTENDED', 'PENDING']))),
+      '1 asistieron · 1 sin registrar',
+    );
+  });
+
+  it('concuerda el plural de las ausencias', () => {
+    const uno = describeAttendance(attendanceBreakdown(withAttendance(['ATTENDED', 'ABSENT'])));
+    const dos = describeAttendance(
+      attendanceBreakdown(withAttendance(['ATTENDED', 'ABSENT', 'ABSENT'])),
+    );
+
+    assert.ok(uno.includes('1 no asistió'));
+    assert.ok(dos.includes('2 no asistieron'));
+  });
+});
+
+describe('solicitudes de reprogramación', () => {
+  const request = (overrides: Partial<RescheduleRequest> = {}): RescheduleRequest => ({
+    id: 'r1',
+    sessionId: 's1',
+    requestedBy: { id: 'u1', fullName: 'Participante Demo' },
+    proposedStartsAt: '2026-08-14T20:00:00Z',
+    reason: 'Cruce de horario laboral.',
+    status: 'PENDING',
+    decisionReason: null,
+    replacementSessionId: null,
+    requestedAt: '2026-08-11T14:20:00Z',
+    version: 1,
+    ...overrides,
+  });
+
+  it('solo se decide una solicitud pendiente', () => {
+    assert.equal(canDecideRequest(request()), true);
+
+    for (const status of ['APPROVED', 'REJECTED', 'CANCELLED'] as const) {
+      assert.equal(canDecideRequest(request({ status })), false);
+    }
+  });
+
+  it('mientras está pendiente, la sesión sigue en pie', () => {
+    // Si la UI insinúa que ya se movió, alguien falta a una sesión que existe.
+    assert.equal(sessionStillStands(request()), true);
+    assert.equal(sessionStillStands(request({ status: 'APPROVED' })), false);
+  });
+});
+
+describe('encadenamiento de reprogramaciones', () => {
+  it('reconoce una sesión reemplazada', () => {
+    assert.equal(isSuperseded(session({ status: 'RESCHEDULED' })), true);
+    assert.equal(isSuperseded(session({ status: 'SCHEDULED' })), false);
+  });
+
+  it('reconoce una sesión que nació como reemplazo', () => {
+    assert.equal(replacedAnother(session({ rescheduledFromId: 'previa' })), true);
+    assert.equal(replacedAnother(session({ rescheduledFromId: null })), false);
+  });
+
+  it('admite un eslabón intermedio de la cadena', () => {
+    // Reemplazó a una anterior y a su vez fue reemplazada: ambas cosas a la vez.
+    const middle = session({ status: 'RESCHEDULED', rescheduledFromId: 'previa' });
+    assert.equal(isSuperseded(middle), true);
+    assert.equal(replacedAnother(middle), true);
   });
 });
 

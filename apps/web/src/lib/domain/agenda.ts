@@ -204,6 +204,90 @@ export function dayKey(iso: string, timezone: string): string {
   }).format(new Date(iso));
 }
 
+/* ---------------------------------------------------------- asistencia */
+
+export interface AttendanceBreakdown {
+  readonly attended: number;
+  readonly absent: number;
+  readonly unregistered: number;
+  readonly total: number;
+  readonly isComplete: boolean;
+}
+
+/**
+ * Cuántas asistencias faltan por registrar.
+ *
+ * `attendanceStatus: PENDING` significa **sin registrar**, no "ausente". Un
+ * mentor que aún no pasó lista no está diciendo que nadie vino, y tratarlo como
+ * falta convertiría un olvido en un dato del programa.
+ */
+export function attendanceBreakdown(session: Session): AttendanceBreakdown {
+  const attended = session.participants.filter(
+    (item) => item.attendanceStatus === 'ATTENDED',
+  ).length;
+  const absent = session.participants.filter((item) => item.attendanceStatus === 'ABSENT').length;
+  const total = session.participants.length;
+  const unregistered = total - attended - absent;
+
+  return { attended, absent, unregistered, total, isComplete: unregistered === 0 && total > 0 };
+}
+
+export function describeAttendance(breakdown: AttendanceBreakdown): string {
+  if (breakdown.total === 0) {
+    return 'Sin participantes';
+  }
+
+  if (breakdown.unregistered === breakdown.total) {
+    return 'Asistencia sin registrar';
+  }
+
+  const parts = [`${breakdown.attended} asistieron`];
+
+  if (breakdown.absent > 0) {
+    parts.push(`${breakdown.absent} no asistió${breakdown.absent === 1 ? '' : 'ieron'}`);
+  }
+
+  if (breakdown.unregistered > 0) {
+    parts.push(`${breakdown.unregistered} sin registrar`);
+  }
+
+  return parts.join(' · ');
+}
+
+/* ------------------------------------------- reprogramación y trazabilidad */
+
+export type RescheduleRequest = Schemas['RescheduleRequest'];
+export type RescheduleRequestStatus = Schemas['RescheduleRequestStatus'];
+
+/**
+ * Una solicitud solo se decide mientras está `PENDING`. El resto de estados son
+ * terminales y la UI no debe ofrecer botones que el backend rechazaría.
+ */
+export function canDecideRequest(request: RescheduleRequest): boolean {
+  return request.status === 'PENDING';
+}
+
+/**
+ * **Mientras la solicitud está pendiente, la sesión sigue programada.**
+ *
+ * Es la invariante más delicada del módulo (`12-domain-state-machines.md` §3):
+ * si la UI insinúa que la sesión ya se movió, alguien falta a una sesión que
+ * sigue en pie.
+ */
+export function sessionStillStands(request: RescheduleRequest): boolean {
+  return request.status === 'PENDING';
+}
+
+/** Una sesión reemplazada por otra: ya no es la vigente. */
+export function isSuperseded(session: Session): boolean {
+  return session.status === 'RESCHEDULED';
+}
+
+/** Nació como reemplazo de otra sesión; permite mostrar el encadenamiento. */
+export function replacedAnother(session: Session): boolean {
+  return (session.rescheduledFromId ?? null) !== null;
+}
+
 /* --------------------------------------------------- tipo de sesión y orden */
 
 /**

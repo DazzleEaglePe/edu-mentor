@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import type { AuthMe, Deliverable, Session } from '@edu-mentor/shared-types';
 import type { AdminUserPage } from '@/lib/domain/users';
 import type { Enrollment, MentorAssignment, Oleada } from '@/lib/domain/cohorts';
+import type { RescheduleRequest } from '@/lib/domain/agenda';
 
 /**
  * Fuente de datos **provisional** mientras la API no expone auth ni sesiones.
@@ -49,6 +50,14 @@ export function loadSessionDetail(): Promise<Session> {
 
 export function loadGroupSession(): Promise<Session> {
   return readFixture<Session>('session.group.json');
+}
+
+export function loadRescheduledSession(): Promise<Session> {
+  return readFixture<Session>('session.rescheduled.json');
+}
+
+export function loadRescheduleRequest(): Promise<RescheduleRequest> {
+  return readFixture<RescheduleRequest>('reschedule-request.json');
 }
 
 export function loadDeliverableDetail(): Promise<Deliverable> {
