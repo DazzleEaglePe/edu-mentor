@@ -195,6 +195,61 @@ export function mergeRubric(
   });
 }
 
+/* ------------------------------------------------------------- top 3 */
+
+export type TopCandidates = Schemas['TopCandidates'];
+export type TopCandidate = Schemas['TopCandidate'];
+
+export interface ResolvedCandidate {
+  readonly rank: number;
+  readonly submissionId: string;
+  /** `null` cuando la entrega no está entre los datos cargados. */
+  readonly participantName: string | null;
+  readonly score: number | null;
+}
+
+/**
+ * Resuelve un candidato del Top 3 hasta la persona.
+ *
+ * `TopCandidate` solo trae `submissionId` y `rank`, así que hay que atravesar
+ * dos saltos: revisión → entregable → enrollment → usuario. Si alguno falta,
+ * el candidato se muestra **igual** con el nombre en `null`: ocultar un puesto
+ * porque no se pudo resolver el nombre haría parecer que el Top 3 tiene menos
+ * seleccionados de los que tiene.
+ *
+ * El orden lo manda el `rank`, no el arreglo recibido.
+ */
+export function resolveCandidates(
+  candidates: readonly TopCandidate[],
+  deliverables: readonly Deliverable[],
+  namesByEnrollmentId: ReadonlyMap<string, string>,
+): readonly ResolvedCandidate[] {
+  return [...candidates]
+    .sort((left, right) => left.rank - right.rank)
+    .map((candidate) => {
+      const owner = deliverables.find((deliverable) =>
+        deliverable.submissions.some((submission) => submission.id === candidate.submissionId),
+      );
+
+      const submission = owner?.submissions.find((item) => item.id === candidate.submissionId);
+
+      return {
+        rank: candidate.rank,
+        submissionId: candidate.submissionId,
+        participantName:
+          owner === undefined ? null : (namesByEnrollmentId.get(owner.enrollmentId) ?? null),
+        score: submission?.evaluation?.score ?? null,
+      };
+    });
+}
+
+/** Los tres puestos, con los vacíos visibles: falta uno es información. */
+export function rankSlots(
+  resolved: readonly ResolvedCandidate[],
+): readonly (ResolvedCandidate | null)[] {
+  return [1, 2, 3].map((rank) => resolved.find((item) => item.rank === rank) ?? null);
+}
+
 /* ------------------------------------------------------------- feedback */
 
 /** El contrato exige entre 10 y 4000 caracteres. */

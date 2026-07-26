@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import {
   feedbackMinLength,
   mergeRubric,
+  rankSlots,
+  resolveCandidates,
   reviewActionsFor,
   rubricMatchesScore,
   rubricMaximum,
@@ -261,6 +263,71 @@ describe('mergeRubric', () => {
     ]);
 
     assert.equal(merged.length, 2);
+  });
+});
+
+describe('resolveCandidates y rankSlots', () => {
+  const names = new Map([['e1', 'Participante Demo']]);
+  const withSubmission = (id: string, submissionId: string): Deliverable => ({
+    ...deliverable(id, [{ ...submission('EVALUATED'), id: submissionId }]),
+    enrollmentId: 'e1',
+  });
+
+  it('resuelve la revisión hasta el nombre de la persona', () => {
+    const resolved = resolveCandidates(
+      [{ submissionId: 's-top', rank: 1 }],
+      [withSubmission('d1', 's-top')],
+      names,
+    );
+
+    assert.equal(resolved[0]?.participantName, 'Participante Demo');
+  });
+
+  it('ordena por rank, no por el arreglo recibido', () => {
+    const resolved = resolveCandidates(
+      [
+        { submissionId: 's-b', rank: 2 },
+        { submissionId: 's-a', rank: 1 },
+      ],
+      [withSubmission('d1', 's-a'), withSubmission('d2', 's-b')],
+      names,
+    );
+
+    assert.deepEqual(
+      resolved.map((item) => item.rank),
+      [1, 2],
+    );
+  });
+
+  it('muestra el candidato aunque no se pueda resolver el nombre', () => {
+    // Ocultarlo haría parecer que el Top 3 tiene menos seleccionados.
+    const resolved = resolveCandidates([{ submissionId: 'desconocida', rank: 1 }], [], names);
+
+    assert.equal(resolved.length, 1);
+    assert.equal(resolved[0]?.participantName, null);
+  });
+
+  it('deja los puestos vacíos visibles', () => {
+    const resolved = resolveCandidates(
+      [{ submissionId: 's-top', rank: 1 }],
+      [withSubmission('d1', 's-top')],
+      names,
+    );
+    const slots = rankSlots(resolved);
+
+    assert.equal(slots.length, 3);
+    assert.notEqual(slots[0], null);
+    assert.equal(slots[1], null);
+    assert.equal(slots[2], null);
+  });
+
+  it('coloca cada candidato en su puesto aunque falte el anterior', () => {
+    const slots = rankSlots([
+      { rank: 3, submissionId: 's', participantName: 'Tercera', score: null },
+    ]);
+
+    assert.equal(slots[0], null);
+    assert.equal(slots[2]?.participantName, 'Tercera');
   });
 });
 

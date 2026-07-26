@@ -4,6 +4,7 @@ import type { AuthMe, Deliverable, Session } from '@edu-mentor/shared-types';
 import type { AdminUserPage } from '@/lib/domain/users';
 import type { Enrollment, MentorAssignment, Oleada } from '@/lib/domain/cohorts';
 import type { RescheduleRequest } from '@/lib/domain/agenda';
+import type { TopCandidates } from '@/lib/domain/evaluation';
 
 /**
  * Fuente de datos **provisional** mientras la API no expone auth ni sesiones.
@@ -66,6 +67,10 @@ export function loadDeliverableDetail(): Promise<Deliverable> {
 
 export function loadEvaluatedDeliverable(): Promise<Deliverable> {
   return readFixture<Deliverable>('deliverable.evaluated.json');
+}
+
+export function loadTopCandidates(): Promise<TopCandidates> {
+  return readFixture<TopCandidates>('assignment.top-candidates.json');
 }
 
 export function loadAdminUsers(): Promise<AdminUserPage> {
