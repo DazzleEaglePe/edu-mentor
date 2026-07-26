@@ -34,11 +34,13 @@ describe('data runtime', () => {
         rolled_back_at: Date | null;
       }>('SELECT finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY started_at');
 
-      assert.equal(migrations.rowCount, 2);
+      assert.equal(migrations.rowCount, 3);
       assert.ok(migrations.rows[0]?.finished_at instanceof Date);
       assert.equal(migrations.rows[0]?.rolled_back_at, null);
       assert.ok(migrations.rows[1]?.finished_at instanceof Date);
       assert.equal(migrations.rows[1]?.rolled_back_at, null);
+      assert.ok(migrations.rows[2]?.finished_at instanceof Date);
+      assert.equal(migrations.rows[2]?.rolled_back_at, null);
 
       const constraints = await pool.query<{ conname: string }>(
         `SELECT conname
@@ -59,12 +61,25 @@ describe('data runtime', () => {
             'oleada_date_range_valid',
             'oleada_version_positive',
             'outbox_event_attempt_count_nonnegative',
+            'schedule_reservation_no_overlap',
+            'schedule_reservation_valid_interval',
+            'session_participant_attendance_time_valid',
+            'session_participant_confirmation_time_valid',
+            'session_participant_version_positive',
+            'session_reminder_attempt_count_nonnegative',
+            'session_reminder_lock_valid',
+            'session_reschedule_request_decision_valid',
+            'session_reschedule_request_version_positive',
+            'session_valid_confirmation_cutoff',
+            'session_valid_interval',
+            'session_valid_phase_period',
+            'session_version_positive',
             'user_version_positive',
           ],
         ],
       );
 
-      assert.equal(constraints.rowCount, 13);
+      assert.equal(constraints.rowCount, 26);
 
       await pool.query('BEGIN');
       await pool.query(
