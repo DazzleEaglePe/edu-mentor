@@ -1,0 +1,122 @@
+{
+  "id": "39999999-9999-4999-8999-999999999999",
+  "title": "Taller grupal — Preparación de entrevistas",
+  "type": "GROUP",
+  "phase": "FASE_1",
+  "startsAt": "2026-08-26T20:00:00.000Z",
+  "endsAt": "2026-08-26T21:00:00.000Z",
+  "timezone": "America/Lima",
+  "status": "SCHEDULED",
+  "confirmationClosesAt": "2026-08-26T20:00:00.000Z",
+  "canConfirm": false,
+  "confirmationSummary": {
+    "total": 8,
+    "pending": 2,
+    "confirmed": 5,
+    "declined": 1
+  },
+  "oleada": {
+    "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "name": "Oleada Tecnología Demo 2026"
+  },
+  "mentor": {
+    "id": "44444444-4444-4444-8444-444444444444",
+    "fullName": "Mentora Demo"
+  },
+  "description": "Taller grupal sintético para validar confirmaciones mixtas.",
+  "weekNumber": 4,
+  "checkpointMonth": null,
+  "meetingUrl": "https://meet.example.test/group-workflow",
+  "participants": [
+    {
+      "enrollmentId": "22222222-2222-4222-8222-222222222222",
+      "participant": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "fullName": "Participante Demo"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:01:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "91111111-1111-4111-8111-111111111111",
+      "participant": {
+        "id": "81111111-1111-4111-8111-111111111111",
+        "fullName": "Participante Grupal 2"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:02:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "92222222-2222-4222-8222-222222222222",
+      "participant": {
+        "id": "82222222-2222-4222-8222-222222222222",
+        "fullName": "Participante Grupal 3"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:03:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "93333333-3333-4333-8333-333333333333",
+      "participant": {
+        "id": "83333333-3333-4333-8333-333333333333",
+        "fullName": "Participante Grupal 4"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:04:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "94444444-4444-4444-8444-444444444444",
+      "participant": {
+        "id": "84444444-4444-4444-8444-444444444444",
+        "fullName": "Participante Grupal 5"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:05:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "95555555-5555-4555-8555-555555555555",
+      "participant": {
+        "id": "85555555-5555-4555-8555-555555555555",
+        "fullName": "Participante Grupal 6"
+      },
+      "confirmationStatus": "DECLINED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-07-25T20:06:00.000Z",
+      "version": 2
+    },
+    {
+      "enrollmentId": "96666666-6666-4666-8666-666666666666",
+      "participant": {
+        "id": "86666666-6666-4666-8666-666666666666",
+        "fullName": "Participante Grupal 7"
+      },
+      "confirmationStatus": "PENDING",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": null,
+      "version": 1
+    },
+    {
+      "enrollmentId": "97777777-7777-4777-8777-777777777777",
+      "participant": {
+        "id": "87777777-7777-4777-8777-777777777777",
+        "fullName": "Participante Grupal 8"
+      },
+      "confirmationStatus": "PENDING",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": null,
+      "version": 1
+    }
+  ],
+  "rescheduledFromId": null,
+  "version": 1
+}

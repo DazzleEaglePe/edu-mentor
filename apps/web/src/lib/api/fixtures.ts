@@ -30,6 +30,10 @@ export function loadSessionDetail(): Promise<Session> {
   return readFixture<Session>('session.detail.json');
 }
 
+export function loadGroupSession(): Promise<Session> {
+  return readFixture<Session>('session.group.json');
+}
+
 export function loadDeliverableDetail(): Promise<Deliverable> {
   return readFixture<Deliverable>('deliverable.detail.json');
 }
