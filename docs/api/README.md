@@ -60,6 +60,15 @@ persistido de Agenda. La consulta se limita a la organización autenticada y des
 de scopes del rol: administración ve la organización, mentor solo sus sesiones y participante solo
 aquellas en las que su enrollment aparece. Un detalle fuera de alcance se oculta con `404`.
 
+`POST /sessions` ya crea la vertical 1:1 para mentor o administración. Normaliza el request antes de
+fingerprint, exige asignación vigente, valida fase/participante y persiste sesión, participante,
+reservas, auditoría, outbox e idempotencia dentro de una transacción. El exclusion constraint decide
+las carreras y la API lo traduce a `409 SCHEDULE_CONFLICT` sin revelar una sesión no autorizada.
+
+`PUT /sessions/{sessionId}/participants/me/confirmation` permite al participante alternar
+`CONFIRMED|DECLINED` mientras la ventana siga abierta. Usa `expectedVersion`, no confunde
+confirmación con asistencia y emite auditoría/outbox solo cuando el estado realmente cambia.
+
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
 DTO/decorators Nest ya cubren usuarios, oleadas, enrollments y mentor assignments; aún corresponde
 automatizar su comparación con OpenAPI para evitar drift entre ambas representaciones.

@@ -145,19 +145,19 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 ## Fase 2 · Agenda y Sesiones
 
 - [x] Modelar Session, participant, reminder y reschedule request.
-- [ ] Implementar repository y service con transacciones.
+- [x] Implementar repository y service con transacciones.
 - [x] Implementar lista/detalle/calendario con scoping por rol.
-- [ ] Crear sesión 1:1.
+- [x] Crear sesión 1:1.
 - [ ] Crear sesión grupal.
 - [ ] Crear checkpoint con reglas de fase.
-- [ ] Confirmar participación.
+- [x] Confirmar participación.
 - [ ] Marcar asistencia.
 - [ ] Solicitar/decidir reprogramación.
 - [ ] Reprogramar preservando historial.
 - [ ] Cancelar/completar.
-- [ ] Bloquear conflictos de mentor.
-- [ ] Bloquear conflictos de participante.
-- [ ] Emitir eventos/outbox idempotentes.
+- [x] Bloquear conflictos de mentor.
+- [x] Bloquear conflictos de participante.
+- [x] Emitir eventos/outbox idempotentes.
 - [ ] Implementar UI participante.
 - [ ] Implementar UI mentor.
 - [ ] Implementar UI admin.
