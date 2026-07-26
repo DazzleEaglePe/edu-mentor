@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   feedbackMinLength,
+  mergeRubric,
   reviewActionsFor,
   rubricMatchesScore,
   rubricMaximum,
@@ -214,6 +215,52 @@ describe('sumRubric y rubricMaximum', () => {
 
     assert.equal(rubricMatchesScore(scores, 85), true);
     assert.equal(rubricMatchesScore(scores, 90), false);
+  });
+});
+
+describe('mergeRubric', () => {
+  const scores = [
+    { criterionId: 'evidencia', score: 54, comment: 'Datos verificables.' },
+    { criterionId: 'claridad', score: 36 },
+  ];
+
+  it('ordena por la rúbrica, no por los puntajes recibidos', () => {
+    // El participante ve los criterios en el orden en que se los anunciaron.
+    const merged = mergeRubric(rubric, scores);
+    assert.deepEqual(
+      merged.map((item) => item.id),
+      ['claridad', 'evidencia'],
+    );
+  });
+
+  it('lleva la etiqueta y el máximo de cada criterio', () => {
+    const merged = mergeRubric(rubric, scores);
+    assert.equal(merged[0]?.label, 'Claridad');
+    assert.equal(merged[0]?.maxScore, 40);
+    assert.equal(merged[0]?.score, 36);
+  });
+
+  it('conserva el comentario cuando existe y null cuando no', () => {
+    const merged = mergeRubric(rubric, scores);
+    assert.equal(merged[0]?.comment, null);
+    assert.equal(merged[1]?.comment, 'Datos verificables.');
+  });
+
+  it('muestra un criterio sin puntuar en vez de omitirlo', () => {
+    // Que falte una nota es información; esconderla haría parecer que la
+    // rúbrica tenía menos criterios de los que tenía.
+    const merged = mergeRubric(rubric, [{ criterionId: 'claridad', score: 36 }]);
+    assert.equal(merged.length, 2);
+    assert.equal(merged[1]?.score, null);
+  });
+
+  it('ignora puntajes de criterios que no están en la rúbrica', () => {
+    const merged = mergeRubric(rubric, [
+      ...scores,
+      { criterionId: 'inventado', score: 10 },
+    ]);
+
+    assert.equal(merged.length, 2);
   });
 });
 

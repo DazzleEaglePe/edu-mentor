@@ -64,6 +64,10 @@ export function loadDeliverableDetail(): Promise<Deliverable> {
   return readFixture<Deliverable>('deliverable.detail.json');
 }
 
+export function loadEvaluatedDeliverable(): Promise<Deliverable> {
+  return readFixture<Deliverable>('deliverable.evaluated.json');
+}
+
 export function loadAdminUsers(): Promise<AdminUserPage> {
   return readFixture<AdminUserPage>('admin.users-page.json');
 }

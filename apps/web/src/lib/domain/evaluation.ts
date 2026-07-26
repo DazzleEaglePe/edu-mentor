@@ -158,6 +158,43 @@ export function rubricMatchesScore(
   return sumRubric(scores) === score;
 }
 
+/**
+ * Une los puntajes con los criterios de la consigna, para poder mostrar
+ * "Claridad · 36 / 40" en vez de un id suelto.
+ *
+ * El orden lo manda la **rúbrica**, no el arreglo de puntajes: así el
+ * participante ve siempre los criterios en el mismo orden en que se los
+ * anunciaron al entregar.
+ *
+ * Un criterio sin puntaje aparece con `score: null` en vez de omitirse: que
+ * falte una nota es información, y esconderla haría parecer que la rúbrica
+ * tenía menos criterios de los que tenía.
+ */
+export interface ScoredCriterion {
+  readonly id: string;
+  readonly label: string;
+  readonly maxScore: number;
+  readonly score: number | null;
+  readonly comment: string | null;
+}
+
+export function mergeRubric(
+  rubric: readonly RubricCriterion[],
+  scores: readonly RubricScore[],
+): readonly ScoredCriterion[] {
+  return rubric.map((criterion) => {
+    const given = scores.find((score) => score.criterionId === criterion.id);
+
+    return {
+      id: criterion.id,
+      label: criterion.label,
+      maxScore: criterion.maxScore,
+      score: given?.score ?? null,
+      comment: given?.comment ?? null,
+    };
+  });
+}
+
 /* ------------------------------------------------------------- feedback */
 
 /** El contrato exige entre 10 y 4000 caracteres. */

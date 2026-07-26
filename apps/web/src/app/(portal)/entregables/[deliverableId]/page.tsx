@@ -4,13 +4,14 @@ import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StatusChip } from '@/components/ui/status-chip';
-import { loadAuthMe, loadDeliverableDetail } from '@/lib/api/fixtures';
+import { loadAuthMe, loadDeliverableDetail, loadEvaluatedDeliverable } from '@/lib/api/fixtures';
 import {
   canSubmitRevision,
   currentSubmission,
   formatFileSize,
   summarizeSubmission,
 } from '@/lib/domain/deliverables';
+import { mergeRubric } from '@/lib/domain/evaluation';
 import { formatDate } from '@/lib/format';
 
 /**
@@ -33,9 +34,16 @@ export default async function EntregableDetallePage({
   readonly params: Promise<{ readonly deliverableId: string }>;
 }) {
   const { deliverableId } = await params;
-  const [me, deliverable] = await Promise.all([loadAuthMe(), loadDeliverableDetail()]);
+  const [me, pendiente, evaluado] = await Promise.all([
+    loadAuthMe(),
+    loadDeliverableDetail(),
+    loadEvaluatedDeliverable(),
+  ]);
 
-  if (deliverableId !== deliverable.id) {
+  // Los fixtures traen dos escenarios: una entrega esperando evaluación y otra
+  // ya evaluada. La ruta elige cuál mostrar según el id pedido.
+  const deliverable = [pendiente, evaluado].find((item) => item.id === deliverableId);
+  if (deliverable === undefined) {
     notFound();
   }
 
@@ -45,6 +53,7 @@ export default async function EntregableDetallePage({
   }
 
   const summary = summarizeSubmission(submission.status);
+  const evaluation = submission.evaluation ?? null;
   const submitBlock = canSubmitRevision(submission);
   const { assignment } = deliverable;
   const dueDate = formatDate(assignment.dueAt, 'America/Lima');
@@ -157,12 +166,51 @@ export default async function EntregableDetallePage({
         ) : null}
       </Card>
 
-      {submission.evaluation === null || submission.evaluation === undefined ? null : (
+      {evaluation === null ? null : (
         <Card title="Retroalimentación">
-          <p className="tabular font-mono text-lg font-bold">
-            {submission.evaluation.score} / {assignment.maxScore}
-          </p>
-          <p className="text-sm whitespace-pre-line">{submission.evaluation.feedback}</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="tabular font-mono text-lg font-bold">
+              {evaluation.score} / {assignment.maxScore}
+            </p>
+            <p className="text-xs text-[var(--edu-text-secondary)]">
+              Evaluó {evaluation.mentor.fullName}
+            </p>
+          </div>
+
+          <p className="text-sm whitespace-pre-line">{evaluation.feedback}</p>
+
+          <div className="flex flex-col gap-2 border-t border-[var(--edu-border)] pt-3">
+            <p className="text-xs font-semibold text-[var(--edu-text-secondary)]">Por criterio</p>
+            {mergeRubric(assignment.rubric, evaluation.rubricScores).map((criterion) => {
+              const filled =
+                criterion.score === null
+                  ? 0
+                  : Math.round((criterion.score / criterion.maxScore) * 100);
+
+              return (
+                <div key={criterion.id} className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span>{criterion.label}</span>
+                    <span className="tabular font-mono text-xs">
+                      {criterion.score === null ? 'sin puntuar' : criterion.score} /{' '}
+                      {criterion.maxScore}
+                    </span>
+                  </div>
+                  {criterion.score === null ? null : (
+                    <div className="h-1.5 rounded-full bg-[var(--edu-surface-sunken)]">
+                      <div
+                        className="h-full rounded-full bg-[var(--edu-teal-700)]"
+                        style={{ width: `${filled}%` }}
+                      />
+                    </div>
+                  )}
+                  {criterion.comment === null ? null : (
+                    <p className="text-xs text-[var(--edu-text-secondary)]">{criterion.comment}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </Card>
       )}
     </AppShell>

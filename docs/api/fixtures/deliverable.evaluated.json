@@ -1,0 +1,76 @@
+{
+  "id": "55555555-5555-4555-8555-555555555555",
+  "assignment": {
+    "id": "66666666-6666-4666-8666-666666666666",
+    "oleada": {
+      "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "name": "Oleada Tecnología Demo 2026"
+    },
+    "title": "Mapa de oportunidades",
+    "instructions": "Describe tres oportunidades profesionales y justifica la priorización.",
+    "weekNumber": 4,
+    "dueAt": "2026-08-15T04:59:59Z",
+    "maxScore": 100,
+    "rubric": [
+      {
+        "id": "claridad",
+        "label": "Claridad",
+        "description": "La propuesta se entiende y está sustentada.",
+        "maxScore": 40
+      },
+      {
+        "id": "evidencia",
+        "label": "Uso de evidencia",
+        "description": "Las decisiones usan información verificable.",
+        "maxScore": 60
+      }
+    ],
+    "isActive": true,
+    "version": 1
+  },
+  "enrollmentId": "22222222-2222-4222-8222-222222222222",
+  "currentSubmissionId": "77777777-7777-4777-8777-777777777777",
+  "submissions": [
+    {
+      "id": "77777777-7777-4777-8777-777777777777",
+      "revisionNumber": 1,
+      "previousSubmissionId": null,
+      "status": "EVALUATED",
+      "notes": "Primera revisión sintética.",
+      "submittedAt": "2026-08-14T18:00:00Z",
+      "files": [
+        {
+          "id": "88888888-8888-4888-8888-888888888888",
+          "originalName": "mapa-oportunidades-demo.pdf",
+          "detectedMimeType": "application/pdf",
+          "sizeBytes": 245760,
+          "scanStatus": "CLEAN"
+        }
+      ],
+      "evaluation": {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "submissionId": "77777777-7777-4777-8777-777777777777",
+        "mentor": {
+          "id": "44444444-4444-4444-8444-444444444444",
+          "fullName": "Mentora Demo"
+        },
+        "score": 90,
+        "feedback": "Excelente trabajo en la identificación de oportunidades. La sustentación es sólida y la evidencia es clara.",
+        "rubricScores": [
+          {
+            "criterionId": "claridad",
+            "score": 36,
+            "comment": "Buena estructura y excelente redacción."
+          },
+          {
+            "criterionId": "evidencia",
+            "score": 54,
+            "comment": "Uso de datos verificables muy bien aplicados."
+          }
+        ],
+        "evaluatedAt": "2026-08-14T21:30:00Z"
+      },
+      "version": 3
+    }
+  ]
+}
