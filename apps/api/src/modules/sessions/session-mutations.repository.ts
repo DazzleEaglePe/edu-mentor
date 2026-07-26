@@ -1244,4 +1244,725 @@ export class SessionMutationsRepository {
       };
     });
   }
+
+  async reschedule(input: RescheduleSessionInput): Promise<RescheduleSessionResult> {
+    const expiresAt = input.expiresAt;
+    const operation = 'sessions.reschedule';
+
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const reservation = await reserveIdempotency(transaction, {
+          expiresAt,
+          keyHash: input.idempotencyKeyHash,
+          operation,
+          organizationId: input.organizationId,
+          requestHash: input.requestHash,
+        });
+
+        if (reservation.kind === 'reused') {
+          return { kind: 'idempotency_key_reused' };
+        }
+
+        if (reservation.kind === 'replay') {
+          const replacementSession = parseStoredSession(reservation.responseBody);
+          if (reservation.responseStatus !== 201 || replacementSession === null) {
+            throw new Error('Stored reschedule response is invalid.');
+          }
+          return { kind: 'replayed', replacementSession };
+        }
+
+        const locked = await transaction.$queryRaw<readonly LockedSessionLifecycle[]>`
+          SELECT
+            "session"."mentor_user_id",
+            "session"."starts_at",
+            "session"."status"::text AS session_status,
+            "session"."version"
+          FROM "session"
+          INNER JOIN "oleada"
+            ON "oleada"."id" = "session"."oleada_id"
+          WHERE "session"."id" = ${input.sessionId}::uuid
+            AND "oleada"."organization_id" = ${input.organizationId}::uuid
+          FOR UPDATE OF "session"
+        `;
+        const currentLock = locked[0];
+
+        if (currentLock === undefined) {
+          throw new CreateSessionAbort({ kind: 'not_found' });
+        }
+
+        if (!input.actorIsAdmin && currentLock.mentor_user_id !== input.actorUserId) {
+          throw new CreateSessionAbort({ kind: 'forbidden' });
+        }
+
+        if (currentLock.version !== input.expectedVersion) {
+          throw new CreateSessionAbort({
+            currentVersion: currentLock.version,
+            kind: 'conflict',
+          });
+        }
+
+        if (currentLock.session_status !== 'SCHEDULED') {
+          throw new CreateSessionAbort({ kind: 'session_not_scheduled' });
+        }
+
+        const originalRecord = await transaction.session.findUnique({
+          include: sessionViewInclude,
+          where: { id: input.sessionId },
+        });
+
+        if (originalRecord === null) {
+          throw new CreateSessionAbort({ kind: 'not_found' });
+        }
+
+        const endsAt = new Date(input.startsAt.getTime() + input.durationMinutes * 60_000);
+        const enrollmentIds = originalRecord.participants.map((p) => p.enrollmentId).sort();
+
+        const conflictInput: ConflictLookupInput = {
+          actorIsAdmin: input.actorIsAdmin,
+          actorUserId: input.actorUserId,
+          endsAt,
+          enrollmentIds,
+          excludeSessionId: input.sessionId,
+          mentorUserId: originalRecord.mentorUserId,
+          organizationId: input.organizationId,
+          startsAt: input.startsAt,
+        };
+
+        const existingConflict = await findScheduleConflict(transaction, conflictInput);
+
+        if (existingConflict !== null) {
+          throw new CreateSessionAbort({
+            conflict: existingConflict,
+            kind: 'schedule_conflict',
+          });
+        }
+
+        const now = new Date();
+        const originalView = toSessionView(originalRecord, { userId: input.actorUserId }, now);
+
+        await transaction.session.update({
+          data: {
+            status: 'RESCHEDULED',
+            version: { increment: 1 },
+          },
+          where: { id: input.sessionId },
+        });
+
+        await transaction.scheduleReservation.updateMany({
+          data: { releasedAt: now },
+          where: { sessionId: input.sessionId, releasedAt: null },
+        });
+
+        await transaction.sessionReminder.updateMany({
+          data: { status: 'CANCELLED' },
+          where: { sessionId: input.sessionId, status: 'PENDING' },
+        });
+
+        const replacementRecord = await transaction.session.create({
+          data: {
+            checkpointMonth: originalRecord.checkpointMonth,
+            confirmationClosesAt: input.startsAt,
+            description: originalRecord.description,
+            endsAt,
+            meetingUrl: input.meetingUrl ?? originalRecord.meetingUrl,
+            mentorUserId: originalRecord.mentorUserId,
+            oleadaId: originalRecord.oleadaId,
+            phase: originalRecord.phase,
+            rescheduledFromId: originalRecord.id,
+            startsAt: input.startsAt,
+            status: 'SCHEDULED',
+            timezone: originalRecord.timezone,
+            title: originalRecord.title,
+            type: originalRecord.type,
+            weekNumber: originalRecord.weekNumber,
+            participants: {
+              createMany: {
+                data: enrollmentIds.map((enrollmentId) => ({
+                  attendanceStatus: 'PENDING',
+                  confirmationStatus: 'PENDING',
+                  enrollmentId,
+                })),
+              },
+            },
+            reservations: {
+              createMany: {
+                data: [
+                  {
+                    endsAt,
+                    resourceId: originalRecord.mentorUserId,
+                    resourceType: 'USER',
+                    startsAt: input.startsAt,
+                  },
+                  ...enrollmentIds.map((enrollmentId) => ({
+                    endsAt,
+                    resourceId: enrollmentId,
+                    resourceType: 'ENROLLMENT' as const,
+                    startsAt: input.startsAt,
+                  })),
+                ],
+              },
+            },
+          },
+          include: sessionViewInclude,
+        });
+
+        const replacementView = toSessionView(replacementRecord, { userId: input.actorUserId }, now);
+
+        await storeIdempotentResponse(transaction, reservation.id, 201, replacementView);
+
+        await transaction.auditLog.create({
+          data: {
+            action: 'session.rescheduled',
+            actorUserId: input.actorUserId,
+            afterData: lifecycleSnapshot(replacementView, input.reason),
+            beforeData: lifecycleSnapshot(originalView),
+            entityId: input.sessionId,
+            entityType: 'SESSION',
+            organizationId: input.organizationId,
+            traceId: input.traceId,
+          },
+        });
+
+        await transaction.outboxEvent.create({
+          data: {
+            aggregateId: replacementRecord.id,
+            aggregateType: 'SESSION',
+            eventType: 'session.rescheduled',
+            idempotencyKey: `session:${input.sessionId}:rescheduled:v${replacementRecord.version}`,
+            organizationId: input.organizationId,
+            payload: {
+              originalSessionId: input.sessionId,
+              replacementSession: replacementView,
+            },
+          },
+        });
+
+        return {
+          kind: 'created',
+          replacementSession: replacementView,
+        };
+      });
+    } catch (error) {
+      if (error instanceof CreateSessionAbort) {
+        return error.result as RescheduleSessionResult;
+      }
+      throw error;
+    }
+  }
+
+  async createRescheduleRequest(
+    input: CreateRescheduleRequestInput,
+  ): Promise<CreateRescheduleRequestResult> {
+    const expiresAt = input.expiresAt;
+    const operation = 'sessions.create_reschedule_request';
+
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const reservation = await reserveIdempotency(transaction, {
+          expiresAt,
+          keyHash: input.idempotencyKeyHash,
+          operation,
+          organizationId: input.organizationId,
+          requestHash: input.requestHash,
+        });
+
+        if (reservation.kind === 'reused') {
+          return { kind: 'idempotency_key_reused' };
+        }
+
+        if (reservation.kind === 'replay') {
+          const requestView = parseStoredRescheduleRequest(reservation.responseBody);
+          if (reservation.responseStatus !== 201 || requestView === null) {
+            throw new Error('Stored reschedule request response is invalid.');
+          }
+          return { kind: 'replayed', request: requestView };
+        }
+
+        const session = await transaction.session.findFirst({
+          include: {
+            oleada: { select: { organizationId: true } },
+            participants: { include: { enrollment: { select: { userId: true } } } },
+          },
+          where: {
+            id: input.sessionId,
+            oleada: { organizationId: input.organizationId },
+          },
+        });
+
+        if (session === null) {
+          throw new CreateSessionAbort({ kind: 'not_found' });
+        }
+
+        const isParticipant = session.participants.some(
+          (p) => p.enrollment.userId === input.actorUserId,
+        );
+
+        if (!isParticipant) {
+          throw new CreateSessionAbort({ kind: 'forbidden' });
+        }
+
+        if (session.status !== 'SCHEDULED') {
+          throw new CreateSessionAbort({ kind: 'session_not_scheduled' });
+        }
+
+        const existingPending = await transaction.sessionRescheduleRequest.findFirst({
+          where: {
+            requestedByUserId: input.actorUserId,
+            sessionId: input.sessionId,
+            status: 'PENDING',
+          },
+        });
+
+        if (existingPending !== null) {
+          throw new CreateSessionAbort({ kind: 'pending_request_exists' });
+        }
+
+        const requestRecord = await transaction.sessionRescheduleRequest.create({
+          data: {
+            proposedStartsAt: input.proposedStartsAt,
+            reason: input.reason,
+            requestedByUserId: input.actorUserId,
+            sessionId: input.sessionId,
+            status: 'PENDING',
+          },
+          include: rescheduleRequestInclude,
+        });
+
+        const requestView = toRescheduleRequestView(requestRecord);
+
+        await storeIdempotentResponse(transaction, reservation.id, 201, requestView);
+
+        await transaction.auditLog.create({
+          data: {
+            action: 'session.reschedule_requested',
+            actorUserId: input.actorUserId,
+            afterData: requestView as unknown as Prisma.InputJsonValue,
+            beforeData: null as unknown as Prisma.InputJsonValue,
+            entityId: requestRecord.id,
+            entityType: 'SESSION_RESCHEDULE_REQUEST',
+            organizationId: input.organizationId,
+            traceId: input.traceId,
+          },
+        });
+
+        await transaction.outboxEvent.create({
+          data: {
+            aggregateId: requestRecord.id,
+            aggregateType: 'SESSION_RESCHEDULE_REQUEST',
+            eventType: 'session.reschedule_requested',
+            idempotencyKey: `reschedule_request:${requestRecord.id}:created`,
+            organizationId: input.organizationId,
+            payload: requestView as unknown as Prisma.InputJsonValue,
+          },
+        });
+
+        return {
+          kind: 'created',
+          request: requestView,
+        };
+      });
+    } catch (error) {
+      if (error instanceof CreateSessionAbort) {
+        return error.result as CreateRescheduleRequestResult;
+      }
+      throw error;
+    }
+  }
+
+  async approveRescheduleRequest(
+    input: ApproveRescheduleRequestInput,
+  ): Promise<ApproveRescheduleRequestResult> {
+    const expiresAt = input.expiresAt;
+    const operation = 'sessions.approve_reschedule_request';
+
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const reservation = await reserveIdempotency(transaction, {
+          expiresAt,
+          keyHash: input.idempotencyKeyHash,
+          operation,
+          organizationId: input.organizationId,
+          requestHash: input.requestHash,
+        });
+
+        if (reservation.kind === 'reused') {
+          return { kind: 'idempotency_key_reused' };
+        }
+
+        if (reservation.kind === 'replay') {
+          const stored = parseStoredApproveResponse(reservation.responseBody);
+          if (reservation.responseStatus !== 201 || stored === null) {
+            throw new Error('Stored approve response is invalid.');
+          }
+          return {
+            kind: 'replayed',
+            replacementSession: stored.replacementSession,
+            request: stored.request,
+          };
+        }
+
+        const requestRecord = await transaction.sessionRescheduleRequest.findFirst({
+          include: {
+            ...rescheduleRequestInclude,
+            session: {
+              include: sessionViewInclude,
+            },
+          },
+          where: {
+            id: input.requestId,
+            session: {
+              oleada: { organizationId: input.organizationId },
+            },
+          },
+        });
+
+        if (requestRecord === null) {
+          throw new CreateSessionAbort({ kind: 'not_found' });
+        }
+
+        const sessionRecord = requestRecord.session;
+
+        if (!input.actorIsAdmin && sessionRecord.mentorUserId !== input.actorUserId) {
+          throw new CreateSessionAbort({ kind: 'forbidden' });
+        }
+
+        if (requestRecord.status !== 'PENDING') {
+          throw new CreateSessionAbort({ kind: 'request_not_pending' });
+        }
+
+        if (sessionRecord.status !== 'SCHEDULED') {
+          throw new CreateSessionAbort({ kind: 'session_not_scheduled' });
+        }
+
+        if (
+          requestRecord.version !== input.expectedRequestVersion ||
+          sessionRecord.version !== input.expectedSessionVersion
+        ) {
+          throw new CreateSessionAbort({
+            currentRequestVersion: requestRecord.version,
+            currentSessionVersion: sessionRecord.version,
+            kind: 'conflict',
+          });
+        }
+
+        const durationMinutes =
+          input.durationMinutes ??
+          Math.round((sessionRecord.endsAt.getTime() - sessionRecord.startsAt.getTime()) / 60_000);
+        const endsAt = new Date(input.startsAt.getTime() + durationMinutes * 60_000);
+        const enrollmentIds = sessionRecord.participants.map((p) => p.enrollmentId).sort();
+
+        const conflictInput: ConflictLookupInput = {
+          actorIsAdmin: input.actorIsAdmin,
+          actorUserId: input.actorUserId,
+          endsAt,
+          enrollmentIds,
+          excludeSessionId: sessionRecord.id,
+          mentorUserId: sessionRecord.mentorUserId,
+          organizationId: input.organizationId,
+          startsAt: input.startsAt,
+        };
+
+        const existingConflict = await findScheduleConflict(transaction, conflictInput);
+
+        if (existingConflict !== null) {
+          // CRITICAL INVARIANT: Leaves request PENDING and returns 409
+          throw new CreateSessionAbort({
+            conflict: existingConflict,
+            kind: 'schedule_conflict',
+          });
+        }
+
+        const now = new Date();
+        const originalView = toSessionView(sessionRecord, { userId: input.actorUserId }, now);
+
+        await transaction.session.update({
+          data: {
+            status: 'RESCHEDULED',
+            version: { increment: 1 },
+          },
+          where: { id: sessionRecord.id },
+        });
+
+        await transaction.scheduleReservation.updateMany({
+          data: { releasedAt: now },
+          where: { sessionId: sessionRecord.id, releasedAt: null },
+        });
+
+        const replacementRecord = await transaction.session.create({
+          data: {
+            checkpointMonth: sessionRecord.checkpointMonth,
+            confirmationClosesAt: input.startsAt,
+            description: sessionRecord.description,
+            endsAt,
+            meetingUrl: input.meetingUrl ?? sessionRecord.meetingUrl,
+            mentorUserId: sessionRecord.mentorUserId,
+            oleadaId: sessionRecord.oleadaId,
+            phase: sessionRecord.phase,
+            rescheduledFromId: sessionRecord.id,
+            startsAt: input.startsAt,
+            status: 'SCHEDULED',
+            timezone: sessionRecord.timezone,
+            title: sessionRecord.title,
+            type: sessionRecord.type,
+            weekNumber: sessionRecord.weekNumber,
+            participants: {
+              createMany: {
+                data: enrollmentIds.map((enrollmentId) => ({
+                  attendanceStatus: 'PENDING',
+                  confirmationStatus: 'PENDING',
+                  enrollmentId,
+                })),
+              },
+            },
+            reservations: {
+              createMany: {
+                data: [
+                  {
+                    endsAt,
+                    resourceId: sessionRecord.mentorUserId,
+                    resourceType: 'USER',
+                    startsAt: input.startsAt,
+                  },
+                  ...enrollmentIds.map((enrollmentId) => ({
+                    endsAt,
+                    resourceId: enrollmentId,
+                    resourceType: 'ENROLLMENT' as const,
+                    startsAt: input.startsAt,
+                  })),
+                ],
+              },
+            },
+          },
+          include: sessionViewInclude,
+        });
+
+        const replacementView = toSessionView(replacementRecord, { userId: input.actorUserId }, now);
+
+        const updatedRequestRecord = await transaction.sessionRescheduleRequest.update({
+          data: {
+            decidedByUserId: input.actorUserId,
+            decisionReason: 'Aprobada por el mentor',
+            replacementSessionId: replacementRecord.id,
+            status: 'APPROVED',
+            version: { increment: 1 },
+          },
+          include: rescheduleRequestInclude,
+        });
+
+        const updatedRequestView = toRescheduleRequestView(updatedRequestRecord);
+
+        const payload = {
+          replacementSession: replacementView,
+          request: updatedRequestView,
+        };
+
+        await storeIdempotentResponse(transaction, reservation.id, 201, payload);
+
+        await transaction.auditLog.create({
+          data: {
+            action: 'session.reschedule_approved',
+            actorUserId: input.actorUserId,
+            afterData: payload as unknown as Prisma.InputJsonValue,
+            beforeData: lifecycleSnapshot(originalView),
+            entityId: input.requestId,
+            entityType: 'SESSION_RESCHEDULE_REQUEST',
+            organizationId: input.organizationId,
+            traceId: input.traceId,
+          },
+        });
+
+        await transaction.outboxEvent.create({
+          data: {
+            aggregateId: input.requestId,
+            aggregateType: 'SESSION_RESCHEDULE_REQUEST',
+            eventType: 'session.reschedule_approved',
+            idempotencyKey: `reschedule_request:${input.requestId}:approved:v${updatedRequestRecord.version}`,
+            organizationId: input.organizationId,
+            payload: payload as unknown as Prisma.InputJsonValue,
+          },
+        });
+
+        return {
+          kind: 'approved',
+          replacementSession: replacementView,
+          request: updatedRequestView,
+        };
+      });
+    } catch (error) {
+      if (error instanceof CreateSessionAbort) {
+        return error.result as ApproveRescheduleRequestResult;
+      }
+      throw error;
+    }
+  }
+
+  async rejectRescheduleRequest(
+    input: RejectRescheduleRequestInput,
+  ): Promise<RejectRescheduleRequestResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const requestRecord = await transaction.sessionRescheduleRequest.findFirst({
+        include: {
+          ...rescheduleRequestInclude,
+          session: { select: { mentorUserId: true, oleada: { select: { organizationId: true } } } },
+        },
+        where: {
+          id: input.requestId,
+          session: { oleada: { organizationId: input.organizationId } },
+        },
+      });
+
+      if (requestRecord === null) {
+        return { kind: 'not_found' };
+      }
+
+      if (!input.actorIsAdmin && requestRecord.session.mentorUserId !== input.actorUserId) {
+        return { kind: 'forbidden' };
+      }
+
+      if (requestRecord.status !== 'PENDING') {
+        return { kind: 'request_not_pending' };
+      }
+
+      const updatedRecord = await transaction.sessionRescheduleRequest.update({
+        data: {
+          decidedByUserId: input.actorUserId,
+          decisionReason: input.reason,
+          status: 'REJECTED',
+          version: { increment: 1 },
+        },
+        include: rescheduleRequestInclude,
+      });
+
+      const updatedView = toRescheduleRequestView(updatedRecord);
+
+      await transaction.auditLog.create({
+        data: {
+          action: 'session.reschedule_rejected',
+          actorUserId: input.actorUserId,
+          afterData: updatedView as unknown as Prisma.InputJsonValue,
+          beforeData: toRescheduleRequestView(requestRecord) as unknown as Prisma.InputJsonValue,
+          entityId: input.requestId,
+          entityType: 'SESSION_RESCHEDULE_REQUEST',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+
+      await transaction.outboxEvent.create({
+        data: {
+          aggregateId: input.requestId,
+          aggregateType: 'SESSION_RESCHEDULE_REQUEST',
+          eventType: 'session.reschedule_rejected',
+          idempotencyKey: `reschedule_request:${input.requestId}:rejected:v${updatedRecord.version}`,
+          organizationId: input.organizationId,
+          payload: updatedView as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return {
+        kind: 'updated',
+        request: updatedView,
+      };
+    });
+  }
+
+  async cancelOwnRescheduleRequest(
+    input: CancelOwnRescheduleRequestInput,
+  ): Promise<CancelOwnRescheduleRequestResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const requestRecord = await transaction.sessionRescheduleRequest.findFirst({
+        include: {
+          ...rescheduleRequestInclude,
+          session: { select: { oleada: { select: { organizationId: true } } } },
+        },
+        where: {
+          id: input.requestId,
+          session: { oleada: { organizationId: input.organizationId } },
+        },
+      });
+
+      if (requestRecord === null) {
+        return { kind: 'not_found' };
+      }
+
+      if (requestRecord.requestedByUserId !== input.actorUserId) {
+        return { kind: 'forbidden' };
+      }
+
+      if (requestRecord.version !== input.expectedVersion) {
+        return {
+          currentVersion: requestRecord.version,
+          kind: 'conflict',
+        };
+      }
+
+      if (requestRecord.status !== 'PENDING') {
+        return { kind: 'request_not_pending' };
+      }
+
+      const updatedRecord = await transaction.sessionRescheduleRequest.update({
+        data: {
+          status: 'CANCELLED',
+          version: { increment: 1 },
+        },
+        include: rescheduleRequestInclude,
+      });
+
+      const updatedView = toRescheduleRequestView(updatedRecord);
+
+      await transaction.auditLog.create({
+        data: {
+          action: 'session.reschedule_request_cancelled',
+          actorUserId: input.actorUserId,
+          afterData: updatedView as unknown as Prisma.InputJsonValue,
+          beforeData: toRescheduleRequestView(requestRecord) as unknown as Prisma.InputJsonValue,
+          entityId: input.requestId,
+          entityType: 'SESSION_RESCHEDULE_REQUEST',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+
+      await transaction.outboxEvent.create({
+        data: {
+          aggregateId: input.requestId,
+          aggregateType: 'SESSION_RESCHEDULE_REQUEST',
+          eventType: 'session.reschedule_request_cancelled',
+          idempotencyKey: `reschedule_request:${input.requestId}:cancelled:v${updatedRecord.version}`,
+          organizationId: input.organizationId,
+          payload: updatedView as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return {
+        kind: 'updated',
+        request: updatedView,
+      };
+    });
+  }
 }
+
+function parseStoredRescheduleRequest(
+  responseBody: Prisma.JsonValue,
+): import('./session-view.js').RescheduleRequestView | null {
+  if (responseBody === null || typeof responseBody !== 'object' || Array.isArray(responseBody)) {
+    return null;
+  }
+  return responseBody as unknown as import('./session-view.js').RescheduleRequestView;
+}
+
+function parseStoredApproveResponse(
+  responseBody: Prisma.JsonValue,
+): {
+  readonly replacementSession: SessionView;
+  readonly request: import('./session-view.js').RescheduleRequestView;
+} | null {
+  if (responseBody === null || typeof responseBody !== 'object' || Array.isArray(responseBody)) {
+    return null;
+  }
+  return responseBody as unknown as {
+    readonly replacementSession: SessionView;
+    readonly request: import('./session-view.js').RescheduleRequestView;
+  };
+}
+

@@ -1,0 +1,45 @@
+{
+  "id": "33333333-3333-4333-8333-333333333333",
+  "title": "Mentoría 1:1 — Objetivo profesional",
+  "type": "ONE_ON_ONE",
+  "phase": "FASE_1",
+  "startsAt": "2026-08-12T20:00:00Z",
+  "endsAt": "2026-08-12T20:45:00Z",
+  "timezone": "America/Lima",
+  "status": "RESCHEDULED",
+  "confirmationClosesAt": "2026-08-12T20:00:00Z",
+  "canConfirm": false,
+  "confirmationSummary": {
+    "total": 1,
+    "pending": 0,
+    "confirmed": 1,
+    "declined": 0
+  },
+  "oleada": {
+    "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "name": "Oleada Tecnología Demo 2026"
+  },
+  "mentor": {
+    "id": "44444444-4444-4444-8444-444444444444",
+    "fullName": "Mentora Demo"
+  },
+  "description": "Sesión original reprogramada por mutuo acuerdo.",
+  "weekNumber": 4,
+  "checkpointMonth": null,
+  "meetingUrl": "https://meet.example.test/demo-session",
+  "participants": [
+    {
+      "enrollmentId": "22222222-2222-4222-8222-222222222222",
+      "participant": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "fullName": "Participante Demo"
+      },
+      "confirmationStatus": "CONFIRMED",
+      "attendanceStatus": "PENDING",
+      "confirmedAt": "2026-08-10T15:30:00Z",
+      "version": 2
+    }
+  ],
+  "rescheduledFromId": "00000000-0000-4000-8000-111111111111",
+  "version": 4
+}

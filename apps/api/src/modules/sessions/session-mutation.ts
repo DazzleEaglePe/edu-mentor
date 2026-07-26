@@ -193,3 +193,177 @@ export type CancelSessionResult =
   | {
       readonly kind: 'session_not_scheduled';
     };
+
+export interface RescheduleSessionInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly durationMinutes: number;
+  readonly expectedVersion: number;
+  readonly expiresAt: Date;
+  readonly idempotencyKeyHash: string;
+  readonly meetingUrl: string | null;
+  readonly organizationId: string;
+  readonly reason: string;
+  readonly requestHash: string;
+  readonly sessionId: string;
+  readonly startsAt: Date;
+  readonly traceId: string;
+}
+
+export type RescheduleSessionResult =
+  | {
+      readonly kind: 'created' | 'replayed';
+      readonly replacementSession: SessionView;
+    }
+  | {
+      readonly kind: 'idempotency_key_reused';
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentVersion: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'session_not_scheduled';
+    }
+  | {
+      readonly conflict: ScheduleConflict;
+      readonly kind: 'schedule_conflict';
+    };
+
+export interface CreateRescheduleRequestInput {
+  readonly actorUserId: string;
+  readonly expiresAt: Date;
+  readonly idempotencyKeyHash: string;
+  readonly organizationId: string;
+  readonly proposedStartsAt: Date | null;
+  readonly reason: string;
+  readonly requestHash: string;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
+export type CreateRescheduleRequestResult =
+  | {
+      readonly kind: 'created' | 'replayed';
+      readonly request: import('./session-view.js').RescheduleRequestView;
+    }
+  | {
+      readonly kind: 'idempotency_key_reused';
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly kind: 'pending_request_exists';
+    }
+  | {
+      readonly kind: 'session_not_scheduled';
+    };
+
+export interface ApproveRescheduleRequestInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly durationMinutes: number | null;
+  readonly expectedRequestVersion: number;
+  readonly expectedSessionVersion: number;
+  readonly expiresAt: Date;
+  readonly idempotencyKeyHash: string;
+  readonly meetingUrl: string | null;
+  readonly organizationId: string;
+  readonly requestId: string;
+  readonly requestHash: string;
+  readonly startsAt: Date;
+  readonly traceId: string;
+}
+
+export type ApproveRescheduleRequestResult =
+  | {
+      readonly kind: 'approved' | 'replayed';
+      readonly replacementSession: SessionView;
+      readonly request: import('./session-view.js').RescheduleRequestView;
+    }
+  | {
+      readonly kind: 'idempotency_key_reused';
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentRequestVersion?: number;
+      readonly currentSessionVersion?: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'request_not_pending';
+    }
+  | {
+      readonly kind: 'session_not_scheduled';
+    }
+  | {
+      readonly conflict: ScheduleConflict;
+      readonly kind: 'schedule_conflict';
+    };
+
+export interface RejectRescheduleRequestInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly organizationId: string;
+  readonly reason: string;
+  readonly requestId: string;
+  readonly traceId: string;
+}
+
+export type RejectRescheduleRequestResult =
+  | {
+      readonly kind: 'updated';
+      readonly request: import('./session-view.js').RescheduleRequestView;
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly kind: 'request_not_pending';
+    };
+
+export interface CancelOwnRescheduleRequestInput {
+  readonly actorUserId: string;
+  readonly expectedVersion: number;
+  readonly organizationId: string;
+  readonly requestId: string;
+  readonly traceId: string;
+}
+
+export type CancelOwnRescheduleRequestResult =
+  | {
+      readonly kind: 'updated';
+      readonly request: import('./session-view.js').RescheduleRequestView;
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentVersion: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'request_not_pending';
+    };
+

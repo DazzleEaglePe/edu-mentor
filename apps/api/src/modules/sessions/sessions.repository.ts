@@ -267,4 +267,118 @@ export class SessionsRepository {
 
     return session === null ? null : toSessionView(session, principal, now);
   }
+
+  async listRescheduleRequests(
+    principal: AuthPrincipal,
+    page: number,
+    limit: number,
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED',
+  ): Promise<import('./session-view.js').RescheduleRequestPage> {
+    const skip = (page - 1) * limit;
+    const where: Prisma.SessionRescheduleRequestWhereInput = {
+      AND: [
+        rescheduleRequestAccessFilter(principal),
+        ...(status === undefined ? [] : [{ status }]),
+      ],
+    };
+
+    const [requests, total] = await this.prisma.$transaction([
+      this.prisma.sessionRescheduleRequest.findMany({
+        include: rescheduleRequestInclude,
+        orderBy: [{ requestedAt: 'desc' }, { id: 'asc' }],
+        skip,
+        take: limit,
+        where,
+      }),
+      this.prisma.sessionRescheduleRequest.count({ where }),
+    ]);
+
+    return {
+      data: requests.map(toRescheduleRequestView),
+      meta: {
+        hasNextPage: skip + requests.length < total,
+        limit,
+        page,
+        total,
+      },
+    };
+  }
 }
+
+export const rescheduleRequestInclude = {
+  requestedBy: {
+    select: {
+      fullName: true,
+      id: true,
+    },
+  },
+} as const satisfies Prisma.SessionRescheduleRequestInclude;
+
+export type RescheduleRequestWithRelations = Prisma.SessionRescheduleRequestGetPayload<{
+  include: typeof rescheduleRequestInclude;
+}>;
+
+export function toRescheduleRequestView(
+  request: RescheduleRequestWithRelations,
+): import('./session-view.js').RescheduleRequestView {
+  return {
+    decisionReason: request.decisionReason,
+    id: request.id,
+    proposedStartsAt: request.proposedStartsAt?.toISOString() ?? null,
+    reason: request.reason,
+    replacementSessionId: request.replacementSessionId,
+    requestedAt: request.requestedAt.toISOString(),
+    requestedBy: request.requestedBy,
+    sessionId: request.sessionId,
+    status: request.status,
+    version: request.version,
+  };
+}
+
+function rescheduleRequestAccessFilter(
+  principal: AuthPrincipal,
+): Prisma.SessionRescheduleRequestWhereInput {
+  if (principal.roles.includes('ADMIN')) {
+    return {
+      session: {
+        oleada: {
+          organizationId: principal.organization.id,
+        },
+      },
+    };
+  }
+
+  const scopes: Prisma.SessionRescheduleRequestWhereInput[] = [];
+
+  if (principal.roles.includes('MENTOR')) {
+    scopes.push({
+      session: {
+        mentorUserId: principal.userId,
+      },
+    });
+  }
+
+  if (principal.roles.includes('PARTICIPANT')) {
+    scopes.push({
+      requestedByUserId: principal.userId,
+    });
+  }
+
+  return {
+    session: {
+      oleada: {
+        organizationId: principal.organization.id,
+      },
+    },
+    ...(scopes.length === 0
+      ? {
+          id: {
+            equals: '00000000-0000-4000-8000-000000000000',
+          },
+        }
+      : {
+          OR: scopes,
+        }),
+  };
+}
+

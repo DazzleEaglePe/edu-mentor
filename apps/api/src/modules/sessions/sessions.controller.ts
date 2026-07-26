@@ -137,4 +137,83 @@ export class SessionsController {
       traceId: getOrCreateTraceId(request),
     });
   }
+
+  @Post(':sessionId/complete')
+  @HttpCode(200)
+  @Roles('ADMIN', 'MENTOR')
+  complete(
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Body(createValidationPipe(import('./dto/complete-session.dto.js').CompleteSessionDto))
+    body: import('./dto/complete-session.dto.js').CompleteSessionDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SessionView> {
+    return this.sessions.complete(requirePrincipal(request), {
+      expectedVersion: body.expectedVersion,
+      sessionId,
+      traceId: getOrCreateTraceId(request),
+    });
+  }
+
+  @Post(':sessionId/cancel')
+  @HttpCode(200)
+  @Roles('ADMIN', 'MENTOR')
+  cancel(
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Body(createValidationPipe(import('./dto/cancel-session.dto.js').CancelSessionDto))
+    body: import('./dto/cancel-session.dto.js').CancelSessionDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SessionView> {
+    return this.sessions.cancel(requirePrincipal(request), {
+      expectedVersion: body.expectedVersion,
+      reason: body.reason,
+      sessionId,
+      traceId: getOrCreateTraceId(request),
+    });
+  }
+
+  @Post(':sessionId/reschedule')
+  @HttpCode(201)
+  @Roles('ADMIN', 'MENTOR')
+  reschedule(
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Body(createValidationPipe(import('./dto/reschedule-session.dto.js').RescheduleSessionDto))
+    body: import('./dto/reschedule-session.dto.js').RescheduleSessionDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SessionView> {
+    return this.sessions.reschedule(requirePrincipal(request), {
+      durationMinutes: body.durationMinutes,
+      expectedVersion: body.expectedVersion,
+      idempotencyKey,
+      meetingUrl: body.meetingUrl,
+      reason: body.reason,
+      sessionId,
+      startsAt: body.startsAt,
+      traceId: getOrCreateTraceId(request),
+    });
+  }
+
+  @Post(':sessionId/reschedule-requests')
+  @HttpCode(201)
+  @Roles('PARTICIPANT')
+  createRescheduleRequest(
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Body(
+      createValidationPipe(
+        import('./dto/create-reschedule-request.dto.js').CreateRescheduleRequestDto,
+      ),
+    )
+    body: import('./dto/create-reschedule-request.dto.js').CreateRescheduleRequestDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<import('./session-view.js').RescheduleRequestView> {
+    return this.sessions.createRescheduleRequest(requirePrincipal(request), {
+      idempotencyKey,
+      proposedStartsAt: body.proposedStartsAt,
+      reason: body.reason,
+      sessionId,
+      traceId: getOrCreateTraceId(request),
+    });
+  }
 }
+

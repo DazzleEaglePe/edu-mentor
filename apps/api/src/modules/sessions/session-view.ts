@@ -74,3 +74,30 @@ export interface SessionListFilters {
   readonly status?: SessionStatus;
   readonly to?: Date;
 }
+
+export interface RescheduleRequestView {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly requestedBy: {
+    readonly fullName: string;
+    readonly id: string;
+  };
+  readonly proposedStartsAt: string | null;
+  readonly reason: string;
+  readonly status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  readonly decisionReason: string | null;
+  readonly replacementSessionId: string | null;
+  readonly requestedAt: string;
+  readonly version: number;
+}
+
+export interface RescheduleRequestPage {
+  readonly data: readonly RescheduleRequestView[];
+  readonly meta: {
+    readonly hasNextPage: boolean;
+    readonly limit: number;
+    readonly page: number;
+    readonly total: number;
+  };
+}
+

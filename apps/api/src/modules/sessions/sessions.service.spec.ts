@@ -146,6 +146,22 @@ function createService(
     setOwnConfirmation: [],
     setParticipantAttendance: [],
   };
+  const requestView: import('./session-view.js').RescheduleRequestView = {
+    decisionReason: null,
+    id: '55555555-5555-4555-8555-555555555555',
+    proposedStartsAt: '2026-08-14T20:00:00.000Z',
+    reason: 'Cruce de horario con examen universitario',
+    replacementSessionId: null,
+    requestedAt: '2026-08-11T14:20:00.000Z',
+    requestedBy: {
+      fullName: 'Participant',
+      id: USER_ID,
+    },
+    sessionId: SESSION_ID,
+    status: 'PENDING',
+    version: 1,
+  };
+
   const repository = {
     calendar: async (...args: readonly unknown[]) => {
       calls.calendar.push([...args]);
@@ -159,12 +175,48 @@ function createService(
       calls.list.push([...args]);
       return page;
     },
+    listRescheduleRequests: async () => {
+      return {
+        data: [requestView],
+        meta: { hasNextPage: false, limit: 20, page: 1, total: 1 },
+      };
+    },
   };
+
   const mutations = {
+    approveRescheduleRequest: async () => ({
+      kind: 'approved',
+      replacementSession: session,
+      request: { ...requestView, status: 'APPROVED' },
+    }),
+    cancel: async () => ({
+      kind: 'updated',
+      session,
+    }),
+    cancelOwnRescheduleRequest: async () => ({
+      kind: 'updated',
+      request: { ...requestView, status: 'CANCELLED' },
+    }),
+    complete: async () => ({
+      kind: 'updated',
+      session,
+    }),
     create: async (...args: readonly unknown[]) => {
       calls.create.push([...args]);
       return createResult;
     },
+    createRescheduleRequest: async () => ({
+      kind: 'created',
+      request: requestView,
+    }),
+    rejectRescheduleRequest: async () => ({
+      kind: 'updated',
+      request: { ...requestView, status: 'REJECTED' },
+    }),
+    reschedule: async () => ({
+      kind: 'created',
+      replacementSession: session,
+    }),
     setOwnConfirmation: async (...args: readonly unknown[]) => {
       calls.setOwnConfirmation.push([...args]);
       return confirmationResult;
@@ -174,6 +226,7 @@ function createService(
       return attendanceResult;
     },
   };
+
   const fingerprints = {
     hashIdempotencyKey: () => 'key-hash',
     hashRequest: () => 'request-hash',
@@ -659,4 +712,103 @@ describe('SessionsService', () => {
       assert.deepEqual(error.details, details);
     }
   });
+
+  it('handles complete session workflow and errors', async () => {
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const { service } = createService(session);
+    const completed = await service.complete(mentor, {
+      expectedVersion: 1,
+      sessionId: SESSION_ID,
+      traceId: 'trace-complete',
+    });
+    assert.equal(completed.id, SESSION_ID);
+
+    const { service: errorService } = createService(session, undefined, undefined, {
+      kind: 'session_not_started',
+      startsAt: '2026-08-20T20:00:00.000Z',
+    });
+    const error = await expectApiError(
+      errorService.complete(mentor, {
+        expectedVersion: 1,
+        sessionId: SESSION_ID,
+        traceId: 'trace-complete',
+      }),
+      422,
+      'SESSION_NOT_STARTED',
+    );
+    assert.equal(error.code, 'SESSION_NOT_STARTED');
+  });
+
+  it('handles cancel session workflow and validation', async () => {
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const { service } = createService(session);
+    const cancelled = await service.cancel(mentor, {
+      expectedVersion: 1,
+      reason: 'Mentor indisponible por motivo de salud',
+      sessionId: SESSION_ID,
+      traceId: 'trace-cancel',
+    });
+    assert.equal(cancelled.id, SESSION_ID);
+
+    const validationError = await expectApiError(
+      service.cancel(mentor, {
+        expectedVersion: 1,
+        reason: 'no',
+        sessionId: SESSION_ID,
+        traceId: 'trace-cancel',
+      }),
+      422,
+      'VALIDATION_ERROR',
+    );
+    assert.equal(validationError.code, 'VALIDATION_ERROR');
+  });
+
+  it('validates reschedule session input and error responses', async () => {
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const { service } = createService(session);
+
+    const rescheduled = await service.reschedule(mentor, {
+      durationMinutes: 45,
+      expectedVersion: 1,
+      idempotencyKey: 'idemp-reschedule-1234',
+      reason: 'Solicitud de reprogramación coordinada',
+      sessionId: SESSION_ID,
+      startsAt: '2026-08-14T20:00:00.000Z',
+      traceId: 'trace-reschedule',
+    });
+    assert.equal(rescheduled.id, SESSION_ID);
+  });
+
+  it('handles create and list reschedule requests', async () => {
+    const { service } = createService(session);
+
+    const request = await service.createRescheduleRequest(principal, {
+      idempotencyKey: 'idemp-req-1234',
+      proposedStartsAt: '2026-08-14T20:00:00.000Z',
+      reason: 'Cruce de horario con examen universitario',
+      sessionId: SESSION_ID,
+      traceId: 'trace-request',
+    });
+    assert.equal(request.sessionId, SESSION_ID);
+
+    const list = await service.listRescheduleRequests(principal, {
+      limit: 20,
+      page: 1,
+      status: 'PENDING',
+    });
+    assert.equal(list.data.length, 1);
+  });
 });
+

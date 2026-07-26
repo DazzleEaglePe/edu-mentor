@@ -506,4 +506,370 @@ export class SessionsService {
         );
     }
   }
+
+  async reschedule(
+    principal: AuthPrincipal,
+    command: RescheduleSessionCommand,
+  ): Promise<SessionView> {
+    const idempotencyKey = requireIdempotencyKey(command.idempotencyKey);
+    const startsAt = parseTimestamp('startsAt', command.startsAt);
+    const reason = command.reason.trim();
+    const meetingUrl = command.meetingUrl?.trim() || null;
+
+    if (reason.length < 3 || reason.length > 1_000) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'No pudimos procesar los datos enviados.', {
+        fields: ['reason'],
+      });
+    }
+
+    const canonicalRequest = {
+      durationMinutes: command.durationMinutes,
+      expectedVersion: command.expectedVersion,
+      meetingUrl,
+      reason,
+      startsAt: startsAt.toISOString(),
+    };
+
+    const result = await this.mutations.reschedule({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      durationMinutes: command.durationMinutes,
+      expectedVersion: command.expectedVersion,
+      expiresAt: new Date(Date.now() + IDEMPOTENCY_RETENTION_MS),
+      idempotencyKeyHash: this.fingerprints.hashIdempotencyKey(idempotencyKey),
+      meetingUrl,
+      organizationId: principal.organization.id,
+      reason,
+      requestHash: this.fingerprints.hashRequest('sessions.reschedule', canonicalRequest),
+      sessionId: command.sessionId,
+      startsAt,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'created':
+      case 'replayed':
+        return result.replacementSession;
+      case 'idempotency_key_reused':
+        throw new ApiError(
+          409,
+          'IDEMPOTENCY_KEY_REUSED',
+          'La clave de idempotencia ya se usó con otros datos.',
+        );
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+          {
+            currentVersion: result.currentVersion,
+            expectedVersion: command.expectedVersion,
+          },
+        );
+      case 'session_not_scheduled':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_SCHEDULED',
+          'La sesión ya no admite esta transición.',
+        );
+      case 'schedule_conflict':
+        throw new ApiError(409, 'SCHEDULE_CONFLICT', 'El horario ya no está disponible.', {
+          canViewConflictingSession: result.conflict.canViewConflictingSession,
+          conflictingSessionId: result.conflict.conflictingSessionId,
+          occupiedInterval: result.conflict.occupiedInterval,
+          resourceId: result.conflict.resourceId,
+          resourceType: result.conflict.resourceType,
+        });
+    }
+  }
+
+  async createRescheduleRequest(
+    principal: AuthPrincipal,
+    command: CreateRescheduleRequestCommand,
+  ): Promise<import('./session-view.js').RescheduleRequestView> {
+    const idempotencyKey = requireIdempotencyKey(command.idempotencyKey);
+    const reason = command.reason.trim();
+    const proposedStartsAt =
+      command.proposedStartsAt === undefined
+        ? null
+        : parseTimestamp('proposedStartsAt', command.proposedStartsAt);
+
+    if (reason.length < 3 || reason.length > 1_000) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'No pudimos procesar los datos enviados.', {
+        fields: ['reason'],
+      });
+    }
+
+    const canonicalRequest = {
+      proposedStartsAt: proposedStartsAt?.toISOString() ?? null,
+      reason,
+    };
+
+    const result = await this.mutations.createRescheduleRequest({
+      actorUserId: principal.userId,
+      expiresAt: new Date(Date.now() + IDEMPOTENCY_RETENTION_MS),
+      idempotencyKeyHash: this.fingerprints.hashIdempotencyKey(idempotencyKey),
+      organizationId: principal.organization.id,
+      proposedStartsAt,
+      reason,
+      requestHash: this.fingerprints.hashRequest(
+        'sessions.create_reschedule_request',
+        canonicalRequest,
+      ),
+      sessionId: command.sessionId,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'created':
+      case 'replayed':
+        return result.request;
+      case 'idempotency_key_reused':
+        throw new ApiError(
+          409,
+          'IDEMPOTENCY_KEY_REUSED',
+          'La clave de idempotencia ya se usó con otros datos.',
+        );
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'pending_request_exists':
+        throw new ApiError(
+          409,
+          'PENDING_REQUEST_EXISTS',
+          'Ya tienes una solicitud de reprogramación pendiente para esta sesión.',
+        );
+      case 'session_not_scheduled':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_SCHEDULED',
+          'La sesión ya no admite solicitudes de reprogramación.',
+        );
+    }
+  }
+
+  async listRescheduleRequests(
+    principal: AuthPrincipal,
+    command: RescheduleRequestListCommand,
+  ): Promise<import('./session-view.js').RescheduleRequestPage> {
+    return this.repository.listRescheduleRequests(
+      principal,
+      command.page,
+      command.limit,
+      command.status,
+    );
+  }
+
+  async approveRescheduleRequest(
+    principal: AuthPrincipal,
+    command: ApproveRescheduleRequestCommand,
+  ): Promise<{
+    readonly replacementSession: SessionView;
+    readonly request: import('./session-view.js').RescheduleRequestView;
+  }> {
+    const idempotencyKey = requireIdempotencyKey(command.idempotencyKey);
+    const startsAt = parseTimestamp('startsAt', command.startsAt);
+    const meetingUrl = command.meetingUrl?.trim() || null;
+
+    const canonicalRequest = {
+      durationMinutes: command.durationMinutes ?? null,
+      expectedRequestVersion: command.expectedRequestVersion,
+      expectedSessionVersion: command.expectedSessionVersion,
+      meetingUrl,
+      startsAt: startsAt.toISOString(),
+    };
+
+    const result = await this.mutations.approveRescheduleRequest({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      durationMinutes: command.durationMinutes ?? null,
+      expectedRequestVersion: command.expectedRequestVersion,
+      expectedSessionVersion: command.expectedSessionVersion,
+      expiresAt: new Date(Date.now() + IDEMPOTENCY_RETENTION_MS),
+      idempotencyKeyHash: this.fingerprints.hashIdempotencyKey(idempotencyKey),
+      meetingUrl,
+      organizationId: principal.organization.id,
+      requestId: command.requestId,
+      requestHash: this.fingerprints.hashRequest(
+        'sessions.approve_reschedule_request',
+        canonicalRequest,
+      ),
+      startsAt,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'approved':
+      case 'replayed':
+        return {
+          replacementSession: result.replacementSession,
+          request: result.request,
+        };
+      case 'idempotency_key_reused':
+        throw new ApiError(
+          409,
+          'IDEMPOTENCY_KEY_REUSED',
+          'La clave de idempotencia ya se usó con otros datos.',
+        );
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+        );
+      case 'request_not_pending':
+        throw new ApiError(
+          409,
+          'REQUEST_NOT_PENDING',
+          'La solicitud ya no está en estado pendiente.',
+        );
+      case 'session_not_scheduled':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_SCHEDULED',
+          'La sesión ya no admite ser reprogramada.',
+        );
+      case 'schedule_conflict':
+        throw new ApiError(409, 'SCHEDULE_CONFLICT', 'El horario ya no está disponible.', {
+          canViewConflictingSession: result.conflict.canViewConflictingSession,
+          conflictingSessionId: result.conflict.conflictingSessionId,
+          occupiedInterval: result.conflict.occupiedInterval,
+          resourceId: result.conflict.resourceId,
+          resourceType: result.conflict.resourceType,
+        });
+    }
+  }
+
+  async rejectRescheduleRequest(
+    principal: AuthPrincipal,
+    command: RejectRescheduleRequestCommand,
+  ): Promise<import('./session-view.js').RescheduleRequestView> {
+    const reason = command.reason.trim();
+
+    if (reason.length < 3 || reason.length > 1_000) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'No pudimos procesar los datos enviados.', {
+        fields: ['reason'],
+      });
+    }
+
+    const result = await this.mutations.rejectRescheduleRequest({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      organizationId: principal.organization.id,
+      reason,
+      requestId: command.requestId,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'updated':
+        return result.request;
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'request_not_pending':
+        throw new ApiError(
+          409,
+          'REQUEST_NOT_PENDING',
+          'La solicitud ya no está en estado pendiente.',
+        );
+    }
+  }
+
+  async cancelOwnRescheduleRequest(
+    principal: AuthPrincipal,
+    command: CancelOwnRescheduleRequestCommand,
+  ): Promise<import('./session-view.js').RescheduleRequestView> {
+    const result = await this.mutations.cancelOwnRescheduleRequest({
+      actorUserId: principal.userId,
+      expectedVersion: command.expectedVersion,
+      organizationId: principal.organization.id,
+      requestId: command.requestId,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'updated':
+        return result.request;
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+          {
+            currentVersion: result.currentVersion,
+            expectedVersion: command.expectedVersion,
+          },
+        );
+      case 'request_not_pending':
+        throw new ApiError(
+          409,
+          'REQUEST_NOT_PENDING',
+          'La solicitud ya no está en estado pendiente.',
+        );
+    }
+  }
 }
+
+export interface RescheduleSessionCommand {
+  readonly durationMinutes: number;
+  readonly expectedVersion: number;
+  readonly idempotencyKey: string | undefined;
+  readonly meetingUrl?: string;
+  readonly reason: string;
+  readonly sessionId: string;
+  readonly startsAt: string;
+  readonly traceId: string;
+}
+
+export interface CreateRescheduleRequestCommand {
+  readonly idempotencyKey: string | undefined;
+  readonly proposedStartsAt?: string;
+  readonly reason: string;
+  readonly sessionId: string;
+  readonly traceId: string;
+}
+
+export interface RescheduleRequestListCommand {
+  readonly limit: number;
+  readonly page: number;
+  readonly status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+}
+
+export interface ApproveRescheduleRequestCommand {
+  readonly durationMinutes?: number;
+  readonly expectedRequestVersion: number;
+  readonly expectedSessionVersion: number;
+  readonly idempotencyKey: string | undefined;
+  readonly meetingUrl?: string;
+  readonly requestId: string;
+  readonly startsAt: string;
+  readonly traceId: string;
+}
+
+export interface RejectRescheduleRequestCommand {
+  readonly reason: string;
+  readonly requestId: string;
+  readonly traceId: string;
+}
+
+export interface CancelOwnRescheduleRequestCommand {
+  readonly expectedVersion: number;
+  readonly requestId: string;
+  readonly traceId: string;
+}
+
