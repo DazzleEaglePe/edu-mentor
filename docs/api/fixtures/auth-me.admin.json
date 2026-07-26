@@ -1,0 +1,15 @@
+{
+  "id": "55555555-5555-4555-8555-555555555555",
+  "fullName": "Administradora Demo",
+  "email": "admin.demo@example.test",
+  "organization": {
+    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "name": "EDU-US Demo"
+  },
+  "roles": [
+    "ADMIN"
+  ],
+  "mentorCapabilities": [],
+  "activeEnrollment": null,
+  "mustChangePassword": false
+}
