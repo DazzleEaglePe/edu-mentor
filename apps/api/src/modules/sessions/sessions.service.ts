@@ -57,6 +57,14 @@ export interface SetOwnConfirmationCommand {
   readonly traceId: string;
 }
 
+export interface SetParticipantAttendanceCommand {
+  readonly enrollmentId: string;
+  readonly expectedVersion: number;
+  readonly sessionId: string;
+  readonly status: 'ATTENDED' | 'ABSENT';
+  readonly traceId: string;
+}
+
 function parseTimestamp(field: 'from' | 'startsAt' | 'to', value: string): Date {
   const parsed = new Date(value);
 
@@ -342,6 +350,58 @@ export class SessionsService {
           409,
           'SESSION_NOT_SCHEDULED',
           'La sesión ya no admite cambios de confirmación.',
+        );
+    }
+  }
+
+  async setParticipantAttendance(
+    principal: AuthPrincipal,
+    command: SetParticipantAttendanceCommand,
+  ): Promise<SessionParticipantView> {
+    const result = await this.mutations.setParticipantAttendance({
+      actorIsAdmin: principal.roles.includes('ADMIN'),
+      actorUserId: principal.userId,
+      enrollmentId: command.enrollmentId,
+      expectedVersion: command.expectedVersion,
+      organizationId: principal.organization.id,
+      sessionId: command.sessionId,
+      status: command.status,
+      traceId: command.traceId,
+    });
+
+    switch (result.kind) {
+      case 'updated':
+      case 'unchanged':
+        return result.participant;
+      case 'not_found':
+        throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'No encontramos el recurso solicitado.');
+      case 'forbidden':
+        throw new ApiError(403, 'FORBIDDEN', 'No tienes permiso para realizar esta acción.');
+      case 'conflict':
+        throw new ApiError(
+          409,
+          'VERSION_CONFLICT',
+          'El recurso cambió. Actualiza e inténtalo otra vez.',
+          {
+            currentVersion: result.currentVersion,
+            expectedVersion: command.expectedVersion,
+          },
+        );
+      case 'session_not_started':
+        throw new ApiError(422, 'SESSION_NOT_STARTED', 'La sesión todavía no ha comenzado.', {
+          startsAt: result.startsAt,
+        });
+      case 'session_not_attendable':
+        throw new ApiError(
+          409,
+          'SESSION_NOT_ATTENDABLE',
+          'El estado de la sesión no admite registrar asistencia.',
+        );
+      case 'attendance_already_recorded':
+        throw new ApiError(
+          409,
+          'ATTENDANCE_ALREADY_RECORDED',
+          'La asistencia ya fue registrada y solo administración puede corregirla.',
         );
     }
   }

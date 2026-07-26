@@ -14,6 +14,8 @@ import type {
   ScheduleConflict,
   SetOwnConfirmationInput,
   SetOwnConfirmationResult,
+  SetParticipantAttendanceInput,
+  SetParticipantAttendanceResult,
 } from './session-mutation.js';
 import type { ConfirmationSummary, SessionParticipantView, SessionView } from './session-view.js';
 import { sessionViewInclude, toSessionView } from './sessions.repository.js';
@@ -41,6 +43,12 @@ interface LockedConfirmation {
   readonly confirmation_closes_at: Date;
   readonly enrollment_id: string;
   readonly session_status: string;
+}
+
+interface LockedAttendance {
+  readonly mentor_user_id: string;
+  readonly session_status: string;
+  readonly starts_at: Date;
 }
 
 class CreateSessionAbort extends Error {
@@ -275,6 +283,20 @@ function confirmationSnapshot(participant: SessionParticipantView): Prisma.Input
   return {
     confirmationStatus: participant.confirmationStatus,
     confirmedAt: participant.confirmedAt,
+    enrollmentId: participant.enrollmentId,
+    version: participant.version,
+  };
+}
+
+function attendanceSnapshot(
+  participant: SessionParticipantView,
+  recordedAt: Date | null,
+  recordedByUserId: string | null,
+): Prisma.InputJsonObject {
+  return {
+    attendanceRecordedAt: recordedAt?.toISOString() ?? null,
+    attendanceRecordedByUserId: recordedByUserId,
+    attendanceStatus: participant.attendanceStatus,
     enrollmentId: participant.enrollmentId,
     version: participant.version,
   };
@@ -817,6 +839,167 @@ export class SessionMutationsRepository {
           payload: {
             confirmationStatus: updated.confirmationStatus,
             enrollmentId: updated.enrollmentId,
+            sessionId: input.sessionId,
+            version: updated.version,
+          },
+        },
+      });
+
+      return {
+        kind: 'updated',
+        participant: updated,
+      };
+    });
+  }
+
+  setParticipantAttendance(
+    input: SetParticipantAttendanceInput,
+  ): Promise<SetParticipantAttendanceResult> {
+    return this.prisma.$transaction(async (transaction) => {
+      const locked = await transaction.$queryRaw<readonly LockedAttendance[]>`
+        SELECT
+          "session"."mentor_user_id",
+          "session"."starts_at",
+          "session"."status"::text AS session_status
+        FROM "session_participant"
+        INNER JOIN "session"
+          ON "session"."id" = session_participant."session_id"
+        INNER JOIN "oleada"
+          ON "oleada"."id" = "session"."oleada_id"
+        WHERE session_participant."session_id" = ${input.sessionId}::uuid
+          AND session_participant."enrollment_id" = ${input.enrollmentId}::uuid
+          AND "oleada"."organization_id" = ${input.organizationId}::uuid
+        FOR SHARE OF "session"
+        FOR UPDATE OF session_participant
+      `;
+      const currentLock = locked[0];
+
+      if (currentLock === undefined) {
+        return { kind: 'not_found' };
+      }
+
+      if (!input.actorIsAdmin && currentLock.mentor_user_id !== input.actorUserId) {
+        return { kind: 'forbidden' };
+      }
+
+      if (!['SCHEDULED', 'COMPLETED'].includes(currentLock.session_status)) {
+        return { kind: 'session_not_attendable' };
+      }
+
+      const now = new Date();
+
+      if (now.getTime() < currentLock.starts_at.getTime()) {
+        return {
+          kind: 'session_not_started',
+          startsAt: currentLock.starts_at.toISOString(),
+        };
+      }
+
+      const currentRecord = await transaction.sessionParticipant.findUnique({
+        include: {
+          enrollment: {
+            include: {
+              user: {
+                select: {
+                  fullName: true,
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+        where: {
+          sessionId_enrollmentId: {
+            enrollmentId: input.enrollmentId,
+            sessionId: input.sessionId,
+          },
+        },
+      });
+
+      if (currentRecord === null) {
+        return { kind: 'not_found' };
+      }
+
+      const current = toParticipantView(currentRecord);
+
+      if (current.version !== input.expectedVersion) {
+        return {
+          currentVersion: current.version,
+          kind: 'conflict',
+        };
+      }
+
+      if (current.attendanceStatus === input.status) {
+        return {
+          kind: 'unchanged',
+          participant: current,
+        };
+      }
+
+      if (current.attendanceStatus !== 'PENDING' && !input.actorIsAdmin) {
+        return { kind: 'attendance_already_recorded' };
+      }
+
+      const updatedRecord = await transaction.sessionParticipant.update({
+        data: {
+          attendanceRecordedAt: now,
+          attendanceRecordedById: input.actorUserId,
+          attendanceStatus: input.status,
+          version: {
+            increment: 1,
+          },
+        },
+        include: {
+          enrollment: {
+            include: {
+              user: {
+                select: {
+                  fullName: true,
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+        where: {
+          sessionId_enrollmentId: {
+            enrollmentId: input.enrollmentId,
+            sessionId: input.sessionId,
+          },
+        },
+      });
+      const updated = toParticipantView(updatedRecord);
+      const isCorrection = current.attendanceStatus !== 'PENDING';
+      await transaction.auditLog.create({
+        data: {
+          action: isCorrection
+            ? 'session.participant_attendance_corrected'
+            : 'session.participant_attendance_recorded',
+          actorUserId: input.actorUserId,
+          afterData: attendanceSnapshot(updated, now, input.actorUserId),
+          beforeData: attendanceSnapshot(
+            current,
+            currentRecord.attendanceRecordedAt,
+            currentRecord.attendanceRecordedById,
+          ),
+          entityId: input.sessionId,
+          entityType: 'SESSION_PARTICIPANT',
+          organizationId: input.organizationId,
+          traceId: input.traceId,
+        },
+      });
+      await transaction.outboxEvent.create({
+        data: {
+          aggregateId: input.sessionId,
+          aggregateType: 'SESSION',
+          eventType: 'session.attendance_recorded',
+          idempotencyKey: `session:${input.sessionId}:enrollment:${updated.enrollmentId}:attendance:v${updated.version}`,
+          organizationId: input.organizationId,
+          payload: {
+            attendanceStatus: updated.attendanceStatus,
+            corrected: isCorrection,
+            enrollmentId: updated.enrollmentId,
+            recordedByUserId: input.actorUserId,
             sessionId: input.sessionId,
             version: updated.version,
           },

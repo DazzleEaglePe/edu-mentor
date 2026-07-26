@@ -4,7 +4,11 @@ import { describe, it } from 'node:test';
 import type { AuthPrincipal } from '../../common/auth/auth-principal.js';
 import { ApiError } from '../../common/http/api-error.js';
 import type { IdempotencyFingerprintService } from '../../common/idempotency/idempotency-fingerprint.service.js';
-import type { CreateSessionResult, SetOwnConfirmationResult } from './session-mutation.js';
+import type {
+  CreateSessionResult,
+  SetOwnConfirmationResult,
+  SetParticipantAttendanceResult,
+} from './session-mutation.js';
 import type { SessionMutationsRepository } from './session-mutations.repository.js';
 import type {
   SessionListFilters,
@@ -110,6 +114,7 @@ interface Calls {
   readonly findById: unknown[][];
   readonly list: unknown[][];
   readonly setOwnConfirmation: unknown[][];
+  readonly setParticipantAttendance: unknown[][];
 }
 
 function createService(
@@ -122,6 +127,13 @@ function createService(
     kind: 'updated',
     participant,
   },
+  attendanceResult: SetParticipantAttendanceResult = {
+    kind: 'updated',
+    participant: {
+      ...participant,
+      attendanceStatus: 'ATTENDED',
+    },
+  },
 ): {
   readonly calls: Calls;
   readonly service: SessionsService;
@@ -132,6 +144,7 @@ function createService(
     findById: [],
     list: [],
     setOwnConfirmation: [],
+    setParticipantAttendance: [],
   };
   const repository = {
     calendar: async (...args: readonly unknown[]) => {
@@ -155,6 +168,10 @@ function createService(
     setOwnConfirmation: async (...args: readonly unknown[]) => {
       calls.setOwnConfirmation.push([...args]);
       return confirmationResult;
+    },
+    setParticipantAttendance: async (...args: readonly unknown[]) => {
+      calls.setParticipantAttendance.push([...args]);
+      return attendanceResult;
     },
   };
   const fingerprints = {
@@ -278,6 +295,76 @@ describe('SessionsService', () => {
       'SESSION_PARTICIPANT_COUNT_INVALID',
     );
     assert.deepEqual(calls.create, []);
+  });
+
+  it('accepts a group in Fase 1 and a checkpoint in Fase 2 with exclusive period fields', async () => {
+    const { calls, service } = createService();
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const enrollmentIds = [
+      '99999999-9999-4999-8999-999999999999',
+      '22222222-2222-4222-8222-222222222222',
+    ] as const;
+
+    await service.create(mentor, {
+      durationMinutes: 60,
+      enrollmentIds,
+      idempotencyKey: 'session-group-0001',
+      oleadaId: OLEADA_ID,
+      phase: 'FASE_1',
+      startsAt: '2026-08-22T20:00:00Z',
+      timezone: 'America/Lima',
+      title: 'Taller grupal',
+      traceId: 'trace-group',
+      type: 'GROUP',
+      weekNumber: 5,
+    });
+    await service.create(mentor, {
+      checkpointMonth: 3,
+      durationMinutes: 45,
+      enrollmentIds: [enrollmentIds[0]],
+      idempotencyKey: 'session-checkpoint-0001',
+      oleadaId: OLEADA_ID,
+      phase: 'FASE_2',
+      startsAt: '2026-09-22T20:00:00Z',
+      timezone: 'America/Lima',
+      title: 'Checkpoint del mes 3',
+      traceId: 'trace-checkpoint',
+      type: 'CHECKPOINT',
+    });
+
+    assert.equal(calls.create.length, 2);
+    assert.deepEqual(
+      (calls.create[0]?.[0] as { readonly enrollmentIds: readonly string[] }).enrollmentIds,
+      [...enrollmentIds].sort(),
+    );
+    assert.equal(
+      (calls.create[0]?.[0] as { readonly checkpointMonth: number | null }).checkpointMonth,
+      null,
+    );
+    assert.equal((calls.create[1]?.[0] as { readonly weekNumber: number | null }).weekNumber, null);
+
+    await expectApiError(
+      service.create(mentor, {
+        checkpointMonth: 4,
+        durationMinutes: 45,
+        enrollmentIds: [enrollmentIds[0]],
+        idempotencyKey: 'session-checkpoint-invalid',
+        oleadaId: OLEADA_ID,
+        phase: 'FASE_2',
+        startsAt: '2026-09-23T20:00:00Z',
+        timezone: 'America/Lima',
+        title: 'Checkpoint inválido',
+        traceId: 'trace-checkpoint',
+        type: 'CHECKPOINT',
+      }),
+      422,
+      'PHASE_PERIOD_MISMATCH',
+    );
+    assert.equal(calls.create.length, 2);
   });
 
   it('redacts a typed schedule conflict according to the repository result', async () => {
@@ -469,5 +556,107 @@ describe('SessionsService', () => {
     assert.deepEqual(error.details, {
       confirmationClosesAt: '2026-08-20T20:00:00.000Z',
     });
+  });
+
+  it('maps attendance ownership and optimistic locking without conflating confirmation', async () => {
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const { calls, service } = createService();
+    const updated = await service.setParticipantAttendance(mentor, {
+      enrollmentId: participant.enrollmentId,
+      expectedVersion: 2,
+      sessionId: SESSION_ID,
+      status: 'ATTENDED',
+      traceId: 'trace-attendance',
+    });
+
+    assert.deepEqual(updated, {
+      ...participant,
+      attendanceStatus: 'ATTENDED',
+    });
+    assert.deepEqual(calls.setParticipantAttendance, [
+      [
+        {
+          actorIsAdmin: false,
+          actorUserId: mentor.userId,
+          enrollmentId: participant.enrollmentId,
+          expectedVersion: 2,
+          organizationId: ORGANIZATION_ID,
+          sessionId: SESSION_ID,
+          status: 'ATTENDED',
+          traceId: 'trace-attendance',
+        },
+      ],
+    ]);
+    assert.equal(updated.confirmationStatus, 'CONFIRMED');
+
+    const conflict = createService(session, undefined, undefined, {
+      currentVersion: 3,
+      kind: 'conflict',
+    });
+    const error = await expectApiError(
+      conflict.service.setParticipantAttendance(mentor, {
+        enrollmentId: participant.enrollmentId,
+        expectedVersion: 2,
+        sessionId: SESSION_ID,
+        status: 'ABSENT',
+        traceId: 'trace-attendance',
+      }),
+      409,
+      'VERSION_CONFLICT',
+    );
+    assert.deepEqual(error.details, {
+      currentVersion: 3,
+      expectedVersion: 2,
+    });
+  });
+
+  it('exposes stable attendance transition errors', async () => {
+    const mentor: AuthPrincipal = {
+      ...principal,
+      roles: ['MENTOR'],
+      userId: '44444444-4444-4444-8444-444444444444',
+    };
+    const cases: readonly [
+      SetParticipantAttendanceResult,
+      number,
+      string,
+      Readonly<Record<string, unknown>> | undefined,
+    ][] = [
+      [{ kind: 'forbidden' }, 403, 'FORBIDDEN', undefined],
+      [{ kind: 'not_found' }, 404, 'RESOURCE_NOT_FOUND', undefined],
+      [
+        {
+          kind: 'session_not_started',
+          startsAt: '2026-08-20T20:00:00.000Z',
+        },
+        422,
+        'SESSION_NOT_STARTED',
+        {
+          startsAt: '2026-08-20T20:00:00.000Z',
+        },
+      ],
+      [{ kind: 'session_not_attendable' }, 409, 'SESSION_NOT_ATTENDABLE', undefined],
+      [{ kind: 'attendance_already_recorded' }, 409, 'ATTENDANCE_ALREADY_RECORDED', undefined],
+    ];
+
+    for (const [result, statusCode, code, details] of cases) {
+      const { service } = createService(session, undefined, undefined, result);
+      const error = await expectApiError(
+        service.setParticipantAttendance(mentor, {
+          enrollmentId: participant.enrollmentId,
+          expectedVersion: 2,
+          sessionId: SESSION_ID,
+          status: 'ABSENT',
+          traceId: 'trace-attendance',
+        }),
+        statusCode,
+        code,
+      );
+      assert.deepEqual(error.details, details);
+    }
   });
 });

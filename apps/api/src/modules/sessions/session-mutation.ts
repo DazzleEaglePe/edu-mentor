@@ -95,3 +95,40 @@ export type SetOwnConfirmationResult =
   | {
       readonly kind: 'session_not_scheduled';
     };
+
+export interface SetParticipantAttendanceInput {
+  readonly actorIsAdmin: boolean;
+  readonly actorUserId: string;
+  readonly enrollmentId: string;
+  readonly expectedVersion: number;
+  readonly organizationId: string;
+  readonly sessionId: string;
+  readonly status: 'ATTENDED' | 'ABSENT';
+  readonly traceId: string;
+}
+
+export type SetParticipantAttendanceResult =
+  | {
+      readonly kind: 'updated' | 'unchanged';
+      readonly participant: SessionParticipantView;
+    }
+  | {
+      readonly kind: 'not_found';
+    }
+  | {
+      readonly kind: 'forbidden';
+    }
+  | {
+      readonly currentVersion: number;
+      readonly kind: 'conflict';
+    }
+  | {
+      readonly kind: 'session_not_started';
+      readonly startsAt: string;
+    }
+  | {
+      readonly kind: 'session_not_attendable';
+    }
+  | {
+      readonly kind: 'attendance_already_recorded';
+    };

@@ -22,6 +22,7 @@ import { CreateSessionDto } from './dto/create-session.dto.js';
 import { SessionCalendarQueryDto } from './dto/session-calendar-query.dto.js';
 import { SessionListQueryDto } from './dto/session-list-query.dto.js';
 import { SetSessionConfirmationDto } from './dto/set-session-confirmation.dto.js';
+import { SetSessionAttendanceDto } from './dto/set-session-attendance.dto.js';
 import type {
   SessionPage,
   SessionParticipantView,
@@ -112,6 +113,24 @@ export class SessionsController {
     @Req() request: AuthenticatedRequest,
   ): Promise<SessionParticipantView> {
     return this.sessions.setOwnConfirmation(requirePrincipal(request), {
+      expectedVersion: body.expectedVersion,
+      sessionId,
+      status: body.status,
+      traceId: getOrCreateTraceId(request),
+    });
+  }
+
+  @Put(':sessionId/participants/:enrollmentId/attendance')
+  @Roles('ADMIN', 'MENTOR')
+  setParticipantAttendance(
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Param('enrollmentId', new ParseUUIDPipe({ version: '4' })) enrollmentId: string,
+    @Body(createValidationPipe(SetSessionAttendanceDto))
+    body: SetSessionAttendanceDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SessionParticipantView> {
+    return this.sessions.setParticipantAttendance(requirePrincipal(request), {
+      enrollmentId,
       expectedVersion: body.expectedVersion,
       sessionId,
       status: body.status,
