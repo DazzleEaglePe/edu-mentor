@@ -44,9 +44,7 @@ export function describeConfirmations(summary: ConfirmationSummary): string {
 
 /** Quién no ha respondido todavía: es a quien el mentor debe recordarle. */
 export function awaitingResponse(session: Session): readonly SessionParticipant[] {
-  return session.participants.filter(
-    (participant) => participant.confirmationStatus === 'PENDING',
-  );
+  return session.participants.filter((participant) => participant.confirmationStatus === 'PENDING');
 }
 
 /* ------------------------------------------------------- fase y periodo */

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, Metric } from '@/components/ui/card';
 import { StatusChip } from '@/components/ui/status-chip';
 import { EmptyState } from '@/components/ui/states';
-import { loadAuthMe, loadGroupSession, loadSessionDetail } from '@/lib/api/fixtures';
+import { loadGroupSession, loadMentorAuthMe, loadSessionDetail } from '@/lib/api/fixtures';
 import {
   actionsFor,
   awaitingResponse,
@@ -29,7 +29,7 @@ import { formatDate, formatInterval } from '@/lib/format';
  */
 export default async function AgendaPage() {
   const [me, oneOnOne, groupSession] = await Promise.all([
-    loadAuthMe(),
+    loadMentorAuthMe(),
     loadSessionDetail(),
     loadGroupSession(),
   ]);

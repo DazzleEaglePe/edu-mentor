@@ -26,6 +26,18 @@ export function loadAuthMe(): Promise<AuthMe> {
   return readFixture<AuthMe>('auth-me.participant.json');
 }
 
+/**
+ * Identidad de mentor, **solo para las pantallas del mentor**.
+ *
+ * Existe porque el shell resuelve la navegación desde `roles[]`: con la
+ * identidad de participante, `/agenda` mostraba "Mis entregables" en el
+ * sidebar. No sustituye a `loadAuthMe`; cuando exista auth real, ambas
+ * desaparecen y la identidad viene de la sesión.
+ */
+export function loadMentorAuthMe(): Promise<AuthMe> {
+  return readFixture<AuthMe>('auth-me.mentor.json');
+}
+
 export function loadSessionDetail(): Promise<Session> {
   return readFixture<Session>('session.detail.json');
 }

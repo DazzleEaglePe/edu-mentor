@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { loadAuthMe } from '@/lib/api/fixtures';
+import { loadMentorAuthMe } from '@/lib/api/fixtures';
 import { periodFieldFor, periodOptionsFor, type SessionPhase } from '@/lib/domain/agenda';
 
 /**
@@ -28,7 +28,7 @@ import { periodFieldFor, periodOptionsFor, type SessionPhase } from '@/lib/domai
 const phase: SessionPhase = 'FASE_1';
 
 export default async function AgendarSesionPage() {
-  const me = await loadAuthMe();
+  const me = await loadMentorAuthMe();
   const periodField = periodFieldFor(phase);
   const periodOptions = periodOptionsFor(phase);
 
