@@ -1,8 +1,9 @@
 import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, Metric } from '@/components/ui/card';
+import { ResponsiveTable, type TableRow } from '@/components/ui/responsive-table';
 import { EmptyState } from '@/components/ui/states';
-import { loadAdminUsers, loadAuthMe } from '@/lib/api/fixtures';
+import { loadAdminAuthMe, loadAdminUsers } from '@/lib/api/fixtures';
 import {
   accountState,
   describeAccountState,
@@ -16,17 +17,46 @@ import {
  *
  * `AdminUser` tiene siete campos y ninguno es "último acceso" ni "oleada".
  * El wireframe original mostraba ambas columnas; eran invención mía y aquí no
- * aparecen. La pertenencia a una oleada vive en `Enrollment`, que es otro
- * recurso y merece su propia pantalla (A7).
+ * aparecen. La pertenencia a una oleada vive en `Enrollment` (A7).
  *
  * Lo que sí aporta valor operativo es `mustChangePassword`: durante la primera
  * semana del piloto distingue a quien todavía no logró entrar de quien ya está
  * operando, y es lo que ordena la lista.
  */
 export default async function AdminUsuariosPage() {
-  const [me, page] = await Promise.all([loadAuthMe(), loadAdminUsers()]);
+  const [me, page] = await Promise.all([loadAdminAuthMe(), loadAdminUsers()]);
   const users = sortByAttention(page.data);
   const pending = pendingFirstAccess(page.data);
+
+  const rows: readonly TableRow[] = users.map((user) => {
+    const described = describeAccountState(accountState(user));
+
+    return {
+      key: user.id,
+      cells: [
+        <span key="name" className="font-medium">
+          {user.fullName}
+        </span>,
+        <span key="email" className="break-all text-[var(--edu-text-secondary)]">
+          {user.email}
+        </span>,
+        describeRoles(user.roles),
+        <span key="state">
+          <span className="font-medium">{described.label}</span>
+          <span className="block text-xs text-[var(--edu-text-secondary)]">{described.hint}</span>
+        </span>,
+        <Button
+          key="action"
+          id={`reset-access-${user.id}`}
+          variant="ghost"
+          disabled
+          disabledReason="Disponible cuando activemos el portal."
+        >
+          Restablecer acceso
+        </Button>,
+      ],
+    };
+  });
 
   return (
     <AppShell
@@ -59,62 +89,11 @@ export default async function AdminUsuariosPage() {
           body="Empieza cargando a los participantes y mentores de la oleada."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--edu-radius-md)] border border-[var(--edu-border)]">
-          <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">
-              Usuarios de la organización, ordenados por atención requerida
-            </caption>
-            <thead>
-              <tr className="bg-[var(--edu-surface-sunken)] text-left">
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Nombre
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Correo
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Roles
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Estado
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  <span className="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => {
-                const state = accountState(user);
-                const described = describeAccountState(state);
-
-                return (
-                  <tr key={user.id} className="border-t border-[var(--edu-border)] align-top">
-                    <td className="px-3 py-2 font-medium">{user.fullName}</td>
-                    <td className="px-3 py-2 text-[var(--edu-text-secondary)]">{user.email}</td>
-                    <td className="px-3 py-2">{describeRoles(user.roles)}</td>
-                    <td className="px-3 py-2">
-                      <span className="font-medium">{described.label}</span>
-                      <span className="block text-xs text-[var(--edu-text-secondary)]">
-                        {described.hint}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <Button
-                        id={`reset-access-${user.id}`}
-                        variant="ghost"
-                        disabled
-                        disabledReason="Disponible cuando activemos el portal."
-                      >
-                        Restablecer acceso
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          caption="Usuarios de la organización, ordenados por atención requerida"
+          headers={['Nombre', 'Correo', 'Roles', 'Estado', '']}
+          rows={rows}
+        />
       )}
 
       <p className="text-xs text-[var(--edu-text-secondary)]">

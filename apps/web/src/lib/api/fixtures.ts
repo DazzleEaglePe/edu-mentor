@@ -38,6 +38,11 @@ export function loadMentorAuthMe(): Promise<AuthMe> {
   return readFixture<AuthMe>('auth-me.mentor.json');
 }
 
+/** Identidad de admin, **solo para las pantallas administrativas**. */
+export function loadAdminAuthMe(): Promise<AuthMe> {
+  return readFixture<AuthMe>('auth-me.admin.json');
+}
+
 export function loadSessionDetail(): Promise<Session> {
   return readFixture<Session>('session.detail.json');
 }

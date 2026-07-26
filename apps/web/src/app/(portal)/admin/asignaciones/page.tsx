@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ResponsiveTable, type TableRow } from '@/components/ui/responsive-table';
 import { StatusChip } from '@/components/ui/status-chip';
 import { EmptyState } from '@/components/ui/states';
 import {
+  loadAdminAuthMe,
   loadAdminEnrollment,
   loadAdminMentorAssignment,
   loadAdminOleada,
-  loadAuthMe,
 } from '@/lib/api/fixtures';
 import {
   assignmentPeriod,
@@ -36,7 +37,7 @@ const day = (iso: string) => formatDate(iso, 'America/Lima');
  */
 export default async function AdminAsignacionesPage() {
   const [me, oleada, enrollment, assignment] = await Promise.all([
-    loadAuthMe(),
+    loadAdminAuthMe(),
     loadAdminOleada(),
     loadAdminEnrollment(),
     loadAdminMentorAssignment(),
@@ -49,6 +50,30 @@ export default async function AdminAsignacionesPage() {
   const covered = coveredEnrollmentIds(assignments, activeEnrollments);
   const uncovered = activeEnrollments.filter((item) => !covered.has(item.id));
   const readOnly = isReadOnly(oleada);
+
+  const rows: readonly TableRow[] = assignments.map((item) => {
+    const scope = scopeOf(item);
+    const owner = activeEnrollments.find((row) => row.id === item.enrollmentId);
+    const participantName = owner?.user.fullName ?? 'Participante';
+    const target = scope === 'OLEADA' ? 'Toda la oleada' : participantName;
+
+    return {
+      key: item.id,
+      cells: [
+        <span key="mentor" className="font-medium">
+          {item.mentor.fullName}
+        </span>,
+        scope === 'OLEADA' ? <em key="scope">{target}</em> : target,
+        <span key="capability" className="text-[var(--edu-text-secondary)]">
+          {item.capability === 'SPECIALIST' ? 'Especialista' : 'Mentor par'}
+        </span>,
+        <span key="period" className="tabular text-[var(--edu-text-secondary)]">
+          {assignmentPeriod(item, day)}
+        </span>,
+        <StatusChip key="status" kind="mentorAssignmentStatus" value={item.status} />,
+      ],
+    };
+  });
 
   return (
     <AppShell
@@ -111,54 +136,11 @@ export default async function AdminAsignacionesPage() {
           body="Asigna un mentor a cada participante, o uno para toda la oleada."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--edu-radius-md)] border border-[var(--edu-border)]">
-          <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">Asignaciones de mentoría de la oleada</caption>
-            <thead>
-              <tr className="bg-[var(--edu-surface-sunken)] text-left">
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Mentor
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Alcance
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Capacidad
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Vigencia
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Estado
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((item) => {
-                const scope = scopeOf(item);
-                const owner = activeEnrollments.find((row) => row.id === item.enrollmentId);
-                const participantName = owner?.user.fullName ?? 'Participante';
-                const target = scope === 'OLEADA' ? 'Toda la oleada' : participantName;
-
-                return (
-                  <tr key={item.id} className="border-t border-[var(--edu-border)] align-top">
-                    <td className="px-3 py-2 font-medium">{item.mentor.fullName}</td>
-                    <td className="px-3 py-2">{scope === 'OLEADA' ? <em>{target}</em> : target}</td>
-                    <td className="px-3 py-2 text-[var(--edu-text-secondary)]">
-                      {item.capability === 'SPECIALIST' ? 'Especialista' : 'Mentor par'}
-                    </td>
-                    <td className="tabular px-3 py-2 text-[var(--edu-text-secondary)]">
-                      {assignmentPeriod(item, day)}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusChip kind="mentorAssignmentStatus" value={item.status} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          caption="Asignaciones de mentoría de la oleada"
+          headers={['Mentor', 'Alcance', 'Capacidad', 'Vigencia', 'Estado']}
+          rows={rows}
+        />
       )}
 
       <p className="text-xs text-[var(--edu-text-secondary)]">

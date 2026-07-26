@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, Metric } from '@/components/ui/card';
+import { ResponsiveTable, type TableRow } from '@/components/ui/responsive-table';
 import { StatusChip } from '@/components/ui/status-chip';
 import { EmptyState } from '@/components/ui/states';
-import { loadAdminEnrollment, loadAdminOleada, loadAuthMe } from '@/lib/api/fixtures';
+import { loadAdminAuthMe, loadAdminEnrollment, loadAdminOleada } from '@/lib/api/fixtures';
 import { isReadOnly, occupancyOf } from '@/lib/domain/cohorts';
 import { translateProgramPhase } from '@/lib/domain/labels';
 import { formatDate } from '@/lib/format';
@@ -21,7 +22,7 @@ import { formatDate } from '@/lib/format';
  */
 export default async function AdminEnrollmentsPage() {
   const [me, oleada, enrollment] = await Promise.all([
-    loadAuthMe(),
+    loadAdminAuthMe(),
     loadAdminOleada(),
     loadAdminEnrollment(),
   ]);
@@ -29,6 +30,30 @@ export default async function AdminEnrollmentsPage() {
   const enrollments = [enrollment];
   const occupancy = occupancyOf(oleada);
   const readOnly = isReadOnly(oleada);
+
+  const rows: readonly TableRow[] = enrollments.map((item) => ({
+    key: item.id,
+    cells: [
+      <span key="who">
+        <span className="font-medium">{item.user.fullName}</span>
+        <span className="block text-xs break-all text-[var(--edu-text-secondary)]">
+          {item.user.email}
+        </span>
+      </span>,
+      <span key="phase">
+        {translateProgramPhase(item.currentPhase)}
+        {typeof item.currentWeek === 'number' ? (
+          <span className="block text-xs text-[var(--edu-text-secondary)]">
+            Semana {item.currentWeek}
+          </span>
+        ) : null}
+      </span>,
+      <span key="when" className="tabular text-[var(--edu-text-secondary)]">
+        {formatDate(item.enrolledAt, 'America/Lima')}
+      </span>,
+      <StatusChip key="status" kind="enrollmentStatus" value={item.status} />,
+    ],
+  }));
 
   return (
     <AppShell
@@ -75,53 +100,11 @@ export default async function AdminEnrollmentsPage() {
           body="Inscribe a los participantes que ya creaste para que puedan ver sus sesiones."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--edu-radius-md)] border border-[var(--edu-border)]">
-          <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">Participantes inscritos en la oleada</caption>
-            <thead>
-              <tr className="bg-[var(--edu-surface-sunken)] text-left">
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Participante
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Fase
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Inscrito
-                </th>
-                <th scope="col" className="px-3 py-2 font-semibold">
-                  Estado
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {enrollments.map((item) => (
-                <tr key={item.id} className="border-t border-[var(--edu-border)] align-top">
-                  <td className="px-3 py-2">
-                    <span className="font-medium">{item.user.fullName}</span>
-                    <span className="block text-xs text-[var(--edu-text-secondary)]">
-                      {item.user.email}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2">
-                    {translateProgramPhase(item.currentPhase)}
-                    {typeof item.currentWeek === 'number' ? (
-                      <span className="block text-xs text-[var(--edu-text-secondary)]">
-                        Semana {item.currentWeek}
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="tabular px-3 py-2 text-[var(--edu-text-secondary)]">
-                    {formatDate(item.enrolledAt, 'America/Lima')}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusChip kind="enrollmentStatus" value={item.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          caption="Participantes inscritos en la oleada"
+          headers={['Participante', 'Fase', 'Inscrito', 'Estado']}
+          rows={rows}
+        />
       )}
 
       <Link

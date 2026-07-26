@@ -3,11 +3,11 @@ import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, Metric } from '@/components/ui/card';
 import {
+  loadAdminAuthMe,
   loadAdminEnrollment,
   loadAdminMentorAssignment,
   loadAdminOleada,
   loadAdminUsers,
-  loadAuthMe,
 } from '@/lib/api/fixtures';
 import {
   allowedTransitions,
@@ -31,7 +31,7 @@ import { formatDate } from '@/lib/format';
  */
 export default async function AdminOleadasPage() {
   const [me, oleada, users, enrollment, assignment] = await Promise.all([
-    loadAuthMe(),
+    loadAdminAuthMe(),
     loadAdminOleada(),
     loadAdminUsers(),
     loadAdminEnrollment(),

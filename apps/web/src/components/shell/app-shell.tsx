@@ -34,7 +34,7 @@ export function AppShell({ me, currentPath, children, aside }: AppShellProps) {
 
       <nav
         aria-label="Navegación principal"
-        className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-[var(--edu-navy-700)] bg-[var(--edu-navy-900)] px-2 py-2 md:static md:h-dvh md:flex-col md:justify-start md:gap-1 md:border-t-0 md:border-r md:px-3 md:py-5"
+        className="fixed inset-x-0 bottom-0 z-20 flex justify-around overflow-x-auto border-t border-[var(--edu-navy-700)] bg-[var(--edu-navy-900)] px-2 py-2 md:static md:h-dvh md:flex-col md:justify-start md:gap-1 md:overflow-x-visible md:border-t-0 md:border-r md:px-3 md:py-5"
       >
         <p className="hidden px-3 pb-4 text-sm font-bold tracking-wide text-white md:block">
           EDU-MENTOR
@@ -46,7 +46,7 @@ export function AppShell({ me, currentPath, children, aside }: AppShellProps) {
               key={item.href}
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
-              className={`rounded-[var(--edu-radius-sm)] px-3 py-2 text-center text-xs md:text-left md:text-sm ${
+              className={`shrink-0 rounded-[var(--edu-radius-sm)] px-3 py-2 text-center text-xs whitespace-nowrap md:text-left md:text-sm ${
                 isActive
                   ? 'bg-[var(--edu-teal-700)] font-semibold text-white'
                   : 'text-[var(--edu-teal-100)] hover:bg-[var(--edu-navy-700)]'
