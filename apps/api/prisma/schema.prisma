@@ -57,6 +57,72 @@ enum ProgramPhase {
   @@map("program_phase")
 }
 
+enum SessionType {
+  ONE_ON_ONE
+  GROUP
+  CHECKPOINT
+
+  @@map("session_type")
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+
+  @@map("session_status")
+}
+
+enum SessionPhase {
+  FASE_1
+  FASE_2
+
+  @@map("session_phase")
+}
+
+enum ConfirmationStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+
+  @@map("confirmation_status")
+}
+
+enum AttendanceStatus {
+  PENDING
+  ATTENDED
+  ABSENT
+
+  @@map("attendance_status")
+}
+
+enum RescheduleRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+
+  @@map("reschedule_request_status")
+}
+
+enum ScheduleResourceType {
+  USER
+  ENROLLMENT
+
+  @@map("schedule_resource_type")
+}
+
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+
+  @@map("reminder_status")
+}
+
 model Organization {
   id        String             @id @default(uuid()) @db.Uuid
   name      String             @db.VarChar(160)
@@ -65,10 +131,10 @@ model Organization {
   createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  users        User[]
-  oleadas      Oleada[]
-  auditLogs    AuditLog[]
-  outboxEvents OutboxEvent[]
+  users              User[]
+  oleadas            Oleada[]
+  auditLogs          AuditLog[]
+  outboxEvents       OutboxEvent[]
   idempotencyRecords IdempotencyRecord[]
 
   @@map("organization")
@@ -88,14 +154,19 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  userRoles         UserRole[]         @relation("UserRoleUser")
-  assignedUserRoles UserRole[]         @relation("UserRoleAssignedBy")
-  mentorProfile     MentorProfile?
-  mentorAssignments MentorAssignment[] @relation("MentorAssignments")
-  enrollments       Enrollment[]       @relation("ParticipantEnrollments")
-  authSessions      AuthSession[]
-  auditLogs         AuditLog[]         @relation("AuditActor")
+  organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userRoles            UserRole[]                 @relation("UserRoleUser")
+  assignedUserRoles    UserRole[]                 @relation("UserRoleAssignedBy")
+  mentorProfile        MentorProfile?
+  mentorAssignments    MentorAssignment[]         @relation("MentorAssignments")
+  enrollments          Enrollment[]               @relation("ParticipantEnrollments")
+  mentoredSessions     Session[]                  @relation("SessionMentor")
+  createdSessions      Session[]                  @relation("SessionCreator")
+  attendanceRecords    SessionParticipant[]       @relation("SessionAttendanceRecorder")
+  requestedReschedules SessionRescheduleRequest[] @relation("RescheduleRequester")
+  decidedReschedules   SessionRescheduleRequest[] @relation("RescheduleDecider")
+  authSessions         AuthSession[]
+  auditLogs            AuditLog[]                 @relation("AuditActor")
 
   @@unique([organizationId, normalizedEmail])
   @@index([organizationId, isActive])
@@ -168,6 +239,7 @@ model Oleada {
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   enrollments       Enrollment[]
   mentorAssignments MentorAssignment[]
+  sessions          Session[]
 
   @@index([organizationId, status])
   @@map("oleada")
@@ -186,9 +258,10 @@ model Enrollment {
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user              User               @relation("ParticipantEnrollments", fields: [userId], references: [id], onDelete: Restrict)
-  oleada            Oleada             @relation(fields: [oleadaId], references: [id], onDelete: Restrict)
-  mentorAssignments MentorAssignment[]
+  user                User                 @relation("ParticipantEnrollments", fields: [userId], references: [id], onDelete: Restrict)
+  oleada              Oleada               @relation(fields: [oleadaId], references: [id], onDelete: Restrict)
+  mentorAssignments   MentorAssignment[]
+  sessionParticipants SessionParticipant[]
 
   @@unique([userId, oleadaId])
   @@index([oleadaId, status, currentPhase])
@@ -214,6 +287,129 @@ model MentorAssignment {
   @@index([mentorUserId, oleadaId, endsAt])
   @@index([enrollmentId, endsAt])
   @@map("mentor_assignment")
+}
+
+model Session {
+  id                   String        @id @default(uuid()) @db.Uuid
+  oleadaId             String        @map("oleada_id") @db.Uuid
+  mentorUserId         String        @map("mentor_user_id") @db.Uuid
+  createdByUserId      String        @map("created_by_user_id") @db.Uuid
+  title                String        @db.VarChar(160)
+  description          String?
+  type                 SessionType
+  phase                SessionPhase
+  weekNumber           Int?          @map("week_number")
+  checkpointMonth      Int?          @map("checkpoint_month")
+  startsAt             DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt               DateTime      @map("ends_at") @db.Timestamptz(3)
+  timezone             String        @db.VarChar(64)
+  confirmationClosesAt DateTime      @map("confirmation_closes_at") @db.Timestamptz(3)
+  meetingUrl           String?       @map("meeting_url") @db.VarChar(2048)
+  status               SessionStatus @default(SCHEDULED)
+  version              Int           @default(1)
+  rescheduledFromId    String?       @unique @map("rescheduled_from_id") @db.Uuid
+  rescheduleReason     String?       @map("reschedule_reason") @db.VarChar(1000)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  oleada                    Oleada                     @relation(fields: [oleadaId], references: [id], onDelete: Restrict)
+  mentor                    User                       @relation("SessionMentor", fields: [mentorUserId], references: [id], onDelete: Restrict)
+  createdBy                 User                       @relation("SessionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  participants              SessionParticipant[]
+  reservations              ScheduleReservation[]
+  rescheduleRequests        SessionRescheduleRequest[] @relation("RescheduleRequestSession")
+  approvedRescheduleRequest SessionRescheduleRequest?  @relation("RescheduleReplacement")
+  reminders                 SessionReminder[]
+  rescheduledFrom           Session?                   @relation("SessionReschedule", fields: [rescheduledFromId], references: [id], onDelete: Restrict)
+  replacement               Session?                   @relation("SessionReschedule")
+
+  @@index([oleadaId, status, startsAt])
+  @@index([mentorUserId, startsAt])
+  @@map("session")
+}
+
+model SessionParticipant {
+  sessionId              String             @map("session_id") @db.Uuid
+  enrollmentId           String             @map("enrollment_id") @db.Uuid
+  confirmationStatus     ConfirmationStatus @default(PENDING) @map("confirmation_status")
+  confirmedAt            DateTime?          @map("confirmed_at") @db.Timestamptz(3)
+  attendanceStatus       AttendanceStatus   @default(PENDING) @map("attendance_status")
+  attendanceRecordedAt   DateTime?          @map("attendance_recorded_at") @db.Timestamptz(3)
+  attendanceRecordedById String?            @map("attendance_recorded_by") @db.Uuid
+  version                Int                @default(1)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  session              Session    @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  enrollment           Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  attendanceRecordedBy User?      @relation("SessionAttendanceRecorder", fields: [attendanceRecordedById], references: [id], onDelete: SetNull)
+
+  @@id([sessionId, enrollmentId])
+  @@index([enrollmentId, sessionId])
+  @@map("session_participant")
+}
+
+model SessionRescheduleRequest {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  sessionId            String                  @map("session_id") @db.Uuid
+  requestedByUserId    String                  @map("requested_by_user_id") @db.Uuid
+  proposedStartsAt     DateTime?               @map("proposed_starts_at") @db.Timestamptz(3)
+  reason               String                  @db.VarChar(1000)
+  status               RescheduleRequestStatus @default(PENDING)
+  decidedByUserId      String?                 @map("decided_by_user_id") @db.Uuid
+  decisionReason       String?                 @map("decision_reason") @db.VarChar(1000)
+  replacementSessionId String?                 @unique @map("replacement_session_id") @db.Uuid
+  requestedAt          DateTime                @default(now()) @map("requested_at") @db.Timestamptz(3)
+  version              Int                     @default(1)
+  updatedAt            DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  session            Session  @relation("RescheduleRequestSession", fields: [sessionId], references: [id], onDelete: Restrict)
+  requestedBy        User     @relation("RescheduleRequester", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  decidedBy          User?    @relation("RescheduleDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  replacementSession Session? @relation("RescheduleReplacement", fields: [replacementSessionId], references: [id], onDelete: Restrict)
+
+  @@index([sessionId, status, requestedAt])
+  @@index([requestedByUserId, status, requestedAt])
+  @@map("session_reschedule_request")
+}
+
+model ScheduleReservation {
+  id           String               @id @default(uuid()) @db.Uuid
+  sessionId    String               @map("session_id") @db.Uuid
+  resourceType ScheduleResourceType @map("resource_type")
+  resourceId   String               @map("resource_id") @db.Uuid
+  startsAt     DateTime             @map("starts_at") @db.Timestamptz(3)
+  endsAt       DateTime             @map("ends_at") @db.Timestamptz(3)
+  releasedAt   DateTime?            @map("released_at") @db.Timestamptz(3)
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+
+  @@index([sessionId, releasedAt])
+  @@index([resourceType, resourceId, releasedAt])
+  @@map("schedule_reservation")
+}
+
+model SessionReminder {
+  id                String         @id @default(uuid()) @db.Uuid
+  sessionId         String         @map("session_id") @db.Uuid
+  channel           String         @db.VarChar(40)
+  sendAt            DateTime       @map("send_at") @db.Timestamptz(3)
+  status            ReminderStatus @default(PENDING)
+  attemptCount      Int            @default(0) @map("attempt_count")
+  idempotencyKey    String         @unique @map("idempotency_key") @db.VarChar(180)
+  providerMessageId String?        @map("provider_message_id") @db.VarChar(255)
+  lastErrorCode     String?        @map("last_error_code") @db.VarChar(120)
+  lockedAt          DateTime?      @map("locked_at") @db.Timestamptz(3)
+  lockExpiresAt     DateTime?      @map("lock_expires_at") @db.Timestamptz(3)
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+
+  @@index([status, sendAt])
+  @@index([sessionId, status])
+  @@map("session_reminder")
 }
 
 model AuthSession {
@@ -279,16 +475,16 @@ model OutboxEvent {
 }
 
 model IdempotencyRecord {
-  id             String    @id @default(uuid()) @db.Uuid
-  organizationId String    @map("organization_id") @db.Uuid
-  operation      String    @db.VarChar(120)
-  keyHash        String    @map("key_hash") @db.Char(64)
-  requestHash    String    @map("request_hash") @db.Char(64)
-  resourceId     String?   @map("resource_id") @db.Uuid
-  responseStatus Int?      @map("response_status")
-  responseBody   Json?     @map("response_body")
-  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  operation      String   @db.VarChar(120)
+  keyHash        String   @map("key_hash") @db.Char(64)
+  requestHash    String   @map("request_hash") @db.Char(64)
+  resourceId     String?  @map("resource_id") @db.Uuid
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 

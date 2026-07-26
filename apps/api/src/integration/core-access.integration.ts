@@ -168,6 +168,9 @@ describe('synthetic seed and organization-scoped administration', () => {
       mentor_assignment_count: number;
       organization_count: number;
       role_count: number;
+      schedule_reservation_count: number;
+      session_count: number;
+      session_participant_count: number;
       user_count: number;
     }>(
       `SELECT
@@ -180,7 +183,18 @@ describe('synthetic seed and organization-scoped administration', () => {
            FROM mentor_capability
            WHERE mentor_profile_id = $5
          ) mentor_capability_count,
-         (SELECT COUNT(*)::int FROM mentor_assignment WHERE id = $6) mentor_assignment_count`,
+         (SELECT COUNT(*)::int FROM mentor_assignment WHERE id = $6) mentor_assignment_count,
+         (SELECT COUNT(*)::int FROM "session" WHERE id = $7) session_count,
+         (
+           SELECT COUNT(*)::int
+           FROM session_participant
+           WHERE session_id = $7 AND enrollment_id = $4
+         ) session_participant_count,
+         (
+           SELECT COUNT(*)::int
+           FROM schedule_reservation
+           WHERE session_id = $7 AND released_at IS NULL
+         ) schedule_reservation_count`,
       [
         [SYNTHETIC_IDS.organization, SYNTHETIC_IDS.externalOrganization],
         [
@@ -193,6 +207,7 @@ describe('synthetic seed and organization-scoped administration', () => {
         SYNTHETIC_IDS.enrollment,
         SYNTHETIC_IDS.mentorUser,
         SYNTHETIC_IDS.mentorAssignment,
+        SYNTHETIC_IDS.session,
       ],
     );
     assert.deepEqual(seedShape.rows[0], {
@@ -201,6 +216,9 @@ describe('synthetic seed and organization-scoped administration', () => {
       mentor_assignment_count: 1,
       organization_count: 2,
       role_count: 3,
+      schedule_reservation_count: 2,
+      session_count: 1,
+      session_participant_count: 1,
       user_count: 4,
     });
 

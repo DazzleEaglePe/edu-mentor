@@ -8,7 +8,7 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 |---|---|---|
 | 0 · Alineación y contratos | En curso | Pendiente |
 | 1 · Fundaciones | En curso | Pendiente |
-| 2 · Agenda | No iniciada | Pendiente |
+| 2 · Agenda | En curso | Pendiente |
 | 3 · Entregables | No iniciada | Pendiente |
 | 4 · Notificaciones/Admin | No iniciada | Pendiente |
 | 5 · Hardening/UAT | No iniciada | Pendiente |
@@ -144,29 +144,29 @@ Fuente de verdad del avance. Un checkbox se marca solo con evidencia reproducibl
 
 ## Fase 2 · Agenda y Sesiones
 
-- [ ] Modelar Session, participant, reminder y reschedule request.
-- [ ] Implementar repository y service con transacciones.
-- [ ] Implementar lista/detalle/calendario con scoping por rol.
-- [ ] Crear sesión 1:1.
-- [ ] Crear sesión grupal.
-- [ ] Crear checkpoint con reglas de fase.
-- [ ] Confirmar participación.
-- [ ] Marcar asistencia.
+- [x] Modelar Session, participant, reminder y reschedule request.
+- [x] Implementar repository y service con transacciones.
+- [x] Implementar lista/detalle/calendario con scoping por rol.
+- [x] Crear sesión 1:1.
+- [x] Crear sesión grupal.
+- [x] Crear checkpoint con reglas de fase.
+- [x] Confirmar participación.
+- [x] Marcar asistencia.
 - [ ] Solicitar/decidir reprogramación.
 - [ ] Reprogramar preservando historial.
 - [ ] Cancelar/completar.
-- [ ] Bloquear conflictos de mentor.
-- [ ] Bloquear conflictos de participante.
-- [ ] Emitir eventos/outbox idempotentes.
+- [x] Bloquear conflictos de mentor.
+- [x] Bloquear conflictos de participante.
+- [x] Emitir eventos/outbox idempotentes.
 - [ ] Implementar UI participante.
 - [ ] Implementar UI mentor.
 - [ ] Implementar UI admin.
-- [ ] Probar concurrencia, ownership y reintentos.
+- [x] Probar concurrencia, ownership y reintentos.
 
 ### Gate 2
 
 - [ ] Tres vertical slices demostradas.
-- [ ] Cero doble reserva en test concurrente.
+- [x] Cero doble reserva en test concurrente.
 - [ ] Estados UI/API/DB consistentes.
 - [ ] Recordatorios no duplicados.
 

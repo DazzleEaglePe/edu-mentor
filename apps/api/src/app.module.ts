@@ -7,6 +7,7 @@ import { AdminProgramModule } from './modules/admin-program/admin-program.module
 import { AdminUsersModule } from './modules/admin-users/admin-users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { SessionsModule } from './modules/sessions/sessions.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HealthModule } from './modules/health/health.module.js';
     AuthModule,
     AdminUsersModule,
     AdminProgramModule,
+    SessionsModule,
     HealthModule,
   ],
 })

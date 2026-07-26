@@ -7,6 +7,8 @@
 - `fixtures/participant-dashboard.json`: resumen coherente para la pantalla Inicio del participante.
 - `fixtures/admin.users-page.json`: página administrativa limitada a una organización.
 - `fixtures/session.detail.json`: sesión con confirmación y asistencia separadas.
+- `fixtures/session.group.json`: sesión grupal con cinco confirmaciones, un rechazo y dos respuestas
+  pendientes.
 - `fixtures/deliverable.detail.json`: entregable con submission inmutable.
 - `fixtures/error.schedule-conflict.json`: error estable de doble reserva.
 - `fixtures/admin.oleada.json`: oleada operable por administración.
@@ -54,6 +56,26 @@ sobrecapacidad bajo concurrencia. Estado, fase y semana siguen las transiciones 
 `DELETE /admin/mentor-assignments/{mentorAssignmentId}?expectedVersion=` completan el setup
 administrativo. El alta valida rol/capability del mentor y alcance de oleada o enrollment; el
 `DELETE` cierra la vigencia sin borrar historial.
+
+`GET /sessions`, `GET /sessions/calendar` y `GET /sessions/{sessionId}` ya leen el primer agregado
+persistido de Agenda. La consulta se limita a la organización autenticada y después aplica la unión
+de scopes del rol: administración ve la organización, mentor solo sus sesiones y participante solo
+aquellas en las que su enrollment aparece. Un detalle fuera de alcance se oculta con `404`.
+
+`POST /sessions` crea sesiones `ONE_ON_ONE`, `GROUP` y `CHECKPOINT` para mentor o administración.
+Normaliza el request antes de fingerprint, exige asignación vigente, valida fase/periodo y
+participantes, y persiste sesión, participantes, reservas, auditoría, outbox e idempotencia dentro
+de una transacción. El exclusion constraint decide las carreras y la API lo traduce a
+`409 SCHEDULE_CONFLICT` sin revelar una sesión no autorizada.
+
+`PUT /sessions/{sessionId}/participants/me/confirmation` permite al participante alternar
+`CONFIRMED|DECLINED` mientras la ventana siga abierta. Usa `expectedVersion`, no confunde
+confirmación con asistencia y emite auditoría/outbox solo cuando el estado realmente cambia.
+
+`PUT /sessions/{sessionId}/participants/{enrollmentId}/attendance` permite al mentor de la sesión o
+a administración registrar asistencia cuando la sesión ya comenzó. La primera marca es terminal
+para mentor; una corrección excepcional queda reservada a administración y conserva `before/after`
+en auditoría. Repetir exactamente el mismo estado es idempotente y no duplica eventos.
 
 El archivo se valida con Redocly CLI usando el ruleset `minimal`, sin errores ni warnings. Los
 DTO/decorators Nest ya cubren usuarios, oleadas, enrollments y mentor assignments; aún corresponde

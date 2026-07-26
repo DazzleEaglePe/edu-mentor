@@ -13,6 +13,9 @@ export const SYNTHETIC_IDS = {
   organization: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   participantRole: 'c1111111-1111-4111-8111-111111111111',
   participantUser: '11111111-1111-4111-8111-111111111111',
+  participantReservation: '66666666-6666-4666-8666-666666666666',
+  mentorReservation: '77777777-7777-4777-8777-777777777777',
+  session: '33333333-3333-4333-8333-333333333333',
 } as const;
 
 export const SYNTHETIC_EMAILS = {

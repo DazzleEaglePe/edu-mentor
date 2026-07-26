@@ -313,9 +313,101 @@ async function run(): Promise<void> {
           id: SYNTHETIC_IDS.mentorAssignment,
         },
       });
+      await transaction.session.upsert({
+        create: {
+          confirmationClosesAt: new Date('2026-08-12T20:00:00.000Z'),
+          createdByUserId: SYNTHETIC_IDS.adminUser,
+          description: 'Sesión sintética para validar el contrato.',
+          endsAt: new Date('2026-08-12T20:45:00.000Z'),
+          id: SYNTHETIC_IDS.session,
+          meetingUrl: 'https://meet.example.test/demo-session',
+          mentorUserId: SYNTHETIC_IDS.mentorUser,
+          oleadaId: SYNTHETIC_IDS.oleada,
+          phase: 'FASE_1',
+          startsAt: new Date('2026-08-12T20:00:00.000Z'),
+          status: 'SCHEDULED',
+          timezone: 'America/Lima',
+          title: 'Mentoría 1:1 — Objetivo profesional',
+          type: 'ONE_ON_ONE',
+          version: 3,
+          weekNumber: 4,
+        },
+        update: {
+          checkpointMonth: null,
+          confirmationClosesAt: new Date('2026-08-12T20:00:00.000Z'),
+          createdByUserId: SYNTHETIC_IDS.adminUser,
+          description: 'Sesión sintética para validar el contrato.',
+          endsAt: new Date('2026-08-12T20:45:00.000Z'),
+          meetingUrl: 'https://meet.example.test/demo-session',
+          mentorUserId: SYNTHETIC_IDS.mentorUser,
+          oleadaId: SYNTHETIC_IDS.oleada,
+          phase: 'FASE_1',
+          rescheduleReason: null,
+          rescheduledFromId: null,
+          startsAt: new Date('2026-08-12T20:00:00.000Z'),
+          status: 'SCHEDULED',
+          timezone: 'America/Lima',
+          title: 'Mentoría 1:1 — Objetivo profesional',
+          type: 'ONE_ON_ONE',
+          version: 3,
+          weekNumber: 4,
+        },
+        where: {
+          id: SYNTHETIC_IDS.session,
+        },
+      });
+      await transaction.sessionParticipant.upsert({
+        create: {
+          attendanceStatus: 'PENDING',
+          confirmationStatus: 'CONFIRMED',
+          confirmedAt: new Date('2026-08-10T15:30:00.000Z'),
+          enrollmentId: SYNTHETIC_IDS.enrollment,
+          sessionId: SYNTHETIC_IDS.session,
+          version: 2,
+        },
+        update: {
+          attendanceRecordedAt: null,
+          attendanceRecordedById: null,
+          attendanceStatus: 'PENDING',
+          confirmationStatus: 'CONFIRMED',
+          confirmedAt: new Date('2026-08-10T15:30:00.000Z'),
+          version: 2,
+        },
+        where: {
+          sessionId_enrollmentId: {
+            enrollmentId: SYNTHETIC_IDS.enrollment,
+            sessionId: SYNTHETIC_IDS.session,
+          },
+        },
+      });
+      await transaction.scheduleReservation.deleteMany({
+        where: {
+          sessionId: SYNTHETIC_IDS.session,
+        },
+      });
+      await transaction.scheduleReservation.createMany({
+        data: [
+          {
+            endsAt: new Date('2026-08-12T20:45:00.000Z'),
+            id: SYNTHETIC_IDS.mentorReservation,
+            resourceId: SYNTHETIC_IDS.mentorUser,
+            resourceType: 'USER',
+            sessionId: SYNTHETIC_IDS.session,
+            startsAt: new Date('2026-08-12T20:00:00.000Z'),
+          },
+          {
+            endsAt: new Date('2026-08-12T20:45:00.000Z'),
+            id: SYNTHETIC_IDS.participantReservation,
+            resourceId: SYNTHETIC_IDS.enrollment,
+            resourceType: 'ENROLLMENT',
+            sessionId: SYNTHETIC_IDS.session,
+            startsAt: new Date('2026-08-12T20:00:00.000Z'),
+          },
+        ],
+      });
     });
 
-    console.log('synthetic_seed=ok organizations=2 users=4 roles=3');
+    console.log('synthetic_seed=ok organizations=2 users=4 roles=3 sessions=1');
   } finally {
     await prisma.$disconnect();
     await pool.end();
