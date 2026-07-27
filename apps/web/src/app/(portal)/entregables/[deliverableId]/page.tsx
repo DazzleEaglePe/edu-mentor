@@ -106,7 +106,7 @@ export default async function EntregableDetallePage({
         {summary.title} · entrega hasta el {dueDate} (America/Lima)
       </p>
 
-      <Card title="Qué tienes que hacer">
+      <Card title="Qué tienes que hacer" icon="📄">
         <p className="text-sm whitespace-pre-line">{assignment.instructions}</p>
       </Card>
 
@@ -167,7 +167,7 @@ export default async function EntregableDetallePage({
       </Card>
 
       {evaluation === null ? null : (
-        <Card title="Retroalimentación">
+        <Card title="Retroalimentación" icon="💬">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="tabular font-mono text-lg font-bold">
               {evaluation.score} / {assignment.maxScore}

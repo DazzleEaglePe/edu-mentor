@@ -120,7 +120,7 @@ export default async function EvaluarRevisionPage({
         </Card>
       ) : null}
 
-      <Card title="Lo que envió">
+      <Card title="Lo que envió" icon="📎">
         {submission.files.length === 0 ? (
           <p className="text-sm text-[var(--edu-text-secondary)]">Sin archivos adjuntos.</p>
         ) : (
@@ -163,7 +163,7 @@ export default async function EvaluarRevisionPage({
         </p>
       </Card>
 
-      <Card title="Tu evaluación">
+      <Card title="Tu evaluación" icon="✍️">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-semibold">Retroalimentación</span>
           <span className="min-h-24 rounded-[var(--edu-radius-sm)] border border-[var(--edu-border-strong)] px-3 py-2 text-[var(--edu-text-secondary)]">

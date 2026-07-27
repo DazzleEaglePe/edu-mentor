@@ -53,7 +53,7 @@ export default async function AdminDashboardPage() {
           </p>
         </Card>
       ) : (
-        <Card title="En riesgo esta semana" variant="emphasis">
+        <Card title="En riesgo esta semana" icon="⚠️" variant="emphasis">
           <ul className="flex flex-col gap-3">
             {riskItems.map((item) => (
               <li key={item.label} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -66,7 +66,7 @@ export default async function AdminDashboardPage() {
         </Card>
       )}
 
-      <Card title="Pulso del programa">
+      <Card title="Pulso del programa" icon="📊">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Metric
             value={`${dashboard.activeOleadas}/${dashboard.totalOleadas}`}
@@ -97,7 +97,7 @@ export default async function AdminDashboardPage() {
         </div>
       </Card>
 
-      <Card title="Sesiones">
+      <Card title="Sesiones" icon="📅">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Metric value={`${dashboard.upcomingSessions}`} label="Próximas" />
           <Metric value={`${dashboard.completedSessions}`} label="Realizadas" />

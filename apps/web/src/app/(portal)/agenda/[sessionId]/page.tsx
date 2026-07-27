@@ -186,7 +186,7 @@ export default async function MentorSesionDetallePage({
         </Card>
       ) : null}
 
-      <Card title="Confirmaciones">
+      <Card title="Confirmaciones" icon="✅">
         <p className="text-sm">{describeConfirmations(session.confirmationSummary)}</p>
         <p className="text-sm text-[var(--edu-text-secondary)]">{describeAttendance(attendance)}</p>
       </Card>

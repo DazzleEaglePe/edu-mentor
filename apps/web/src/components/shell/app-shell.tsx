@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import type { AuthMe } from '@edu-mentor/shared-types';
+import { HelpWidget } from './help-widget';
 import { navigationForRoles } from '@/lib/domain/navigation';
 import { primaryRole, translateProgramPhase, translateRole } from '@/lib/domain/labels';
 
@@ -56,6 +57,8 @@ export function AppShell({ me, currentPath, children, aside }: AppShellProps) {
             </Link>
           );
         })}
+
+        <HelpWidget />
       </nav>
 
       <div className="flex min-w-0 flex-col pb-20 md:pb-0">
@@ -63,7 +66,8 @@ export function AppShell({ me, currentPath, children, aside }: AppShellProps) {
           <div>
             <p className="text-lg font-bold">Hola, {me.fullName.split(' ')[0]}</p>
             {enrollment === null || enrollment === undefined ? null : (
-              <p className="text-xs text-[var(--edu-text-secondary)]">
+              <p className="mt-1 inline-flex items-center gap-1.5 rounded-[var(--edu-radius-pill)] bg-[var(--edu-teal-50)] px-2.5 py-1 text-xs text-[var(--edu-teal-800)]">
+                <span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--edu-teal-700)]" />
                 {enrollment.oleada.name} · {translateProgramPhase(enrollment.currentPhase)}
                 {typeof enrollment.currentWeek === 'number'
                   ? ` · Semana ${enrollment.currentWeek}`

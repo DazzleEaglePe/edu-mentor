@@ -150,9 +150,29 @@ El participante confirmará asistencia desde el celular: `sm` es un requisito, n
 8. `prefers-reduced-motion`: sin animaciones de entrada ni transiciones de más de 150ms.
 9. Idioma `lang="es"`; fechas y horas en `America/Lima` con zona explícita cuando aplique.
 
-## 7. Pendientes de esta propuesta
+## 7. Alineación con las maquetas de referencia (jul-2026)
 
-- Confirmar si la mascota es un activo de marca oficial de EDU-US y en qué contextos aparece.
+Proyectos confirmó que `design-platform/screen-1..4.png` son la **guía estética oficial**: composición, jerarquía y estilo de contenedores. Se adoptó eso; los datos y estados siguen viniendo del contrato.
+
+Qué se tomó:
+
+- esquinas más redondeadas (`radius-lg`) y **sombra suave** en tarjetas y métricas;
+- **icono decorativo** junto al título de sección, con `aria-hidden` — el título ya nombra la sección y repetirlo en el lector sería ruido;
+- **píldora de contexto** en el topbar, con punto teal;
+- **widget de ayuda** en el sidebar, solo en escritorio: en la barra inferior de móvil ocuparía espacio que la persona necesita para su tarea.
+
+Dos desviaciones deliberadas:
+
+| Maqueta | Implementado | Por qué |
+|---|---|---|
+| Widget naranja `#E8461E` con texto blanco | `coral-700 #B23414` | Blanco sobre el naranja de marca da **3.94:1**; AA exige 4.5. Con `coral-700`, 6.19:1. Se conserva la intención cálida sin dejar el texto por debajo del mínimo legible |
+| Teal `#00A896` en botones | `teal-700 #0B6E66` | Mismo motivo: 2.9:1 contra el blanco. La rampa existe precisamente para esto |
+
+La accesibilidad AA es requisito de charter, no preferencia: cuando la maqueta y el contraste chocan, gana el contraste y se conserva el tono.
+
+## 8. Pendientes de esta propuesta
+
+- **La mascota.** El widget de ayuda está construido y le falta solo la ilustración. Cuando Comunicaciones confirme que es un activo oficial, se coloca en `apps/web/public/mascota.png` y se descomenta el bloque en `help-widget.tsx`. Sin ella la tarjeta se ve completa; una imagen rota sería peor.
 - Confirmar tipografía institucional (si EDU-US tiene una, reemplaza a Inter).
 - Definir el set de iconografía (propuesta: Lucide, licencia ISC, estilo lineal 1.5px).
 - Definir logo en versión clara para `navy-900` y área de resguardo.

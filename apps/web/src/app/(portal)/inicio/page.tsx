@@ -50,7 +50,7 @@ export default async function InicioPage() {
       currentPath="/inicio"
       aside={
         enrollment === null ? undefined : (
-          <Card title="Tu recorrido">
+          <Card title="Tu recorrido" icon="🧭">
             <ol className="flex flex-col gap-2 text-sm">
               <li className="flex items-center gap-2">
                 <StatusChip kind="sessionStatus" value="COMPLETED" />
@@ -75,7 +75,7 @@ export default async function InicioPage() {
     >
       <h1 className="text-2xl font-bold tracking-tight">Tu semana</h1>
 
-      <Card title="Tu próxima sesión">
+      <Card title="Tu próxima sesión" icon="📅">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold">{session.title}</p>
