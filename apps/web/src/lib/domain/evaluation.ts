@@ -39,7 +39,7 @@ function oldestSubmittedAt(deliverable: Deliverable): string | null {
     .map((submission) => submission.submittedAt)
     .filter((value): value is string => typeof value === 'string');
 
-  return dates.length === 0 ? null : dates.sort()[0] ?? null;
+  return dates.length === 0 ? null : (dates.sort()[0] ?? null);
 }
 
 /* ------------------------------------------------- acciones sobre revisión */
@@ -151,10 +151,7 @@ export function rubricMaximum(rubric: readonly RubricCriterion[]): number {
  * y el campo pasa a solo lectura. Mientras tanto, inventar la regla sería
  * decidir por ellos.
  */
-export function rubricMatchesScore(
-  scores: readonly RubricScore[],
-  score: number,
-): boolean {
+export function rubricMatchesScore(scores: readonly RubricScore[], score: number): boolean {
   return sumRubric(scores) === score;
 }
 

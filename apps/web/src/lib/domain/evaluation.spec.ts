@@ -257,10 +257,7 @@ describe('mergeRubric', () => {
   });
 
   it('ignora puntajes de criterios que no están en la rúbrica', () => {
-    const merged = mergeRubric(rubric, [
-      ...scores,
-      { criterionId: 'inventado', score: 10 },
-    ]);
+    const merged = mergeRubric(rubric, [...scores, { criterionId: 'inventado', score: 10 }]);
 
     assert.equal(merged.length, 2);
   });

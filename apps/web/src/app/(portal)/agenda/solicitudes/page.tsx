@@ -103,9 +103,7 @@ export default async function SolicitudesPage() {
                   {formatDateTime(item.proposedStartsAt, session.timezone)}
                 </p>
               ) : (
-                <p className="text-[var(--edu-text-secondary)]">
-                  No propuso fecha: la eliges tú.
-                </p>
+                <p className="text-[var(--edu-text-secondary)]">No propuso fecha: la eliges tú.</p>
               )}
             </div>
 

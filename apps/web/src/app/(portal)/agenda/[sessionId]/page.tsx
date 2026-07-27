@@ -110,8 +110,7 @@ export default async function MentorSesionDetallePage({
         <Card variant="quiet" title="Acciones sobre la sesión">
           {superseded ? (
             <p className="text-sm text-[var(--edu-text-secondary)]">
-              Esta sesión fue reemplazada por otra. Se conserva como historial y no admite
-              cambios.
+              Esta sesión fue reemplazada por otra. Se conserva como historial y no admite cambios.
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -189,9 +188,7 @@ export default async function MentorSesionDetallePage({
 
       <Card title="Confirmaciones">
         <p className="text-sm">{describeConfirmations(session.confirmationSummary)}</p>
-        <p className="text-sm text-[var(--edu-text-secondary)]">
-          {describeAttendance(attendance)}
-        </p>
+        <p className="text-sm text-[var(--edu-text-secondary)]">{describeAttendance(attendance)}</p>
       </Card>
 
       <Card title={`Participantes · ${session.participants.length}`}>

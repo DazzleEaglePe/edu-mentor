@@ -71,9 +71,7 @@ export default async function TopTresPage() {
       </div>
 
       <p className="text-sm text-[var(--edu-text-secondary)]">
-        {chosen === 0
-          ? 'Todavía no has marcado a nadie.'
-          : `${chosen} de 3 puestos asignados.`}
+        {chosen === 0 ? 'Todavía no has marcado a nadie.' : `${chosen} de 3 puestos asignados.`}
       </p>
 
       <ol className="flex flex-col gap-3">
@@ -97,9 +95,7 @@ export default async function TopTresPage() {
                             {slot.participantName ?? 'Participante no identificado'}
                           </p>
                           <p className="text-xs text-[var(--edu-text-secondary)]">
-                            {slot.score === null
-                              ? 'Sin evaluar todavía'
-                              : `Puntaje ${slot.score}`}
+                            {slot.score === null ? 'Sin evaluar todavía' : `Puntaje ${slot.score}`}
                           </p>
                         </>
                       )}

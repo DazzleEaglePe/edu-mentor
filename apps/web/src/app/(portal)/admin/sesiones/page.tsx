@@ -33,10 +33,7 @@ export default async function AdminSesionesPage() {
 
   const sessions = sortForAgenda([oneOnOne, group, rescheduled]);
   const scheduled = sessions.filter((item) => item.status === 'SCHEDULED');
-  const awaiting = sessions.reduce(
-    (total, item) => total + item.confirmationSummary.pending,
-    0,
-  );
+  const awaiting = sessions.reduce((total, item) => total + item.confirmationSummary.pending, 0);
 
   const rows: readonly TableRow[] = sessions.map((session) => {
     const period = describePeriod(session);

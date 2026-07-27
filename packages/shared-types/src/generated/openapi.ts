@@ -901,6 +901,18 @@ export interface components {
             upcomingSessions: number;
             pendingDeliverables: number;
             failedJobs: number;
+            totalOleadas: number;
+            activeOleadas: number;
+            totalParticipants: number;
+            activeMentors: number;
+            pendingReviews: number;
+            completedSessions: number;
+            submissionsSummary: {
+                total: number;
+                evaluated: number;
+                pending: number;
+                returned: number;
+            };
         };
         /** @enum {string} */
         SessionType: "ONE_ON_ONE" | "GROUP" | "CHECKPOINT";
