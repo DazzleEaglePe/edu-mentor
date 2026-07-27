@@ -244,7 +244,7 @@ export function describeAttendance(breakdown: AttendanceBreakdown): string {
   const parts = [`${breakdown.attended} asistieron`];
 
   if (breakdown.absent > 0) {
-    parts.push(`${breakdown.absent} no asistió${breakdown.absent === 1 ? '' : 'ieron'}`);
+    parts.push(breakdown.absent === 1 ? '1 no asistió' : `${breakdown.absent} no asistieron`);
   }
 
   if (breakdown.unregistered > 0) {
